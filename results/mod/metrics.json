@@ -1,0 +1,11 @@
+{
+  "experiment": "mod",
+  "best_checkpoint": "checkpoints/mod/epoch_09.pth",
+  "summary": {
+    "mean_dice": 0.5786,
+    "WT_dice": 0.618,
+    "TC_dice": 0.5867,
+    "ET_dice": 0.5309,
+    "mean_hd95": 79.5767
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "experiment": "baseline",
+  "summary": {
+    "mean_dice": 0.6887,
+    "WT_dice": 0.7525,
+    "TC_dice": 0.652,
+    "ET_dice": 0.6615,
+    "mean_hd95": 83.2078
+  },
+  "checkpoint_evaluated": "checkpoints/baseline/latest.pth"
+}

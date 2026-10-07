@@ -1,0 +1,83 @@
+project:
+  name: "Adaptive Self-Distillation Framework for 3D Brain Tumor Segmentation"
+  version: "0.1.0"
+  description: "3D UNETR-based framework integrating self-distillation and self-modeling on BraTS 2021 subset"
+
+dataset:
+  name: "BraTS 2021 (50-Subject Experimental Subset)"
+  root_dir: "data/raw/BraTS2021/BraTS2021_Training_Data"
+  train_split: "data/splits/train.txt"
+  val_split: "data/splits/val.txt"
+  modalities:
+    - FLAIR
+    - T1
+    - T1ce
+    - T2
+  patch_size: [96, 96, 96]
+  batch_size: 1
+  num_workers: 0
+  seed: 42
+
+model:
+  name: "UNETR"
+  in_channels: 4
+  out_channels: 4
+  img_size: [96, 96, 96]
+  feature_size: 16
+  hidden_size: 768
+  mlp_dim: 3072
+  num_heads: 12
+  proj_type: "conv"
+  norm_name: "instance"
+  res_block: true
+  dropout_rate: 0.0
+
+optimizer:
+  learning_rate: 0.0001
+  weight_decay: 0.00005
+
+training:
+  epochs: 10
+  mixed_precision: true
+  gradient_accumulation_steps: 1
+  seed: 42
+
+loss:
+  segmentation: "dice_focal"
+
+dense_predictor:
+  patch_size: [16, 16, 16]
+  hidden_size: 768
+  in_channels: 4
+  lambda_dp: 1.0
+
+mod:
+  mask_ratio: 0.60
+  token_patch_size: [16, 16, 16]
+  ema_momentum: 0.996
+  lambda_ot: 1.0
+  lambda_dp: 1.0
+
+adaptive:
+  enabled: false
+  strategy: "loss_ratio" # Options: "loss_ratio", "moving_average", "uncertainty"
+  initial_lambda_ot: 1.0
+  initial_lambda_dp: 1.0
+  min_lambda: 0.1
+  max_lambda: 2.0
+  update_frequency: 1 # epoch or step based
+  smoothing_factor: 0.9
+
+hardware:
+  device: "cuda"
+  gpu: "NVIDIA RTX A1000 6GB Laptop GPU"
+
+evaluation:
+  roi_size: [96, 96, 96]
+  sw_batch_size: 1
+  overlap: 0.25
+
+output:
+  checkpoint_dir: "checkpoints"
+  result_dir: "results"
+  log_dir: "results/logs"

@@ -1,0 +1,36 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Editor & Notebook Metadata
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.pytest_cache/
+
+# Large Datasets & Medical Imaging Archives
+data/raw/
+data/processed/
+*.zip
+*.tar.gz
+*.nii
+*.nii.gz
+
+# Checkpoints & Model Weights (50+ GB)
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+
+# Runtime Logs & Tensorboard
+logs/
+results/logs/
+*.log
+events.out.tfevents.*

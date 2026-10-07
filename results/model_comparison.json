@@ -1,0 +1,56 @@
+{
+  "dataset": "BraTS 2021 (50-Subject Experimental Subset)",
+  "validation_protocol": "Full-volume sliding-window inference (ROI 96x96x96, sw_batch_size=1, overlap=0.25)",
+  "models": [
+    {
+      "model": "Baseline UNETR",
+      "checkpoint": "checkpoints/baseline/latest.pth",
+      "WT_dice": 0.7525,
+      "TC_dice": 0.6520,
+      "ET_dice": 0.6615,
+      "mean_dice": 0.6887,
+      "mean_hd95": 83.2078,
+      "status": "Completed"
+    },
+    {
+      "model": "Online Tokenizer",
+      "checkpoint": "checkpoints/online_tokenizer/epoch_10.pth",
+      "WT_dice": 0.5324,
+      "TC_dice": 0.7022,
+      "ET_dice": 0.7454,
+      "mean_dice": 0.6600,
+      "mean_hd95": 66.6347,
+      "status": "Completed"
+    },
+    {
+      "model": "Dense Predictor",
+      "checkpoint": null,
+      "WT_dice": null,
+      "TC_dice": null,
+      "ET_dice": null,
+      "mean_dice": null,
+      "mean_hd95": null,
+      "status": "TBD"
+    },
+    {
+      "model": "Full MOD",
+      "checkpoint": "checkpoints/mod/epoch_09.pth",
+      "WT_dice": 0.6180,
+      "TC_dice": 0.5867,
+      "ET_dice": 0.5309,
+      "mean_dice": 0.5786,
+      "mean_hd95": 79.5767,
+      "status": "Completed"
+    },
+    {
+      "model": "Adaptive MOD",
+      "checkpoint": null,
+      "WT_dice": null,
+      "TC_dice": null,
+      "ET_dice": null,
+      "mean_dice": null,
+      "mean_hd95": null,
+      "status": "TBD"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "experiment": "online_tokenizer",
+  "summary": {
+    "mean_dice": 0.66,
+    "WT_dice": 0.5324,
+    "TC_dice": 0.7022,
+    "ET_dice": 0.7454,
+    "mean_hd95": 66.6347
+  },
+  "checkpoint_evaluated": "checkpoints/online_tokenizer/epoch_10.pth"
+}
