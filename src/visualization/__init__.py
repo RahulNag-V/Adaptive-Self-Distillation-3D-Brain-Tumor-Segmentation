@@ -1,5 +1,6 @@
 from src.visualization.plotter import (
     plot_loss_curves,
+    plot_mod_loss_breakdown,
     plot_dice_comparison,
     plot_hd95_comparison,
     plot_region_dice_comparison,
@@ -7,6 +8,7 @@ from src.visualization.plotter import (
 
 __all__ = [
     "plot_loss_curves",
+    "plot_mod_loss_breakdown",
     "plot_dice_comparison",
     "plot_hd95_comparison",
     "plot_region_dice_comparison",

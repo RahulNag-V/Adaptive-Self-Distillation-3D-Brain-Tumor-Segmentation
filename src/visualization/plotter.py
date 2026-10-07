@@ -17,7 +17,7 @@ def plot_loss_curves(
     colors = {
         "Baseline": "#2563EB",
         "Online Tokenizer": "#10B981",
-        "Full MOD": "#F59E0B",
+        "Full MOD": "#DC2626",
         "Dense Predictor": "#8B5CF6",
     }
     
@@ -40,6 +40,38 @@ def plot_loss_curves(
     print(f"Saved: {out}")
 
 
+def plot_mod_loss_breakdown(
+    epochs: List[int],
+    total_loss: List[float],
+    seg_loss: List[float],
+    ot_loss: List[float],
+    dp_loss: List[float],
+    mod_loss: List[float],
+    output_path: Union[str, Path] = "results/figures/mod_loss_breakdown.png",
+):
+    """Plots fine-grained MOD loss components across epochs."""
+    plt.figure(figsize=(10, 6), dpi=300)
+    plt.plot(epochs, total_loss, marker='o', linewidth=2.5, color='#DC2626', label='Total Loss (Seg + MOD)')
+    plt.plot(epochs, seg_loss,   marker='s', linewidth=2.0, color='#2563EB', label='Segmentation Loss (DiceFocal)')
+    plt.plot(epochs, mod_loss,   marker='^', linewidth=2.0, color='#D97706', label='MOD Loss (OT + DP)')
+    plt.plot(epochs, dp_loss,    marker='d', linewidth=1.8, linestyle='--', color='#7C3AED', label='Dense Predictor Loss')
+    plt.plot(epochs, ot_loss,    marker='x', linewidth=1.8, linestyle=':', color='#059669', label='Online Tokenizer Loss')
+
+    plt.xlabel('Epoch', fontsize=12, fontweight='bold')
+    plt.ylabel('Loss Value', fontsize=12, fontweight='bold')
+    plt.title('MOD 10-Epoch Multi-Objective Loss Trajectory', fontsize=14, fontweight='bold')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.xticks(epochs)
+    plt.legend(fontsize=10, loc='upper right')
+    plt.tight_layout()
+
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out, dpi=300)
+    plt.close()
+    print(f"Saved: {out}")
+
+
 def plot_dice_comparison(
     models: List[str],
     mean_dice: List[float],
@@ -47,7 +79,7 @@ def plot_dice_comparison(
 ):
     """Plots Mean Dice comparison bar chart."""
     plt.figure(figsize=(8, 5), dpi=300)
-    colors = ["#2563EB", "#10B981", "#F59E0B"][:len(models)]
+    colors = ["#2563EB", "#10B981", "#DC2626"][:len(models)]
     bars = plt.bar(models, mean_dice, color=colors, width=0.45, edgecolor="black", linewidth=1.2)
     
     for bar in bars:
@@ -75,7 +107,7 @@ def plot_hd95_comparison(
 ):
     """Plots Mean HD95 boundary distance comparison (lower is better)."""
     plt.figure(figsize=(8, 5), dpi=300)
-    colors = ["#2563EB", "#10B981", "#F59E0B"][:len(models)]
+    colors = ["#2563EB", "#10B981", "#DC2626"][:len(models)]
     bars = plt.bar(models, mean_hd95, color=colors, width=0.45, edgecolor="black", linewidth=1.2)
     
     for bar in bars:
