@@ -1,0 +1,9 @@
+Metric,Value
+WT_dice,0.4814
+WT_hd95,76.8911
+TC_dice,0.6714
+TC_hd95,83.3313
+ET_dice,0.6705
+ET_hd95,84.6933
+mean_dice,0.6078
+mean_hd95,81.6386

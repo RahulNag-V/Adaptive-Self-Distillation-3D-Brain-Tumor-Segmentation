@@ -24,13 +24,13 @@
     },
     {
       "model": "Dense Predictor",
-      "checkpoint": null,
-      "WT_dice": null,
-      "TC_dice": null,
-      "ET_dice": null,
-      "mean_dice": null,
-      "mean_hd95": null,
-      "status": "TBD"
+      "checkpoint": "checkpoints/dense_predictor/best.pth",
+      "WT_dice": 0.4814,
+      "TC_dice": 0.6714,
+      "ET_dice": 0.6705,
+      "mean_dice": 0.6078,
+      "mean_hd95": 81.6386,
+      "status": "Completed"
     },
     {
       "model": "Full MOD",

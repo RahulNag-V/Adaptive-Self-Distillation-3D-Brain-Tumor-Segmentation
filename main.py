@@ -62,7 +62,8 @@ def run_training(experiment: str, config_path: str):
         import scripts.train_mod as tmod
         tmod.main()
     elif experiment == "adaptive":
-        print("Adaptive training is configured in configs/base.yaml. Ensure ablation runs are complete first.")
+        import scripts.train_adaptive as ta
+        ta.train_adaptive(config_path=config_path)
     else:
         print(f"Unknown experiment '{experiment}'. Choose from: baseline, online_tokenizer, dense_predictor, mod, adaptive")
 
@@ -81,8 +82,11 @@ def run_evaluation(experiment: str, config_path: str):
     elif experiment == "mod":
         import scripts.evaluate_mod as em
         em.main(config_path=config_path)
+    elif experiment == "adaptive":
+        import scripts.evaluate_adaptive as ea
+        ea.main(config_path=config_path)
     else:
-        print(f"Unknown experiment '{experiment}'. Choose from: baseline, online_tokenizer, dense_predictor, mod")
+        print(f"Unknown experiment '{experiment}'. Choose from: baseline, online_tokenizer, dense_predictor, mod, adaptive")
 
 
 def run_comparison():
