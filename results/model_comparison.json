@@ -6,7 +6,7 @@
       "model": "Baseline UNETR",
       "checkpoint": "checkpoints/baseline/latest.pth",
       "WT_dice": 0.7525,
-      "TC_dice": 0.6520,
+      "TC_dice": 0.652,
       "ET_dice": 0.6615,
       "mean_dice": 0.6887,
       "mean_hd95": 83.2078,
@@ -18,7 +18,7 @@
       "WT_dice": 0.5324,
       "TC_dice": 0.7022,
       "ET_dice": 0.7454,
-      "mean_dice": 0.6600,
+      "mean_dice": 0.66,
       "mean_hd95": 66.6347,
       "status": "Completed"
     },
@@ -35,7 +35,7 @@
     {
       "model": "Full MOD",
       "checkpoint": "checkpoints/mod/epoch_09.pth",
-      "WT_dice": 0.6180,
+      "WT_dice": 0.618,
       "TC_dice": 0.5867,
       "ET_dice": 0.5309,
       "mean_dice": 0.5786,
@@ -52,5 +52,14 @@
       "mean_hd95": null,
       "status": "TBD"
     }
-  ]
+  ],
+  "adaptive_mod": {
+    "display_name": "Adaptive Self-Distillation (Dynamic MOD)",
+    "mean_dice": 0.6212,
+    "wt_dice": 0.5139,
+    "tc_dice": 0.669,
+    "et_dice": 0.6808,
+    "mean_hd95": 80.4477,
+    "best_epoch": 10
+  }
 }

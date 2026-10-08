@@ -1,0 +1,10 @@
+============================================================
+EXPERIMENT EVALUATION SUMMARY: ADAPTIVE SELF-DISTILLATION
+============================================================
+
+Best Epoch: 10
+Mean Dice:  0.6212
+WT Dice:    0.5139
+TC Dice:    0.6690
+ET Dice:    0.6808
+Mean HD95:  80.4477

@@ -100,6 +100,19 @@ def main(
         print(f"Checkpoint: {best_name}")
         print(f"Mean Dice:  {summary['mean_dice']:.4f}")
 
+        # Update best.pth link
+        best_ckpt_path = Path(best_eval["checkpoint"])
+        best_link_target = ckpt_path / "best.pth"
+        if best_link_target.exists():
+            best_link_target.unlink()
+        try:
+            os.link(best_ckpt_path, best_link_target)
+            print(f"Linked {best_link_target} -> {best_ckpt_path.name}")
+        except Exception:
+            import shutil
+            shutil.copyfile(best_ckpt_path, best_link_target)
+            print(f"Copied {best_ckpt_path.name} -> {best_link_target}")
+
         print("\n" + "=" * 60)
         print("ADAPTIVE MOD EVALUATION SUMMARY")
         print("=" * 60)

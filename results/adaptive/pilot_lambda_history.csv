@@ -1,0 +1,4 @@
+epoch,segmentation_loss,online_tokenizer_loss,dense_predictor_loss,mod_auxiliary_loss,total_loss,lambda_ot_before,lambda_dp_before,lambda_ot_after,lambda_dp_after,target_ot,target_dp,training_time_sec,gpu_allocated_gb,gpu_peak_gb,checkpoint_created
+1,1.071718,0.390880,0.559474,0.950354,2.022072,1.000000,1.000000,1.174180,1.091558,2.741805,1.915577,33.40,2.22,2.97,checkpoints\adaptive\pilot\epoch_01.pth
+2,1.008468,0.125647,0.523700,0.719180,1.727648,1.174180,1.091558,1.349166,1.174054,2.924034,1.916526,33.70,2.22,2.97,checkpoints\adaptive\pilot\epoch_02.pth
+3,0.975017,0.072520,0.527196,0.716799,1.691815,1.349166,1.174054,1.529416,1.247662,3.151666,1.910130,50.70,2.22,2.97,checkpoints\adaptive\pilot\epoch_03.pth

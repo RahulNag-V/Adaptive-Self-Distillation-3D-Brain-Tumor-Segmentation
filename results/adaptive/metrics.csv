@@ -1,0 +1,10 @@
+Metric,Value
+best_epoch,10
+WT_dice,0.5139
+WT_hd95,74.9400
+TC_dice,0.6690
+TC_hd95,82.4485
+ET_dice,0.6808
+ET_hd95,83.9547
+mean_dice,0.6212
+mean_hd95,80.4477
