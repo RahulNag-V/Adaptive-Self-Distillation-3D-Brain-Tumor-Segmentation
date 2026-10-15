@@ -1,0 +1,23 @@
+{
+    "python_version": "3.11.9",
+    "pytorch_version": "2.11.0+cu128",
+    "torchvision_version": "0.26.0+cu128",
+    "cuda_version": "12.8",
+    "gpu_name": "NVIDIA RTX A1000 6GB Laptop GPU",
+    "random_seed": 42,
+    "image_size": 224,
+    "batch_size": 64,
+    "learning_rate": 0.0005,
+    "optimizer": "AdamW",
+    "scheduler": "CosineAnnealingLR",
+    "class_weights": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ],
+    "number_of_epochs_run": 22,
+    "best_epoch": 16,
+    "best_val_macro_f1": 0.9955355320606737,
+    "total_training_time_seconds": 2490.297934293747
+}

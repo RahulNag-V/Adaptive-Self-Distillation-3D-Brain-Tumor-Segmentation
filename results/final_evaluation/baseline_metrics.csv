@@ -1,0 +1,11 @@
+Metric,Value
+Model,Baseline UNETR
+Checkpoint,checkpoints/baseline/epoch_10.pth
+WT_Dice,0.7525
+TC_Dice,0.6520
+ET_Dice,0.6615
+Mean_Dice,0.6887
+WT_HD95,75.3469
+TC_HD95,88.1820
+ET_HD95,86.0923
+Mean_HD95,83.2071

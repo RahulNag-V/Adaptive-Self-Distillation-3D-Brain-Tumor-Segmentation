@@ -1,0 +1,11 @@
+Metric,Value
+Model,Full MOD
+Checkpoint,checkpoints/mod/epoch_09.pth
+WT_Dice,0.6180
+TC_Dice,0.5866
+ET_Dice,0.5309
+Mean_Dice,0.5785
+WT_HD95,74.3392
+TC_HD95,87.7911
+ET_HD95,87.9167
+Mean_HD95,83.3490

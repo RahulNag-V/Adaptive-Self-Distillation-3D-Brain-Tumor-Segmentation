@@ -1,0 +1,11 @@
+Metric,Value
+Model,Adaptive MOD
+Checkpoint,checkpoints/adaptive/best.pth
+WT_Dice,0.5139
+TC_Dice,0.6690
+ET_Dice,0.6808
+Mean_Dice,0.6213
+WT_HD95,74.9393
+TC_HD95,82.4491
+ET_HD95,83.9553
+Mean_HD95,80.4479

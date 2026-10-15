@@ -1,0 +1,11 @@
+Metric,Value
+Model,Online Tokenizer
+Checkpoint,checkpoints/online_tokenizer/epoch_10.pth
+WT_Dice,0.5324
+TC_Dice,0.7022
+ET_Dice,0.7454
+Mean_Dice,0.6600
+WT_HD95,76.3887
+TC_HD95,76.6335
+ET_HD95,79.4056
+Mean_HD95,77.4759

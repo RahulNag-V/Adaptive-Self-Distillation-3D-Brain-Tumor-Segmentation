@@ -1,0 +1,53 @@
+{
+  "status": "success",
+  "session_id": "c440cf7a-bf7e-4613-b6fd-d1689993c612",
+  "prediction_file": "/api/sessions/c440cf7a-bf7e-4613-b6fd-d1689993c612/file/prediction.nii.gz",
+  "mri_file": "/api/sessions/c440cf7a-bf7e-4613-b6fd-d1689993c612/file/flair.nii.gz",
+  "original_shape": [
+    240,
+    240,
+    155
+  ],
+  "processed_shape": [
+    139,
+    168,
+    141
+  ],
+  "voxel_spacing": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "unique_labels": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "tumor_voxels": 301080,
+  "tumor_volume_mm3": 301080.0,
+  "tumor_volume_cm3": 301.08,
+  "inference_time_seconds": 0.548,
+  "device": "cuda",
+  "model": "Adaptive Self-Distillation (UNETR)",
+  "regions": {
+    "WT": {
+      "voxel_count": 301080,
+      "volume_mm3": 301080.0,
+      "volume_cm3": 301.08
+    },
+    "TC": {
+      "voxel_count": 27948,
+      "volume_mm3": 27948.0,
+      "volume_cm3": 27.948
+    },
+    "ET": {
+      "voxel_count": 25075,
+      "volume_mm3": 25075.0,
+      "volume_cm3": 25.075
+    }
+  },
+  "ground_truth_available": false,
+  "metrics": null,
+  "note": "Ground truth not provided; Dice/HD95 shown as N/A"
+}

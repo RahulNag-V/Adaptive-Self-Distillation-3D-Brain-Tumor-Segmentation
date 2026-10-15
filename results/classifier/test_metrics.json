@@ -1,0 +1,83 @@
+{
+    "best_epoch": 16,
+    "test_metrics": {
+        "accuracy": 0.95,
+        "macro_precision": 0.9545346191627551,
+        "macro_recall": 0.9500000000000001,
+        "macro_f1": 0.9488538159884149,
+        "weighted_precision": 0.9545346191627551,
+        "weighted_recall": 0.95,
+        "weighted_f1": 0.9488538159884148,
+        "per_class": {
+            "glioma": {
+                "precision": 0.9969325153374233,
+                "recall": 0.8125,
+                "f1": 0.8953168044077134,
+                "support": 400
+            },
+            "meningioma": {
+                "precision": 0.8785871964679912,
+                "recall": 0.995,
+                "f1": 0.933177022274326,
+                "support": 400
+            },
+            "notumor": {
+                "precision": 0.9501187648456056,
+                "recall": 1.0,
+                "f1": 0.9744214372716199,
+                "support": 400
+            },
+            "pituitary": {
+                "precision": 0.9925,
+                "recall": 0.9925,
+                "f1": 0.9925,
+                "support": 400
+            }
+        },
+        "confusion_matrix": [
+            [
+                325,
+                53,
+                21,
+                1
+            ],
+            [
+                0,
+                398,
+                0,
+                2
+            ],
+            [
+                0,
+                0,
+                400,
+                0
+            ],
+            [
+                1,
+                2,
+                0,
+                397
+            ]
+        ]
+    },
+    "model_parameters": {
+        "total": 4012672,
+        "trainable": 4012672,
+        "checkpoint_size_mb": 15.580235481262207
+    },
+    "latency_benchmarks": {
+        "cpu": {
+            "single_image_seconds": 0.019419004917144777,
+            "single_image_ms": 19.419004917144775,
+            "batch_16_total_seconds": 0.13986003398895264,
+            "batch_16_per_item_ms": 8.74125212430954
+        },
+        "gpu": {
+            "single_image_seconds": 0.010095970630645752,
+            "single_image_ms": 10.095970630645752,
+            "batch_16_total_seconds": 0.20244128704071046,
+            "batch_16_per_item_ms": 12.652580440044403
+        }
+    }
+}

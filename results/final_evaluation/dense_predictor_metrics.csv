@@ -1,0 +1,11 @@
+Metric,Value
+Model,Dense Predictor
+Checkpoint,checkpoints/dense_predictor/epoch_10.pth
+WT_Dice,0.4815
+TC_Dice,0.6714
+ET_Dice,0.6706
+Mean_Dice,0.6078
+WT_HD95,76.8924
+TC_HD95,83.3242
+ET_HD95,84.6877
+Mean_HD95,81.6347

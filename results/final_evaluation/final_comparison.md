@@ -1,0 +1,11 @@
+# Authoritative Model Performance Comparison
+
+| Model | WT Dice | TC Dice | ET Dice | Mean Dice | WT HD95 | TC HD95 | ET HD95 | Mean HD95 |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Baseline UNETR** | 0.7525 | 0.6520 | 0.6615 | **0.6887** | 75.3469 | 88.1820 | 86.0923 | **83.2071** |
+| **Online Tokenizer** | 0.5324 | 0.7022 | 0.7454 | **0.6600** | 76.3887 | 76.6335 | 79.4056 | **77.4759** |
+| **Dense Predictor** | 0.4815 | 0.6714 | 0.6706 | **0.6078** | 76.8924 | 83.3242 | 84.6877 | **81.6347** |
+| **Full MOD** | 0.6180 | 0.5866 | 0.5309 | **0.5785** | 74.3392 | 87.7911 | 87.9167 | **83.3490** |
+| **Adaptive MOD** | 0.5139 | 0.6690 | 0.6808 | **0.6213** | 74.9393 | 82.4491 | 83.9553 | **80.4479** |
+
+*Single Authoritative Protocol: 10 validation subjects, sliding window inference (96^3, overlap 0.25).*

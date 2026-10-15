@@ -1,0 +1,68 @@
+{
+  "status": "success",
+  "session_id": "657c3ac8-45ec-4488-abf3-6d413f377640",
+  "prediction_file": "/api/sessions/657c3ac8-45ec-4488-abf3-6d413f377640/file/prediction.nii.gz",
+  "mri_file": "/api/sessions/657c3ac8-45ec-4488-abf3-6d413f377640/file/flair.nii.gz",
+  "original_shape": [
+    240,
+    240,
+    155
+  ],
+  "processed_shape": [
+    136,
+    180,
+    145
+  ],
+  "voxel_spacing": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "unique_labels": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "tumor_voxels": 348118,
+  "tumor_volume_mm3": 348118.0,
+  "tumor_volume_cm3": 348.118,
+  "inference_time_seconds": 1.572,
+  "device": "cuda",
+  "model": "Adaptive Self-Distillation (UNETR)",
+  "regions": {
+    "WT": {
+      "voxel_count": 348118,
+      "volume_mm3": 348118.0,
+      "volume_cm3": 348.118,
+      "dice": 0.5557,
+      "hd95": 70.0928
+    },
+    "TC": {
+      "voxel_count": 59319,
+      "volume_mm3": 59319.0,
+      "volume_cm3": 59.319,
+      "dice": 0.86,
+      "hd95": 49.3285
+    },
+    "ET": {
+      "voxel_count": 52671,
+      "volume_mm3": 52671.0,
+      "volume_cm3": 52.671,
+      "dice": 0.8986,
+      "hd95": 51.0622
+    }
+  },
+  "ground_truth_available": true,
+  "metrics": {
+    "WT_dice": 0.5557,
+    "TC_dice": 0.86,
+    "ET_dice": 0.8986,
+    "mean_dice": 0.7714,
+    "WT_hd95": 70.0928,
+    "TC_hd95": 49.3285,
+    "ET_hd95": 51.0622,
+    "mean_hd95": 56.8278
+  },
+  "note": "Metrics computed with uploaded ground truth"
+}
