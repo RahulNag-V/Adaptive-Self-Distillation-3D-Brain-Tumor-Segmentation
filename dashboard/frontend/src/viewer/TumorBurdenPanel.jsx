@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
   Award,
   BarChart2,
