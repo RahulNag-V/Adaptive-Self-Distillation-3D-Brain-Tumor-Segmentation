@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "name": "Experimental Research Volumetric Burden Categorization",
+  "citation": "Research volumetric stratification derived from neuro-oncology volumetrics literature (BraTS benchmarks and RANO quantitative research volume quartiles). NOT clinically validated as a diagnostic grade or prognostic indicator.",
+  "is_clinical_validation": false,
+  "disclaimer": "Experimental research categorization based purely on segmented volumetric spatial extent (cm³). This does NOT constitute a clinical diagnosis, WHO tumor grade (Grade 1-4), cancer staging, or prognostic severity assessment, which require histopathological, molecular (e.g. IDH mutation, 1p/19q codeletion, MGMT methylation), and comprehensive clinical oncological evaluations.",
+  "thresholds": [
+    {
+      "category": "Minimal / Focal",
+      "min_cm3": 0.0,
+      "max_cm3": 5.0,
+      "color": "#10B981",
+      "severity_level": "low_burden",
+      "description": "Segmented whole-tumor volume under 5.0 cm³"
+    },
+    {
+      "category": "Moderate",
+      "min_cm3": 5.0,
+      "max_cm3": 25.0,
+      "color": "#06B6D4",
+      "severity_level": "moderate_burden",
+      "description": "Segmented whole-tumor volume between 5.0 and 25.0 cm³"
+    },
+    {
+      "category": "Substantial",
+      "min_cm3": 25.0,
+      "max_cm3": 60.0,
+      "color": "#F59E0B",
+      "severity_level": "high_burden",
+      "description": "Segmented whole-tumor volume between 25.0 and 60.0 cm³"
+    },
+    {
+      "category": "Extensive",
+      "min_cm3": 60.0,
+      "max_cm3": 10000.0,
+      "color": "#EF4444",
+      "severity_level": "extensive_burden",
+      "description": "Segmented whole-tumor volume exceeding 60.0 cm³"
+    }
+  ]
+}

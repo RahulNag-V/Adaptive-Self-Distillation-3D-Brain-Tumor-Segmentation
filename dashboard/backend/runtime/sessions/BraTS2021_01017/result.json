@@ -27,7 +27,7 @@
   "tumor_voxels": 388901,
   "tumor_volume_mm3": 388901.0,
   "tumor_volume_cm3": 388.901,
-  "inference_time_seconds": 1.494,
+  "inference_time_seconds": 4.504,
   "device": "cuda",
   "model": "Adaptive Self-Distillation (UNETR)",
   "regions": {

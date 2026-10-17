@@ -63,14 +63,27 @@ Once running:
 | Method | Endpoint | Description | Status |
 |---|---|---|---|
 | `GET` | `/api/health` | Backend status & model readiness | `200 OK` |
+| `GET` | `/api/patients` | Lists discovered BraTS 2021 patient volumes | `200 OK` |
+| `GET` | `/api/patients/{id}` | Dimensions, voxel spacing, and volumetrics | `200 OK` |
+| `GET` | `/api/volume/slice` | High-speed 2D orthogonal slice rendering with overlay | `200 OK` |
+| `GET` | `/api/patients/{id}/tumor-burden` | Quantitative tumor burden, slice extents & research categorization | `200 OK` |
+| `POST` | `/api/patients/{id}/predict` | Runs real Adaptive UNETR sliding-window inference | `200 OK` |
 | `POST` | `/api/validate` | Validates file extensions & required modalities | `200 OK` |
 | `POST` | `/api/upload` | Ephemeral upload of FLAIR, T1, T1ce, T2 | `200 OK` |
-| `POST` | `/api/segment` | Runs 3D UNETR Adaptive inference | `501 Not Implemented` (Safety locked) |
-| `GET` | `/api/results/{id}` | Retrieves computed masks & volumetric analysis | `501 Not Implemented` |
+| `POST` | `/api/segment` | Runs 3D UNETR Adaptive inference for uploaded session | `200 OK` |
+| `GET` | `/api/results/{id}` | Retrieves computed masks & volumetric analysis | `200 OK` |
 
-## Model Connection Roadmap
+## AI-Based Tumor Burden Assessment Service
 
-When ready to connect real inference in future milestones:
-1. `services/preprocessing_service.py` connects directly to the repository's MONAI data loader pipeline.
-2. `services/inference_service.py` loads weights from `checkpoints/adaptive/best.pth` and executes 96×96×96 sliding-window inference with FP16 AMP.
-3. `services/postprocessing_service.py` extracts Whole Tumor (WT), Tumor Core (TC), and Enhancing Tumor (ET) volumes.
+Located in `app/services/tumor_burden_service.py` with configurable thresholds in `app/config/tumor_burden_config.json`:
+
+- **Real NIfTI Voxel Spacing:** Extracts affine zooms ($s_x, s_y, s_z$) to compute exact physical volumes ($\text{cm}^3$ and $\text{mm}^3$) without assuming $1.0\text{ mm}^3$ isotropic spacing.
+- **BraTS Label Derivation:**
+  - Whole Tumor (WT): Necrotic core (1) + Edema (2) + Enhancing tumor (3 or 4)
+  - Tumor Core (TC): Necrotic core (1) + Enhancing tumor (3 or 4)
+  - Enhancing Tumor (ET): Active enhancing tumor (3 or 4)
+- **Slice-Wise Area & Extent:** Calculates cross-sectional tumor area ($\text{cm}^2$) per slice, identifies the peak axial slice index, and calculates affected slice counts and bounding box extents in millimeters along Sagittal ($X$), Coronal ($Y$), and Axial ($Z$).
+- **Relative Intracranial Burden (%):** Calculates percentage of skull-stripped intracranial brain volume occupied by the tumor when brain foreground voxels ($>0$) are available.
+- **Experimental Research Category:** Configurable research thresholds (Minimal/Focal $<5\text{ cm}^3$, Moderate $5–25\text{ cm}^3$, Substantial $25–60\text{ cm}^3$, Extensive $>60\text{ cm}^3$).
+- **Mandatory Non-Clinical Disclaimer:** Tumor burden categories describe volumetric spatial extent only and do NOT predict WHO tumor grade (1–4), histological malignancy, cancer staging, or patient prognosis.
+

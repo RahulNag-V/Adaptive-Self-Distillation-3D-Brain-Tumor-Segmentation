@@ -1,20 +1,91 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Crosshair } from 'lucide-react';
+import { 
+  ZoomIn, 
+  ZoomOut, 
+  RotateCcw, 
+  Crosshair, 
+  Maximize2, 
+  Minimize2,
+  Info,
+  Layers,
+  Move,
+  Palette,
+  Play,
+  Pause
+} from 'lucide-react';
 import { getSliceUrl } from '../api/segmentation';
 
 /**
+ * Detailed configuration for each anatomical plane according to radiological conventions.
+ */
+const PLANE_CONFIG = {
+  axial: {
+    name: 'AXIAL',
+    planeType: 'transverse',
+    planeLabel: 'Transverse',
+    description: 'Cranial-Caudal horizontal section',
+    badgeClass: 'bg-teal-500/20 text-teal-300 border-teal-500/40',
+    accentColor: 'teal',
+    lineColor: 'border-teal-400/80',
+    pipBorder: 'border-teal-300',
+    pipBg: 'bg-teal-400',
+    nativeW: 240,
+    nativeH: 240,
+    // Radiological standard: Anterior Top, Posterior Bottom, Patient Right on Left, Patient Left on Right
+    labels: { top: 'A (Anterior)', bottom: 'P (Posterior)', left: 'R (Right)', right: 'L (Left)' },
+    shortLabels: { top: 'A', bottom: 'P', left: 'R', right: 'L' },
+  },
+  coronal: {
+    name: 'CORONAL',
+    planeType: 'frontal',
+    planeLabel: 'Frontal',
+    description: 'Anterior-Posterior vertical section',
+    badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+    accentColor: 'cyan',
+    lineColor: 'border-cyan-400/80',
+    pipBorder: 'border-cyan-300',
+    pipBg: 'bg-cyan-400',
+    nativeW: 240,
+    nativeH: 155,
+    // Superior Top, Inferior Bottom, Patient Right on Left, Patient Left on Right
+    labels: { top: 'S (Superior)', bottom: 'I (Inferior)', left: 'R (Right)', right: 'L (Left)' },
+    shortLabels: { top: 'S', bottom: 'I', left: 'R', right: 'L' },
+  },
+  sagittal: {
+    name: 'SAGITTAL',
+    planeType: 'side view',
+    planeLabel: 'Side View',
+    description: 'Lateral vertical section',
+    badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+    accentColor: 'blue',
+    lineColor: 'border-sky-400/80',
+    pipBorder: 'border-sky-300',
+    pipBg: 'bg-sky-400',
+    nativeW: 240,
+    nativeH: 155,
+    // Superior Top, Inferior Bottom, Anterior on Left, Posterior on Right
+    labels: { top: 'S (Superior)', bottom: 'I (Inferior)', left: 'A (Anterior)', right: 'P (Posterior)' },
+    shortLabels: { top: 'S', bottom: 'I', left: 'A', right: 'P' },
+  },
+};
+
+/**
  * OrthogonalSliceViewer
- * Interactive 2D medical viewer for Axial, Coronal, and Sagittal planes.
+ * High-clarity 2D medical slice viewer for Axial, Coronal, and Sagittal planes.
+ * 
  * Features:
- * - Real NIfTI slice streaming
- * - Mouse wheel scrolling through slices
- * - Click-to-position synchronized crosshairs
- * - Zoom, pan, and reset
- * - Anatomical directional labels (R/L, A/P, S/I)
+ * - Dynamic "Fit to View" image scaling that fills the panel while preserving exact anatomical aspect ratios.
+ * - Interactive Pan, Zoom In, Zoom Out, Fit to View, and Reset controls.
+ * - Precision thin crosshairs with center reticle marker and toggle option.
+ * - Wheel navigation for slice scrolling.
+ * - Synchronized 3D coordinate click targeting.
+ * - Comprehensive plane headers (AXIAL | Transverse | Modality | Slice N / Total).
+ * - Clear viewer footer with voxel coordinates, zoom %, and navigation hints.
+ * - Integrated toggleable BraTS segmentation color legend.
  */
 export default function OrthogonalSliceViewer({
   plane = 'axial', // 'axial' | 'coronal' | 'sagittal'
-  title = 'Axial (Z)',
+  title, // optional custom override
   patientId,
   sliceIndex = 75,
   totalSlices = 155,
@@ -27,17 +98,79 @@ export default function OrthogonalSliceViewer({
   dimensions = { axial: 155, coronal: 240, sagittal: 240 },
   onSliceChange,
   onCoordinateClick,
-  accentColor = 'teal', // 'teal' | 'cyan' | 'blue'
+  accentColor,
   showControls = true,
+  isMaximized = false,
+  onToggleMaximize,
 }) {
   const containerRef = useRef(null);
+  const viewportRef = useRef(null);
   const imageRef = useRef(null);
+
+  const cfg = PLANE_CONFIG[plane] || PLANE_CONFIG.axial;
+
+  // Viewport and dynamic scaling state
+  const [viewportDims, setViewportDims] = useState({ width: 300, height: 260 });
   const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
   const [showCrosshair, setShowCrosshair] = useState(true);
+  const [showLegend, setShowLegend] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+
+  // Cine Mode: continuous automated slice cycling
+  useEffect(() => {
+    if (!isPlaying || !onSliceChange) return;
+
+    const timer = setInterval(() => {
+      onSliceChange((prev) => {
+        const current = typeof prev === 'number' ? prev : sliceIndex;
+        return (current + 1) % totalSlices;
+      });
+    }, 85);
+
+    return () => clearInterval(timer);
+  }, [isPlaying, sliceIndex, totalSlices, onSliceChange]);
+
+  // Mouse drag tracking
+  const mouseTrackRef = useRef({
+    isDown: false,
+    startX: 0,
+    startY: 0,
+    startPanX: 0,
+    startPanY: 0,
+    hasMoved: false,
+  });
+
+  // Native slice dimensions
+  const nativeW = cfg.nativeW;
+  const nativeH = cfg.nativeH;
+
+  // Calculate base "Fit to View" dimensions using ResizeObserver
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setViewportDims({ width, height });
+        }
+      }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Compute scale so slice occupies 94% of available space without clipping
+  const availW = Math.max(40, viewportDims.width - 24);
+  const availH = Math.max(40, viewportDims.height - 24);
+  const fitScale = Math.min(availW / nativeW, availH / nativeH);
+  const baseWidth = Math.max(20, Math.round(nativeW * fitScale));
+  const baseHeight = Math.max(20, Math.round(nativeH * fitScale));
 
   // Compute slice URL
   const sliceUrl = patientId
@@ -70,102 +203,128 @@ export default function OrthogonalSliceViewer({
     [sliceIndex, totalSlices, onSliceChange]
   );
 
-  // Click on image to update synchronized 3D coordinates
-  const handleImageClick = (e) => {
-    if (!imageRef.current || !onCoordinateClick) return;
-    const rect = imageRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
-    const u = Math.max(0, Math.min(1, clickX / rect.width));
-    const v = Math.max(0, Math.min(1, clickY / rect.height));
-
-    const maxSag = Math.max(1, dimensions.sagittal - 1);
-    const maxCor = Math.max(1, dimensions.coronal - 1);
-    const maxAx = Math.max(1, dimensions.axial - 1);
-
-    if (plane === 'axial') {
-      const x = Math.round((1 - u) * maxSag);
-      const y = Math.round((1 - v) * maxCor);
-      onCoordinateClick({ x, y });
-    } else if (plane === 'coronal') {
-      const x = Math.round((1 - u) * maxSag);
-      const z = Math.round((1 - v) * maxAx);
-      onCoordinateClick({ x, z });
-    } else if (plane === 'sagittal') {
-      const y = Math.round((1 - u) * maxCor);
-      const z = Math.round((1 - v) * maxAx);
-      onCoordinateClick({ y, z });
-    }
-  };
-
-  // Dragging for pan (middle or right click, or with Alt key)
-  const handleMouseDown = (e) => {
-    if (e.button === 1 || e.button === 2 || e.altKey) {
-      e.preventDefault();
-      setIsDragging(true);
-      dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    setPan({
-      x: e.clientX - dragStartRef.current.x,
-      y: e.clientY - dragStartRef.current.y,
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleResetZoom = () => {
+  // Fit to View action
+  const handleFitToView = () => {
     setZoom(1.0);
     setPan({ x: 0, y: 0 });
   };
 
+  // Reset View action
+  const handleResetView = () => {
+    setZoom(1.0);
+    setPan({ x: 0, y: 0 });
+  };
+
+  // Zoom controls (multiplicative scaling)
+  const handleZoomIn = () => {
+    setZoom((prev) => Math.min(5.0, Number((prev * 1.2).toFixed(2))));
+  };
+
+  const handleZoomOut = () => {
+    setZoom((prev) => Math.max(0.4, Number((prev * 0.83).toFixed(2))));
+  };
+
+  // Mouse down for coordinate picking or dragging to pan
+  const handleMouseDown = (e) => {
+    if (e.button === 0 || e.button === 1 || e.button === 2) {
+      mouseTrackRef.current = {
+        isDown: true,
+        startX: e.clientX,
+        startY: e.clientY,
+        startPanX: pan.x,
+        startPanY: pan.y,
+        hasMoved: false,
+      };
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    const track = mouseTrackRef.current;
+    if (!track.isDown) return;
+
+    const dx = e.clientX - track.startX;
+    const dy = e.clientY - track.startY;
+
+    // If dragged more than 4px, treat as pan gesture
+    if (Math.hypot(dx, dy) > 4) {
+      track.hasMoved = true;
+      setIsPanning(true);
+      setPan({
+        x: track.startPanX + dx,
+        y: track.startPanY + dy,
+      });
+    }
+  };
+
+  const handleMouseUp = (e) => {
+    const track = mouseTrackRef.current;
+    if (!track.isDown) return;
+
+    const wasPanning = track.hasMoved;
+    track.isDown = false;
+    track.hasMoved = false;
+    setIsPanning(false);
+
+    // If it was a simple click (not a drag) on left button, set coordinate
+    if (!wasPanning && e.button === 0 && imageRef.current && onCoordinateClick) {
+      const rect = imageRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      if (clickX >= 0 && clickX <= rect.width && clickY >= 0 && clickY <= rect.height) {
+        const u = Math.max(0, Math.min(1, clickX / rect.width));
+        const v = Math.max(0, Math.min(1, clickY / rect.height));
+
+        const maxSag = Math.max(1, (dimensions?.sagittal || 240) - 1);
+        const maxCor = Math.max(1, (dimensions?.coronal || 240) - 1);
+        const maxAx = Math.max(1, (dimensions?.axial || 155) - 1);
+
+        if (plane === 'axial') {
+          const x = Math.round((1 - u) * maxSag);
+          const y = Math.round((1 - v) * maxCor);
+          onCoordinateClick({ x, y });
+        } else if (plane === 'coronal') {
+          const x = Math.round((1 - u) * maxSag);
+          const z = Math.round((1 - v) * maxAx);
+          onCoordinateClick({ x, z });
+        } else if (plane === 'sagittal') {
+          const y = Math.round((1 - u) * maxCor);
+          const z = Math.round((1 - v) * maxAx);
+          onCoordinateClick({ y, z });
+        }
+      }
+    }
+  };
+
   // Compute crosshair position (u, v in 0..1 range)
-  const maxSag = Math.max(1, dimensions.sagittal - 1);
-  const maxCor = Math.max(1, dimensions.coronal - 1);
-  const maxAx = Math.max(1, dimensions.axial - 1);
+  const maxSag = Math.max(1, (dimensions?.sagittal || 240) - 1);
+  const maxCor = Math.max(1, (dimensions?.coronal || 240) - 1);
+  const maxAx = Math.max(1, (dimensions?.axial || 155) - 1);
 
   let crosshairU = 0.5;
   let crosshairV = 0.5;
 
   if (plane === 'axial') {
-    crosshairU = 1 - crosshair.x / maxSag;
-    crosshairV = 1 - crosshair.y / maxCor;
+    crosshairU = 1 - (crosshair?.x ?? 120) / maxSag;
+    crosshairV = 1 - (crosshair?.y ?? 120) / maxCor;
   } else if (plane === 'coronal') {
-    crosshairU = 1 - crosshair.x / maxSag;
-    crosshairV = 1 - crosshair.z / maxAx;
+    crosshairU = 1 - (crosshair?.x ?? 120) / maxSag;
+    crosshairV = 1 - (crosshair?.z ?? 78) / maxAx;
   } else if (plane === 'sagittal') {
-    crosshairU = 1 - crosshair.y / maxCor;
-    crosshairV = 1 - crosshair.z / maxAx;
+    crosshairU = 1 - (crosshair?.y ?? 120) / maxCor;
+    crosshairV = 1 - (crosshair?.z ?? 78) / maxAx;
   }
 
-  // Crosshair color by plane
-  const crosshairColor =
-    accentColor === 'teal'
-      ? 'border-medical-teal text-medical-teal'
-      : accentColor === 'cyan'
-      ? 'border-medical-cyan text-medical-cyan'
-      : 'border-medical-blueLight text-medical-blueLight';
+  // Crosshair styling
+  const lineColor = cfg.lineColor;
+  const pipBorder = cfg.pipBorder;
+  const pipBg = cfg.pipBg;
 
-  const badgeBg =
-    accentColor === 'teal'
-      ? 'bg-medical-teal/15 text-medical-teal border-medical-teal/30'
-      : accentColor === 'cyan'
-      ? 'bg-medical-cyan/15 text-medical-cyan border-medical-cyan/30'
-      : 'bg-medical-blueLight/15 text-medical-blueLight border-medical-blueLight/30';
+  const headerTitle = title || cfg.name;
 
-  // Directional labels
-  let labelTop = 'A', labelBottom = 'P', labelLeft = 'R', labelRight = 'L';
-  if (plane === 'coronal') {
-    labelTop = 'S'; labelBottom = 'I'; labelLeft = 'R'; labelRight = 'L';
-  } else if (plane === 'sagittal') {
-    labelTop = 'S'; labelBottom = 'I'; labelLeft = 'A'; labelRight = 'P';
-  }
+  // Viewport width thresholds for responsive header & footer layout
+  const isCompact = viewportDims.width < 450;
+  const isUltraCompact = viewportDims.width < 340;
 
   return (
     <div
@@ -175,132 +334,291 @@ export default function OrthogonalSliceViewer({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onContextMenu={(e) => e.preventDefault()}
-      className="relative w-full h-full min-h-[260px] bg-medical-darkest rounded-xl overflow-hidden border border-medical-border select-none flex flex-col group"
+      className="relative w-full h-full min-h-0 bg-medical-darkest rounded-xl overflow-hidden border border-medical-border select-none flex flex-col group shadow-lg"
     >
-      {/* Top Header HUD */}
-      <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 pointer-events-none">
-        <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase border ${badgeBg}`}>
-          {title}
-        </span>
-        <span className="px-2 py-0.5 rounded bg-medical-base/80 border border-medical-border text-[11px] font-mono text-white">
-          Slice {sliceIndex + 1} / {totalSlices}
-        </span>
-      </div>
+      {/* 1. TOP HEADER HUD (Responsive, Compact, Clear Metadata & Controls) */}
+      <div className="h-9 px-2.5 bg-medical-base/95 border-b border-medical-border/80 flex items-center justify-between z-20 shrink-0 select-none backdrop-blur-sm">
+        {/* Left: Plane Name | Anatomical Type | Modality | Slice Index */}
+        <div className="flex items-center gap-1.5 min-w-0 truncate">
+          <span 
+            className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase border shadow-sm shrink-0 ${cfg.badgeClass}`}
+            title={`${cfg.name} Plane (${cfg.planeLabel} - ${cfg.description})`}
+          >
+            {isUltraCompact ? cfg.name : headerTitle}
+          </span>
 
-      {/* Floating Viewport Controls */}
-      {showControls && (
-        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-medical-base/90 border border-medical-border/80 p-0.5 rounded-lg shadow-lg opacity-80 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => setShowCrosshair((prev) => !prev)}
-            className={`p-1 rounded text-xs transition-colors ${
-              showCrosshair ? 'bg-medical-surface text-medical-teal' : 'text-medical-muted hover:text-white'
-            }`}
-            title={showCrosshair ? 'Hide Crosshairs' : 'Show Crosshairs'}
-          >
-            <Crosshair className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setZoom((prev) => Math.min(3.5, prev * 1.15))}
-            className="p-1 rounded text-medical-muted hover:text-white hover:bg-medical-surface transition-colors"
-            title="Zoom In"
-          >
-            <ZoomIn className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setZoom((prev) => Math.max(0.6, prev * 0.85))}
-            className="p-1 rounded text-medical-muted hover:text-white hover:bg-medical-surface transition-colors"
-            title="Zoom Out"
-          >
-            <ZoomOut className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={handleResetZoom}
-            className="p-1 rounded text-medical-muted hover:text-white hover:bg-medical-surface transition-colors"
-            title="Reset Zoom"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
+          {!isCompact && (
+            <>
+              <span className="text-[11px] font-medium text-medical-muted capitalize shrink-0">
+                {cfg.planeLabel}
+              </span>
+              <span className="text-medical-border/80 shrink-0">•</span>
+              <span className="px-1.5 py-0.5 rounded bg-medical-card border border-medical-border/70 text-[10px] font-mono font-bold text-white uppercase shrink-0">
+                {modality}
+              </span>
+              <span className="text-medical-border/80 shrink-0">•</span>
+            </>
+          )}
+
+          <span className="px-1.5 py-0.5 rounded bg-medical-surface/80 border border-medical-border/80 text-[10px] font-mono text-white font-semibold shadow-sm shrink-0">
+            {isCompact ? `${sliceIndex + 1}/${totalSlices}` : `Slice ${sliceIndex + 1} / ${totalSlices}`}
+          </span>
         </div>
-      )}
 
-      {/* Anatomical Compass Direction Indicators */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 text-[10px] font-mono font-bold text-medical-muted/70 pointer-events-none">
-        {labelTop}
-      </div>
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-[10px] font-mono font-bold text-medical-muted/70 pointer-events-none">
-        {labelBottom}
-      </div>
-      <div className="absolute top-1/2 left-2 -translate-y-1/2 z-10 text-[10px] font-mono font-bold text-medical-muted/70 pointer-events-none">
-        {labelLeft}
-      </div>
-      <div className="absolute top-1/2 right-2 -translate-y-1/2 z-10 text-[10px] font-mono font-bold text-medical-muted/70 pointer-events-none">
-        {labelRight}
+        {/* Right: Quick Crosshair & Fit Controls */}
+        {showControls && (
+          <div className="flex items-center gap-0.5 bg-medical-card/90 border border-medical-border/80 p-0.5 rounded-lg shadow-sm shrink-0 ml-1">
+            {/* Toggle Crosshairs */}
+            <button
+              onClick={() => setShowCrosshair((prev) => !prev)}
+              className={`p-1 rounded text-xs transition-colors ${
+                showCrosshair ? 'bg-medical-surface text-medical-teal' : 'text-medical-muted hover:text-white hover:bg-medical-surface'
+              }`}
+              title={showCrosshair ? 'Hide Crosshairs' : 'Show Crosshairs'}
+              aria-label="Toggle Crosshairs"
+            >
+              <Crosshair className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Maximize / Restore Button */}
+            <button
+              onClick={onToggleMaximize || handleFitToView}
+              className="p-1 rounded text-medical-muted hover:text-white hover:bg-medical-surface transition-colors"
+              title={isMaximized ? 'Restore View (Esc)' : 'Maximize Whole Screen'}
+              aria-label={isMaximized ? 'Restore View' : 'Maximize Whole Screen'}
+            >
+              {isMaximized ? (
+                <Minimize2 className="w-3.5 h-3.5 text-medical-teal" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Center Image Container with Pan and Zoom */}
-      <div className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden cursor-crosshair">
+      {/* 2. MAIN VIEWPORT AREA (Dynamic Scaling, Fitted Slices & Centering) */}
+      <div 
+        ref={viewportRef}
+        className={`relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-black/60 ${
+          isPanning ? 'cursor-grabbing' : 'cursor-crosshair'
+        }`}
+      >
+        {/* Anatomical Compass Direction Indicators (R/L, A/P, S/I) */}
+        <div 
+          className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          title={cfg.labels.top}
+        >
+          {cfg.shortLabels.top}
+        </div>
+        <div 
+          className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          title={cfg.labels.bottom}
+        >
+          {cfg.shortLabels.bottom}
+        </div>
+        <div 
+          className="absolute top-1/2 left-1.5 -translate-y-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          title={cfg.labels.left}
+        >
+          {cfg.shortLabels.left}
+        </div>
+        <div 
+          className="absolute top-1/2 right-1.5 -translate-y-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          title={cfg.labels.right}
+        >
+          {cfg.shortLabels.right}
+        </div>
+
+        {/* Center Image Container with Smooth Pan and Zoom */}
         <div
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transition: isDragging ? 'none' : 'transform 0.05s ease-out',
+            transition: isPanning ? 'none' : 'transform 0.08s ease-out',
+            width: `${baseWidth}px`,
+            height: `${baseHeight}px`,
           }}
-          className="relative max-w-full max-h-full flex items-center justify-center"
+          className="relative flex items-center justify-center flex-shrink-0"
         >
           {sliceUrl ? (
             <img
               ref={imageRef}
               src={sliceUrl}
               alt={`${plane} slice ${sliceIndex}`}
-              onClick={handleImageClick}
               onLoad={() => setImgLoaded(true)}
-              className="max-w-[420px] max-h-[360px] object-contain rounded shadow-lg pointer-events-auto"
+              style={{
+                width: `${baseWidth}px`,
+                height: `${baseHeight}px`,
+                imageRendering: zoom > 1.4 ? 'pixelated' : 'auto',
+              }}
+              className="object-fill rounded shadow-2xl pointer-events-auto block border border-medical-border/40"
               draggable={false}
             />
           ) : (
-            <div className="w-64 h-64 flex items-center justify-center text-xs text-medical-muted font-mono">
+            <div className="w-full h-full flex items-center justify-center text-xs text-medical-muted font-mono">
               Loading MRI slice...
             </div>
           )}
 
-          {/* Crosshair Overlay (positioned relative to image) */}
+          {/* Synchronized Thin Crosshairs & Center Target Reticle */}
           {showCrosshair && imgLoaded && (
-            <div
-              className="absolute inset-0 pointer-events-none overflow-hidden"
-              style={{
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            >
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
               {/* Vertical Crosshair Line */}
               <div
-                className={`absolute top-0 bottom-0 border-l border-dashed opacity-75 ${crosshairColor}`}
-                style={{ left: `${crosshairU * 100}%` }}
+                className={`absolute top-0 bottom-0 pointer-events-none border-l ${lineColor}`}
+                style={{ 
+                  left: `${crosshairU * 100}%`,
+                  width: '1px',
+                  boxShadow: '0 0 2px rgba(0,0,0,0.85)',
+                }}
               />
               {/* Horizontal Crosshair Line */}
               <div
-                className={`absolute left-0 right-0 border-t border-dashed opacity-75 ${crosshairColor}`}
-                style={{ top: `${crosshairV * 100}%` }}
+                className={`absolute left-0 right-0 pointer-events-none border-t ${lineColor}`}
+                style={{ 
+                  top: `${crosshairV * 100}%`,
+                  height: '1px',
+                  boxShadow: '0 0 2px rgba(0,0,0,0.85)',
+                }}
               />
-              {/* Intersection Pip */}
+              {/* Precision Center Marker Reticle */}
               <div
-                className="absolute w-2 h-2 -ml-1 -mt-1 rounded-full border border-white bg-medical-teal/60 shadow-sm"
+                className={`absolute w-3.5 h-3.5 -ml-[7px] -mt-[7px] rounded-full border ${pipBorder} shadow-md flex items-center justify-center pointer-events-none ring-1 ring-black/80`}
                 style={{
                   left: `${crosshairU * 100}%`,
                   top: `${crosshairV * 100}%`,
                 }}
-              />
+              >
+                <span className={`w-1 h-1 rounded-full ${pipBg}`} />
+              </div>
             </div>
           )}
         </div>
+
+        {/* Floating In-Viewer Segmentation Color Legend */}
+        {showLegend && showOverlay && (
+          <div className="absolute bottom-2 left-2 z-20 flex flex-col gap-1 p-2 rounded-lg bg-medical-darkest/95 border border-medical-border/90 backdrop-blur-md text-[10px] font-mono shadow-2xl pointer-events-none max-w-[210px]">
+            <div className="flex items-center justify-between pb-1 border-b border-medical-border/60 text-medical-muted font-bold text-[9px] uppercase tracking-wider">
+              <span>BraTS Legend</span>
+              <span className="text-medical-teal font-normal">{Math.round(opacity * 100)}%</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#10B981] flex-shrink-0 shadow-sm" />
+              <span className="text-white font-medium">Whole Tumor (WT)</span>
+              <span className="text-medical-muted text-[9px]">• Edema</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#F59E0B] flex-shrink-0 shadow-sm" />
+              <span className="text-white font-medium">Tumor Core (TC)</span>
+              <span className="text-medical-muted text-[9px]">• Necrotic</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#EF4444] flex-shrink-0 shadow-sm" />
+              <span className="text-white font-medium">Enhancing (ET)</span>
+              <span className="text-medical-muted text-[9px]">• Active</span>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Viewport Quick Controls Pill at Bottom Right (Palette + swatch, Play, Zoom In, Zoom Out, Reset) */}
+        {showControls && (
+          <div className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-medical-base/90 border border-medical-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity">
+            {/* Palette Button with Color Swatch Dot */}
+            <button
+              onClick={() => setShowLegend((prev) => !prev)}
+              className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono ${
+                showLegend
+                  ? 'bg-medical-teal text-medical-darkest'
+                  : 'hover:bg-medical-surface text-medical-muted hover:text-white'
+              }`}
+              title={showLegend ? 'Hide BraTS Palette' : 'Show BraTS Palette'}
+              aria-label="Toggle Segmentation Legend"
+            >
+              <Palette className="w-4 h-4" />
+              <span 
+                className="w-2.5 h-2.5 rounded-full border border-black/40 shadow-sm inline-block shrink-0"
+                style={{ backgroundColor: '#E8A598' }}
+              />
+            </button>
+
+            {/* Cine Auto-Scroll Play / Pause */}
+            <button
+              onClick={() => setIsPlaying((prev) => !prev)}
+              className={`p-1.5 rounded transition-colors ${
+                isPlaying
+                  ? 'bg-medical-teal text-medical-darkest'
+                  : 'hover:bg-medical-surface text-medical-muted hover:text-white'
+              }`}
+              title={isPlaying ? 'Pause Cine Scroll' : 'Play Cine Scroll (Auto-cycle slices)'}
+              aria-label="Cine Play"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+
+            {/* Zoom In */}
+            <button
+              onClick={handleZoomIn}
+              className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
+              title="Zoom In"
+              aria-label="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+
+            {/* Zoom Out */}
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
+              title="Zoom Out"
+              aria-label="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+
+            {/* Reset Camera / View */}
+            <button
+              onClick={() => {
+                setIsPlaying(false);
+                handleResetView();
+              }}
+              className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
+              title="Reset View & Pan"
+              aria-label="Reset View"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Bottom Metadata Bar */}
-      <div className="h-6 px-3 bg-medical-base/80 border-t border-medical-border/60 flex items-center justify-between text-[10px] font-mono text-medical-muted z-10">
-        <span>Modality: {modality.toUpperCase()}</span>
-        <span>Zoom: {(zoom * 100).toFixed(0)}%</span>
-        <span>Scroll: Wheel / Drag Slider</span>
+      {/* 3. BOTTOM VIEWER FOOTER (Compact, Non-overlapping Metadata & Instructions) */}
+      <div className="h-6 px-2.5 bg-medical-base/95 border-t border-medical-border/60 flex items-center justify-between text-[10px] font-mono text-medical-muted z-10 shrink-0 select-none">
+        <div className="flex items-center gap-1.5 min-w-0 truncate">
+          <span className="shrink-0">
+            MOD: <strong className="text-white uppercase">{modality}</strong>
+          </span>
+          {!isUltraCompact && (
+            <>
+              <span className="text-medical-border/80 shrink-0">•</span>
+              <span className="truncate">
+                VOX: <strong className="text-medical-tealLight">[{crosshair?.x ?? 0},{crosshair?.y ?? 0},{crosshair?.z ?? 0}]</strong>
+              </span>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 ml-1">
+          <span>
+            ZOOM: <strong className="text-white">{(zoom * 100).toFixed(0)}%</strong>
+          </span>
+          {!isCompact && (
+            <>
+              <span className="text-medical-border/80">•</span>
+              <span className="text-medical-muted/80">
+                Wheel / Click
+              </span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

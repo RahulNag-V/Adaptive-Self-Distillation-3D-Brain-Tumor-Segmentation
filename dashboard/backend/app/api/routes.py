@@ -288,6 +288,26 @@ async def get_patient_info(patient_id: str):
     return meta
 
 
+@router.get("/patients/{patient_id}/tumor-burden")
+async def get_patient_tumor_burden(
+    patient_id: str,
+    seg_source: str = Query("ground_truth", description="ground_truth or prediction")
+):
+    """
+    Calculates quantitative tumor burden, affected slice extents, relative intracranial burden,
+    and experimental research categorization for a patient based on real MRI and segmentation masks.
+    """
+    clean_id = sanitize_filename(patient_id)
+    from app.services.tumor_burden_service import TumorBurdenService
+    result = TumorBurdenService.analyze_tumor_burden(clean_id, seg_source=seg_source)
+    if not result.get("success", False) and "not found" in result.get("error", "").lower():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=result.get("error", f"Patient {clean_id} not found.")
+        )
+    return result
+
+
 @router.get("/volume/slice")
 async def get_volume_slice(
     patient_id: str = Query(..., description="Patient ID e.g. BraTS2021_01017"),

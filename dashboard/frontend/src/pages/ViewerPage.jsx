@@ -11,16 +11,21 @@ import {
   Download,
   Grid,
   Maximize2,
+  Minimize2,
   Loader2,
   Sparkles,
   Play,
   Database,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Palette,
+  Info,
+  Activity
 } from 'lucide-react';
-import MedicalViewer from '../viewer/MedicalViewer';
+import MedicalViewer, { BRAIN_APPEARANCE_OPTIONS, ANATOMICAL_REGIONS_LEGEND } from '../viewer/MedicalViewer';
 import OrthogonalSliceViewer from '../viewer/OrthogonalSliceViewer';
 import SliceCoordinatesPanel from '../viewer/SliceCoordinatesPanel';
+import TumorBurdenPanel from '../viewer/TumorBurdenPanel';
 import { getPatients, getPatientMetadata, runPatientPrediction } from '../api/segmentation';
 import { REGION_LEGEND, DEMO_CASE_METADATA } from '../utils/mockData';
 
@@ -35,6 +40,26 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
   // View Layout Mode: 'quad' (4-view MPR standard) | '3d' | 'axial' | 'coronal' | 'sagittal'
   const [viewLayout, setViewLayout] = useState('quad');
+
+  // Full-Screen Maximized Mode: null | '3d' | 'axial' | 'coronal' | 'sagittal'
+  const [maximizedViewer, setMaximizedViewer] = useState(null);
+
+  // Keyboard shortcut support: Esc to exit fullscreen, 1-4 to switch between views
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && maximizedViewer !== null) {
+        setMaximizedViewer(null);
+      }
+      if (maximizedViewer !== null) {
+        if (e.key === '1') setMaximizedViewer('3d');
+        if (e.key === '2') setMaximizedViewer('axial');
+        if (e.key === '3') setMaximizedViewer('coronal');
+        if (e.key === '4') setMaximizedViewer('sagittal');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [maximizedViewer]);
 
   // Shared 3D Voxel Coordinate State (Single Source of Truth)
   const [axialSlice, setAxialSlice] = useState(78);
@@ -57,7 +82,9 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   });
 
   // Brain Surface & Segmentation Opacity (0.0 to 1.0)
-  const [opacity, setOpacity] = useState(0.75);
+  const [opacity, setOpacity] = useState(0.85);
+  // Brain Anatomical Appearance Preset: default to distinct multi-shade Anatomical Regions
+  const [brainAppearance, setBrainAppearance] = useState('regions');
 
   // Sub-region filters
   const [subregions, setSubregions] = useState({
@@ -65,6 +92,9 @@ export default function ViewerPage({ currentResult, onNavigate }) {
     tc: true,
     et: true,
   });
+
+  // Active right sidebar tab: 'burden' | 'layers'
+  const [activeRightTab, setActiveRightTab] = useState('burden');
 
   // Fetch available patients on mount
   useEffect(() => {
@@ -208,6 +238,25 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             </span>
           )}
 
+          {/* Quick Tumor Burden Assessment Button */}
+          <button
+            onClick={() => setActiveRightTab('burden')}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-semibold transition-all shadow-sm ${
+              activeRightTab === 'burden'
+                ? 'bg-medical-teal text-medical-darkest border-medical-teal shadow-medical-teal/30'
+                : 'bg-medical-card text-white border-medical-teal/40 hover:border-medical-teal hover:bg-medical-surface'
+            }`}
+            title="Open AI-Based Tumor Burden Assessment Panel"
+          >
+            <Activity className="w-3.5 h-3.5 text-medical-teal" />
+            <span className="hidden sm:inline">Tumor Burden</span>
+            {patientMeta?.volumetrics?.WT?.volume_cm3 && (
+              <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${activeRightTab === 'burden' ? 'bg-medical-darkest/30 text-medical-darkest' : 'bg-medical-teal/20 text-medical-tealLight'}`}>
+                {patientMeta.volumetrics.WT.volume_cm3.toFixed(1)} cm³
+              </span>
+            )}
+          </button>
+
           {metaLoading && (
             <span className="inline-flex items-center gap-1 text-[11px] font-mono text-medical-teal">
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -329,18 +378,22 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             /* QUAD MPR VIEW: 2x2 Synchronized Grid (3D + Axial + Coronal + Sagittal) */
             <div className="grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-2 h-full min-h-0">
               {/* Viewport 1: 3D Anatomical Brain & Segmented Tumor */}
-              <div className="h-full min-h-[220px]">
+              <div className="h-full min-h-0 overflow-hidden">
                 <MedicalViewer
                   viewMode="3d"
                   layers={layers}
                   opacity={opacity}
                   subregions={subregions}
+                  brainAppearance={brainAppearance}
+                  onBrainAppearanceChange={setBrainAppearance}
                   onResetView={handleReset}
+                  isMaximized={false}
+                  onToggleMaximize={() => setMaximizedViewer('3d')}
                 />
               </div>
 
               {/* Viewport 2: Axial (Z) Plane */}
-              <div className="h-full min-h-[220px]">
+              <div className="h-full min-h-0 overflow-hidden">
                 <OrthogonalSliceViewer
                   plane="axial"
                   title="Axial (Z)"
@@ -357,11 +410,13 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   onSliceChange={setAxialSlice}
                   onCoordinateClick={handleCoordinateClick}
                   accentColor="teal"
+                  isMaximized={false}
+                  onToggleMaximize={() => setMaximizedViewer('axial')}
                 />
               </div>
 
               {/* Viewport 3: Coronal (Y) Plane */}
-              <div className="h-full min-h-[220px]">
+              <div className="h-full min-h-0 overflow-hidden">
                 <OrthogonalSliceViewer
                   plane="coronal"
                   title="Coronal (Y)"
@@ -378,11 +433,13 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   onSliceChange={setCoronalSlice}
                   onCoordinateClick={handleCoordinateClick}
                   accentColor="cyan"
+                  isMaximized={false}
+                  onToggleMaximize={() => setMaximizedViewer('coronal')}
                 />
               </div>
 
               {/* Viewport 4: Sagittal (X) Plane */}
-              <div className="h-full min-h-[220px]">
+              <div className="h-full min-h-0 overflow-hidden">
                 <OrthogonalSliceViewer
                   plane="sagittal"
                   title="Sagittal (X)"
@@ -399,6 +456,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   onSliceChange={setSagittalSlice}
                   onCoordinateClick={handleCoordinateClick}
                   accentColor="blue"
+                  isMaximized={false}
+                  onToggleMaximize={() => setMaximizedViewer('sagittal')}
                 />
               </div>
             </div>
@@ -410,7 +469,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 layers={layers}
                 opacity={opacity}
                 subregions={subregions}
+                brainAppearance={brainAppearance}
+                onBrainAppearanceChange={setBrainAppearance}
                 onResetView={handleReset}
+                isMaximized={false}
+                onToggleMaximize={() => setMaximizedViewer('3d')}
               />
             </div>
           ) : (
@@ -460,6 +523,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                     ? 'cyan'
                     : 'blue'
                 }
+                isMaximized={false}
+                onToggleMaximize={() => setMaximizedViewer(viewLayout)}
               />
             </div>
           )}
@@ -532,8 +597,48 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               )}
             </div>
 
-            {/* Layer Visibility Toggles */}
-            <div className="space-y-2.5">
+            {/* Panel Tab Selector: [ Tumor Burden Assessment | Controls & Layers ] */}
+            <div className="flex items-center gap-1 p-1 bg-medical-card rounded-lg border border-medical-border">
+              <button
+                onClick={() => setActiveRightTab('burden')}
+                className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold font-mono transition-all flex items-center justify-center gap-1.5 ${
+                  activeRightTab === 'burden'
+                    ? 'bg-medical-teal text-medical-darkest shadow-sm'
+                    : 'text-medical-muted hover:text-white hover:bg-medical-surface'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>Tumor Burden</span>
+              </button>
+              <button
+                onClick={() => setActiveRightTab('layers')}
+                className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold font-mono transition-all flex items-center justify-center gap-1.5 ${
+                  activeRightTab === 'layers'
+                    ? 'bg-medical-teal text-medical-darkest shadow-sm'
+                    : 'text-medical-muted hover:text-white hover:bg-medical-surface'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Controls & Layers</span>
+              </button>
+            </div>
+
+            {/* TAB CONTENT: Tumor Burden Assessment vs Controls & Layers */}
+            {activeRightTab === 'burden' ? (
+              <TumorBurdenPanel
+                patientId={selectedPatientId}
+                segSource={segSource}
+                activeMriModality={activeMriModality}
+                onNavigateToSlice={(plane, sliceIdx) => {
+                  if (plane === 'axial') setAxialSlice(sliceIdx);
+                  if (plane === 'coronal') setCoronalSlice(sliceIdx);
+                  if (plane === 'sagittal') setSagittalSlice(sliceIdx);
+                }}
+              />
+            ) : (
+              <div className="space-y-4">
+                {/* Layer Visibility Toggles */}
+                <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold">
                   Layer Visibility
@@ -563,10 +668,10 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               </div>
             </div>
 
-            {/* Brain Surface & Segmentation Opacity Slider */}
+            {/* Segmentation & Brain Surface Opacity Slider */}
             <div className="space-y-1.5 p-3 bg-medical-card rounded-lg border border-medical-border/80">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-white font-medium">Brain Surface Opacity</span>
+                <span className="text-white font-medium">Segmentation & Surface Opacity</span>
                 <span className="font-mono text-medical-teal font-bold">{Math.round(opacity * 100)}%</span>
               </div>
               <input
@@ -579,15 +684,97 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 className="w-full accent-medical-teal cursor-pointer h-1.5 bg-medical-surface rounded-lg"
               />
               <p className="text-[10px] text-medical-muted leading-tight">
-                Adjust opacity to see through the 3D brain surface into the internal tumor segmentation.
+                Controls alpha transparency across 3D brain mesh and all three 2D orthogonal MRI slice overlays.
               </p>
+            </div>
+
+            {/* Brain Appearance Presets */}
+            <div className="space-y-2 p-3 bg-medical-card rounded-lg border border-medical-border/80">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs text-white font-medium">
+                  <Palette className="w-3.5 h-3.5 text-medical-teal" />
+                  <span>Brain Appearance</span>
+                </div>
+                <span className="text-[10px] font-mono text-medical-teal font-semibold">
+                  {BRAIN_APPEARANCE_OPTIONS?.find(o => o.id === brainAppearance)?.name || 'Anatomical Regions'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                {(BRAIN_APPEARANCE_OPTIONS || []).map((opt) => {
+                  const isSelected = brainAppearance === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => setBrainAppearance(opt.id)}
+                      className={`flex items-center gap-2 p-2 rounded-md text-xs font-medium transition-all border text-left ${
+                        isSelected
+                          ? 'bg-medical-teal/15 border-medical-teal text-white shadow-sm'
+                          : 'bg-medical-surface/60 border-medical-border/60 text-medical-muted hover:text-white hover:border-medical-borderLight'
+                      }`}
+                      title={opt.description}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full border border-black/30 flex-shrink-0 shadow-sm"
+                        style={{ backgroundColor: opt.swatchColor }}
+                      />
+                      <div className="truncate">
+                        <div className="leading-tight">{opt.name}</div>
+                        {opt.badge && (
+                          <div className="text-[9px] text-medical-muted/80 font-mono">{opt.badge}</div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Multi-Shade Anatomical Regions Legend */}
+              {(brainAppearance === 'regions' || brainAppearance === 'contrast') && (
+                <div className="mt-2.5 pt-2 border-t border-medical-border/60 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-medical-muted">
+                    <span className="uppercase tracking-wider font-semibold">Anatomical Lobes</span>
+                    <span className="text-[9px] text-medical-tealLight">Shades: Base / Hi / Sh</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {(ANATOMICAL_REGIONS_LEGEND || []).map((reg) => (
+                      <div 
+                        key={reg.id}
+                        className="flex items-center justify-between p-1.5 rounded bg-medical-surface/50 border border-medical-border/40 text-[11px]"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full border border-black/30 flex-shrink-0"
+                            style={{ backgroundColor: reg.base }}
+                          />
+                          <span className="text-white truncate font-medium text-[11px]">{reg.name}</span>
+                        </div>
+                        <div className="flex items-center gap-0.5 ml-1">
+                          <span className="w-1.5 h-3 rounded-l-sm" style={{ backgroundColor: reg.highlight }} title="Highlight" />
+                          <span className="w-1.5 h-3" style={{ backgroundColor: reg.base }} title="Base" />
+                          <span className="w-1.5 h-3 rounded-r-sm" style={{ backgroundColor: reg.shadow }} title="Shadow" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-start gap-1.5 p-2 rounded bg-medical-surface/30 border border-medical-border/30 text-[10px] text-medical-muted leading-tight font-mono">
+                    <Info className="w-3.5 h-3.5 text-medical-teal flex-shrink-0 mt-0.5" />
+                    <span>Atlas parcellation registered to 3D axes with tangent-space gyri & sulci shadow depth.</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sub-region Filter Toggles with BraTS Standard Color Legend */}
             <div className="space-y-2 pt-2 border-t border-medical-border/70">
-              <span className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold block">
-                Tumor Sub-Regions
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold block">
+                  BraTS 2021 Tumor Legend
+                </span>
+                <span className="text-[10px] text-medical-teal font-mono">Standard Palette</span>
+              </div>
 
               <div className="space-y-1.5">
                 {REGION_LEGEND.map((region) => {
@@ -595,25 +782,46 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   const isChecked = subregions[key];
                   const vol = key === 'wt' ? wtVol : key === 'tc' ? tcVol : etVol;
 
+                  // Explicit radiological label semantics
+                  const labelDetail =
+                    key === 'wt'
+                      ? 'Peritumoral Edema (Label 2) + Core'
+                      : key === 'tc'
+                      ? 'Necrotic / Non-Enhancing Core (Label 1) + ET'
+                      : 'Active Contrast-Enhancing Tumor (Label 3/4)';
+
                   return (
                     <div
                       key={region.code}
                       onClick={() => toggleSubregion(key)}
-                      className="p-2 rounded-lg bg-medical-card border border-medical-border/80 hover:border-medical-borderLight cursor-pointer transition-all flex items-center justify-between"
+                      className={`p-2.5 rounded-lg bg-medical-card border transition-all flex items-center justify-between cursor-pointer ${
+                        isChecked
+                          ? 'border-medical-border/90 hover:border-medical-borderLight'
+                          : 'border-medical-border/40 opacity-50'
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded shadow-sm" style={{ backgroundColor: region.color }} />
-                        <div>
-                          <div className="text-xs font-semibold text-white">
-                            {region.name} ({region.code})
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="w-3.5 h-3.5 rounded shadow-sm flex-shrink-0 border border-black/30"
+                          style={{ backgroundColor: region.color }}
+                        />
+                        <div className="truncate">
+                          <div className="text-xs font-semibold text-white flex items-center gap-1.5">
+                            <span>{region.name}</span>
+                            <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-medical-surface text-medical-muted">
+                              {region.code}
+                            </span>
                           </div>
-                          <div className="text-[10px] text-medical-muted font-mono">
+                          <div className="text-[10px] text-medical-muted font-mono truncate">
+                            {labelDetail}
+                          </div>
+                          <div className="text-[10px] text-medical-tealLight font-mono font-medium">
                             Vol: {typeof vol === 'number' ? vol.toFixed(2) : vol} cm³
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-medical-teal">
+                      <div className="text-medical-teal ml-2 flex-shrink-0">
                         {isChecked ? (
                           <CheckSquare className="w-4 h-4" />
                         ) : (
@@ -624,8 +832,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   );
                 })}
               </div>
+
+              <div className="p-2 rounded bg-medical-surface/40 border border-medical-border/40 text-[10px] text-medical-muted leading-tight font-mono">
+                Background (Label 0) is transparent. The transparent overlay preserves underlying MRI anatomical contours.
+              </div>
             </div>
           </div>
+        )}
+      </div>
 
           {/* Quick Nav to Results */}
           <div className="pt-3 border-t border-medical-border/70">
@@ -638,6 +852,175 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           </div>
         </div>
       </div>
+
+      {/* WHOLE-SCREEN FULLSCREEN MODAL OVERLAY WITH 4-OPTION SHIFTER */}
+      {maximizedViewer && (
+        <div className="fixed inset-0 z-50 bg-[#070b13] flex flex-col p-2.5 sm:p-3 overflow-hidden select-none animate-fadeIn">
+          {/* Fullscreen Navigation Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-medical-base/95 border border-medical-border/80 px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md mb-2 shrink-0">
+            
+            {/* Left: Metadata Badge */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-medical-teal animate-pulse" />
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                  {maximizedViewer === '3d'
+                    ? '3D Human Brain Anatomy'
+                    : maximizedViewer === 'axial'
+                    ? `Axial (Z) • Slice ${axialSlice}/${dimensions.axial}`
+                    : maximizedViewer === 'coronal'
+                    ? `Coronal (Y) • Slice ${coronalSlice}/${dimensions.coronal}`
+                    : `Sagittal (X) • Slice ${sagittalSlice}/${dimensions.sagittal}`}
+                </span>
+              </div>
+              <span className="text-xs text-medical-muted font-mono hidden md:inline border-l border-medical-border pl-3">
+                Case: <strong className="text-white">{selectedPatientId}</strong>
+              </span>
+            </div>
+
+            {/* Center: THE 4 OPTIONS TO SHIFT FROM ONE TO ANOTHER */}
+            <div className="flex items-center gap-1 bg-medical-card/90 border border-medical-border/80 p-1 rounded-xl shadow-lg">
+              {[
+                { id: '3d', label: '3D Anatomy', icon: Box },
+                { id: 'axial', label: 'Axial (Z)', icon: null },
+                { id: 'coronal', label: 'Coronal (Y)', icon: null },
+                { id: 'sagittal', label: 'Sagittal (X)', icon: null },
+              ].map(({ id, label, icon: Icon }) => {
+                const isActive = maximizedViewer === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setMaximizedViewer(id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-medical-teal text-medical-darkest shadow-md shadow-medical-teal/40 scale-105'
+                        : 'text-medical-muted hover:text-white hover:bg-medical-surface'
+                    }`}
+                    title={`Switch to ${label} (Key: ${id === '3d' ? '1' : id === 'axial' ? '2' : id === 'coronal' ? '3' : '4'})`}
+                  >
+                    {Icon && <Icon className="w-3.5 h-3.5" />}
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right: Modality Switcher & Exit Fullscreen Button */}
+            <div className="flex items-center gap-2">
+              {/* MRI Sequence Buttons */}
+              <div className="hidden sm:flex items-center gap-1 text-xs font-mono bg-medical-card/80 border border-medical-border/60 p-0.5 rounded-lg">
+                {['flair', 't1', 't1ce', 't2'].map((mod) => (
+                  <button
+                    key={mod}
+                    onClick={() => setActiveMriModality(mod)}
+                    className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold transition-all ${
+                      activeMriModality === mod
+                        ? 'bg-medical-teal text-medical-darkest font-extrabold'
+                        : 'text-medical-muted hover:text-white'
+                    }`}
+                  >
+                    {mod}
+                  </button>
+                ))}
+              </div>
+
+              {/* Exit / Restore Button */}
+              <button
+                onClick={() => setMaximizedViewer(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-border hover:border-medical-teal text-white text-xs font-mono font-semibold transition-all shadow-md group"
+                title="Exit Fullscreen (Esc)"
+              >
+                <Minimize2 className="w-3.5 h-3.5 text-medical-teal group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline">Exit Fullscreen</span>
+                <kbd className="hidden md:inline px-1 py-0.5 rounded bg-black/40 text-[9px] text-medical-muted">Esc</kbd>
+              </button>
+            </div>
+          </div>
+
+          {/* Fullscreen Viewport Body */}
+          <div className="flex-1 w-full h-full min-h-0 relative rounded-xl overflow-hidden border border-medical-border shadow-2xl bg-medical-darkest">
+            {maximizedViewer === '3d' && (
+              <MedicalViewer
+                viewMode="3d"
+                layers={layers}
+                opacity={opacity}
+                subregions={subregions}
+                brainAppearance={brainAppearance}
+                onBrainAppearanceChange={setBrainAppearance}
+                onResetView={handleReset}
+                isMaximized={true}
+                onToggleMaximize={() => setMaximizedViewer(null)}
+              />
+            )}
+
+            {maximizedViewer === 'axial' && (
+              <OrthogonalSliceViewer
+                plane="axial"
+                title="Axial Plane (Z)"
+                patientId={selectedPatientId}
+                sliceIndex={axialSlice}
+                totalSlices={dimensions.axial}
+                modality={activeMriModality}
+                segSource={segSource}
+                subregions={subregions}
+                opacity={opacity}
+                showOverlay={layers.tumor || layers.overlay}
+                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
+                dimensions={dimensions}
+                onSliceChange={setAxialSlice}
+                onCoordinateClick={handleCoordinateClick}
+                accentColor="teal"
+                isMaximized={true}
+                onToggleMaximize={() => setMaximizedViewer(null)}
+              />
+            )}
+
+            {maximizedViewer === 'coronal' && (
+              <OrthogonalSliceViewer
+                plane="coronal"
+                title="Coronal Plane (Y)"
+                patientId={selectedPatientId}
+                sliceIndex={coronalSlice}
+                totalSlices={dimensions.coronal}
+                modality={activeMriModality}
+                segSource={segSource}
+                subregions={subregions}
+                opacity={opacity}
+                showOverlay={layers.tumor || layers.overlay}
+                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
+                dimensions={dimensions}
+                onSliceChange={setCoronalSlice}
+                onCoordinateClick={handleCoordinateClick}
+                accentColor="cyan"
+                isMaximized={true}
+                onToggleMaximize={() => setMaximizedViewer(null)}
+              />
+            )}
+
+            {maximizedViewer === 'sagittal' && (
+              <OrthogonalSliceViewer
+                plane="sagittal"
+                title="Sagittal Plane (X)"
+                patientId={selectedPatientId}
+                sliceIndex={sagittalSlice}
+                totalSlices={dimensions.sagittal}
+                modality={activeMriModality}
+                segSource={segSource}
+                subregions={subregions}
+                opacity={opacity}
+                showOverlay={layers.tumor || layers.overlay}
+                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
+                dimensions={dimensions}
+                onSliceChange={setSagittalSlice}
+                onCoordinateClick={handleCoordinateClick}
+                accentColor="blue"
+                isMaximized={true}
+                onToggleMaximize={() => setMaximizedViewer(null)}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

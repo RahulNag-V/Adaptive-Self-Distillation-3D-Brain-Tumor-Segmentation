@@ -7,16 +7,141 @@ import {
   ZoomIn, 
   ZoomOut, 
   RotateCcw, 
-  Maximize2,
-  Sliders,
-  Eye,
-  Layers,
-  Sparkles,
-  Loader2,
-  Play,
-  Pause
+  Maximize2, 
+  Minimize2,
+  Sliders, 
+  Eye, 
+  Layers, 
+  Sparkles, 
+  Loader2, 
+  Play, 
+  Pause,
+  Palette,
+  Check,
+  Info
 } from 'lucide-react';
-import { REGION_LEGEND } from '../utils/mockData';
+
+/**
+ * Anatomical Regions Color Legend & Specifications
+ * Based on clinical neuroanatomy palette:
+ * - Frontal Lobe: warm peach (#E5B19F), highlights #F5D1C2, shadows #B97870
+ * - Parietal Lobe: dusty rose (#D9A0A1), highlights #F0C4C3, shadows #A96E78
+ * - Temporal Lobe: muted coral (#D58C83), highlights #EAB3A8, shadows #995C5C
+ * - Occipital Lobe: muted lavender-pink (#C6A2C9), highlights #E3C9E5, shadows #88668F
+ * - Cerebellum: terracotta (#C78378), highlights #E4AA9D, shadows #8C5554
+ * - Brainstem: warm beige-pink (#C9958B), highlights #E4B7AC, shadows #93645F
+ * - Sulcal boundaries & deep folds: dark mauve-brown (#754D55)
+ */
+export const ANATOMICAL_REGIONS_LEGEND = [
+  { id: 'frontal', name: 'Frontal Lobe', base: '#E5B19F', highlight: '#F5D1C2', shadow: '#B97870' },
+  { id: 'parietal', name: 'Parietal Lobe', base: '#D9A0A1', highlight: '#F0C4C3', shadow: '#A96E78' },
+  { id: 'temporal', name: 'Temporal Lobe', base: '#D58C83', highlight: '#EAB3A8', shadow: '#995C5C' },
+  { id: 'occipital', name: 'Occipital Lobe', base: '#C6A2C9', highlight: '#E3C9E5', shadow: '#88668F' },
+  { id: 'cerebellum', name: 'Cerebellum', base: '#C78378', highlight: '#E4AA9D', shadow: '#8C5554' },
+  { id: 'brainstem', name: 'Brainstem', base: '#C9958B', highlight: '#E4B7AC', shadow: '#93645F' },
+];
+
+/**
+ * Appearance options supporting 4 distinct modes:
+ * 1. Anatomical Regions (distinct multi-shade colors for each lobe and structure)
+ * 2. Natural Anatomy (coordinated pink-beige cortex with gyri/sulci relief)
+ * 3. Anatomical Contrast (deepened regional separation and pronounced fold relief)
+ * 4. Original Appearance (clinical neutral-pale medical visualization)
+ */
+export const BRAIN_APPEARANCE_OPTIONS = [
+  {
+    id: 'regions',
+    name: 'Anatomical Regions',
+    swatchColor: '#E5B19F',
+    badge: 'Multi-Shade Lobes',
+    description: 'Distinct realistic shades for Frontal, Parietal, Temporal, Occipital, Cerebellum, and Brainstem',
+    textureKey: 'regions',
+    color: 0xffffff,
+    roughness: 0.52,
+    metalness: 0.02,
+    clearcoat: 0.16,
+    clearcoatRoughness: 0.35,
+    normalScale: 1.95,
+    sheenColor: '#DFC0B8',
+    ambientColor: 0x5a4844,
+    ambientIntensity: 0.68,
+    keyColor: 0xfff4eb,
+    keyIntensity: 1.35,
+    fillColor: 0xd8988e,
+    fillIntensity: 0.65,
+    rimColor: 0xf0e6dc,
+    rimIntensity: 0.85,
+  },
+  {
+    id: 'natural',
+    name: 'Natural Anatomy',
+    swatchColor: '#D9A69B',
+    badge: 'Unified Cortex',
+    description: 'Realistic warm pinkish-beige cerebral cortex with natural sulcal depth and rose-brown shading',
+    textureKey: 'natural',
+    color: '#D9A69B',
+    roughness: 0.52,
+    metalness: 0.02,
+    clearcoat: 0.18,
+    clearcoatRoughness: 0.35,
+    normalScale: 1.85,
+    sheenColor: '#D9A69B',
+    ambientColor: 0x5a4642,
+    ambientIntensity: 0.68,
+    keyColor: 0xfff2e6,
+    keyIntensity: 1.35,
+    fillColor: 0xd8988e,
+    fillIntensity: 0.65,
+    rimColor: 0xf0e6dc,
+    rimIntensity: 0.85,
+  },
+  {
+    id: 'contrast',
+    name: 'Anatomical Contrast',
+    swatchColor: '#C88A7D',
+    badge: 'High Relief',
+    description: 'Sharpened regional boundaries, deep sulcal shadows, and amplified gyral crests',
+    textureKey: 'contrast',
+    color: 0xffffff,
+    roughness: 0.48,
+    metalness: 0.03,
+    clearcoat: 0.22,
+    clearcoatRoughness: 0.28,
+    normalScale: 2.65,
+    sheenColor: '#C88A7D',
+    ambientColor: 0x483432,
+    ambientIntensity: 0.55,
+    keyColor: 0xffece0,
+    keyIntensity: 1.55,
+    fillColor: 0xc88277,
+    fillIntensity: 0.60,
+    rimColor: 0xfff8f2,
+    rimIntensity: 1.05,
+  },
+  {
+    id: 'original',
+    name: 'Original Appearance',
+    swatchColor: '#DDE5ED',
+    badge: 'Monochrome',
+    description: 'Clinical translucent neutral-pale medical visualization',
+    textureKey: 'none',
+    color: '#DDE5ED',
+    roughness: 0.40,
+    metalness: 0.10,
+    clearcoat: 0.0,
+    clearcoatRoughness: 0.0,
+    normalScale: 1.0,
+    sheenColor: '#DDE5ED',
+    ambientColor: 0x404856,
+    ambientIntensity: 0.85,
+    keyColor: 0xf0f9ff,
+    keyIntensity: 1.45,
+    fillColor: 0x38bdf8,
+    fillIntensity: 0.50,
+    rimColor: 0x94a3b8,
+    rimIntensity: 0.75,
+  },
+];
 
 export default function MedicalViewer({
   viewMode = '3d', // '3d' | 'axial' | 'coronal' | 'sagittal'
@@ -24,13 +149,42 @@ export default function MedicalViewer({
   coronalSlice = 120,
   sagittalSlice = 120,
   layers = { mri: true, tumor: true, overlay: true },
-  opacity = 0.75,
+  opacity = 0.85,
   subregions = { wt: true, tc: true, et: true },
+  brainAppearance = 'regions',
+  onBrainAppearanceChange,
   onResetView,
+  isMaximized = false,
+  onToggleMaximize,
 }) {
   const containerRef = useRef(null);
   const threeMountRef = useRef(null);
   const canvas2dRef = useRef(null);
+
+  // Appearance state (syncs with prop or manages locally)
+  const [activeAppearance, setActiveAppearance] = useState(brainAppearance);
+  const [showPaletteMenu, setShowPaletteMenu] = useState(false);
+
+  useEffect(() => {
+    setActiveAppearance(brainAppearance);
+  }, [brainAppearance]);
+
+  const handleSelectAppearance = (optId) => {
+    setActiveAppearance(optId);
+    if (onBrainAppearanceChange) {
+      onBrainAppearanceChange(optId);
+    }
+    setShowPaletteMenu(false);
+  };
+
+  // Textures ref to cache all high-resolution texture maps
+  const texturesRef = useRef({
+    regions: null,
+    natural: null,
+    contrast: null,
+    normal: null,
+    roughness: null,
+  });
 
   // Three.js instances ref
   const threeStateRef = useRef({
@@ -40,6 +194,12 @@ export default function MedicalViewer({
     controls: null,
     brainGroup: null,
     brainMaterials: [],
+    ambientLight: null,
+    keyLight: null,
+    fillLight: null,
+    rimLight: null,
+    bottomFill: null,
+    tumorGlowLight: null,
     tumorGroup: null,
     wtMesh: null,
     wtWireframe: null,
@@ -94,28 +254,27 @@ export default function MedicalViewer({
     controls.maxDistance = 8.0;
     controls.target.set(0, 0, 0);
 
-    // 5. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    // 5. Scientifically Inspired Anatomical Lighting
+    const ambientLight = new THREE.AmbientLight(0x5a4844, 0.68);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xf0f9ff, 2.2);
-    keyLight.position.set(4, 5, 4);
+    const keyLight = new THREE.DirectionalLight(0xfff4eb, 1.35);
+    keyLight.position.set(3.5, 4.5, 3.0);
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.3);
-    fillLight.position.set(-4, 2, 3);
+    const fillLight = new THREE.DirectionalLight(0xd8988e, 0.65);
+    fillLight.position.set(-3.5, 1.5, 2.5);
     scene.add(fillLight);
 
-    const rimLight = new THREE.DirectionalLight(0x34d399, 1.8);
-    rimLight.position.set(0, 4, -4);
+    const rimLight = new THREE.DirectionalLight(0xf0e6dc, 0.85);
+    rimLight.position.set(0, 3.5, -4.0);
     scene.add(rimLight);
 
-    const bottomFill = new THREE.DirectionalLight(0x1e293b, 1.0);
-    bottomFill.position.set(0, -4, 0);
+    const bottomFill = new THREE.DirectionalLight(0x2d1f24, 0.35);
+    bottomFill.position.set(0, -3.5, 0);
     scene.add(bottomFill);
 
-    // Subtle internal tumor glow light
-    const tumorGlowLight = new THREE.PointLight(0x10b981, 2.0, 3.0);
+    const tumorGlowLight = new THREE.PointLight(0x10b981, 1.3, 2.8);
     tumorGlowLight.position.set(0.42, 0.22, 0.28);
     scene.add(tumorGlowLight);
 
@@ -125,7 +284,6 @@ export default function MedicalViewer({
 
     // Whole Tumor (WT - Emerald Green #10B981)
     const wtGeo = new THREE.SphereGeometry(0.38, 32, 32);
-    // Add organic displacement to vertices
     const wtPos = wtGeo.attributes.position;
     for (let i = 0; i < wtPos.count; i++) {
       const u = wtPos.getX(i);
@@ -194,7 +352,32 @@ export default function MedicalViewer({
 
     scene.add(tumorGroup);
 
-    // 7. Load Human Brain 3D GLB Model
+    // 7. Texture Loading: Anatomical Regions, Natural, Contrast, Normal, and Roughness
+    const textureLoader = new THREE.TextureLoader();
+
+    const loadTex = (url, isColor = true) => {
+      const tex = textureLoader.load(url, () => {
+        tex.needsUpdate = true;
+      });
+      if (isColor) tex.colorSpace = THREE.SRGBColorSpace;
+      tex.flipY = false;
+      return tex;
+    };
+
+    const texRegions = loadTex('/models/textures/anatomical_regions.png', true);
+    const texNatural = loadTex('/models/textures/gltf_embedded_0.png', true);
+    const texContrast = loadTex('/models/textures/anatomical_contrast.png', true);
+    const texNormal = loadTex('/models/textures/gltf_embedded_2.png', false);
+    const texRoughness = loadTex('/models/textures/gltf_embedded_1.png', false);
+
+    texturesRef.current = {
+      regions: texRegions,
+      natural: texNatural,
+      contrast: texContrast,
+      normal: texNormal,
+      roughness: texRoughness,
+    };
+
     const brainGroup = new THREE.Group();
     scene.add(brainGroup);
     const brainMaterials = [];
@@ -216,15 +399,40 @@ export default function MedicalViewer({
         model.scale.setScalar(scale);
         model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
-        // Enhance materials for medical rendering & transparency
+        const currentPreset = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === activeAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
+        const activeDiffuse = currentPreset.textureKey === 'regions' 
+          ? texRegions 
+          : currentPreset.textureKey === 'contrast' 
+          ? texContrast 
+          : currentPreset.textureKey === 'natural' 
+          ? texNatural 
+          : null;
+
+        // Apply multi-shade physical material with regional colors and gyri/sulci relief
         model.traverse((child) => {
-          if (child.isMesh && child.material) {
-            const mat = child.material.clone();
-            mat.transparent = true;
-            mat.opacity = opacity;
-            mat.roughness = Math.max(0.35, mat.roughness || 0.4);
-            mat.metalness = Math.min(0.2, mat.metalness || 0.1);
-            mat.depthWrite = opacity > 0.85;
+          if (child.isMesh) {
+            if (child.material && child.material.dispose) {
+              child.material.dispose();
+            }
+
+            const mat = new THREE.MeshPhysicalMaterial({
+              color: new THREE.Color(currentPreset.color),
+              map: activeDiffuse,
+              normalMap: texNormal,
+              normalScale: new THREE.Vector2(currentPreset.normalScale, currentPreset.normalScale),
+              roughness: currentPreset.roughness,
+              roughnessMap: texRoughness,
+              metalness: currentPreset.metalness,
+              clearcoat: currentPreset.clearcoat,
+              clearcoatRoughness: currentPreset.clearcoatRoughness,
+              sheen: 0.25,
+              sheenColor: new THREE.Color(currentPreset.sheenColor),
+              transparent: opacity < 0.99,
+              opacity: layers.mri ? opacity : 0.0,
+              depthWrite: opacity > 0.82,
+              side: THREE.FrontSide,
+            });
+
             child.material = mat;
             brainMaterials.push(mat);
           }
@@ -249,6 +457,12 @@ export default function MedicalViewer({
       controls,
       brainGroup,
       brainMaterials,
+      ambientLight,
+      keyLight,
+      fillLight,
+      rimLight,
+      bottomFill,
+      tumorGlowLight,
       tumorGroup,
       wtMesh,
       wtWireframe,
@@ -259,7 +473,6 @@ export default function MedicalViewer({
     };
 
     // 8. Animation & Render Loop
-    let lastTime = performance.now();
     let frameCount = 0;
     let lastFpsUpdate = performance.now();
 
@@ -304,7 +517,7 @@ export default function MedicalViewer({
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(mountEl);
 
-    // Cleanup
+    // Cleanup GPU resources
     return () => {
       resizeObserver.disconnect();
       if (threeStateRef.current.animationFrameId) {
@@ -312,11 +525,91 @@ export default function MedicalViewer({
       }
       controls.dispose();
       renderer.dispose();
+
+      // Dispose textures
+      texRegions.dispose();
+      texNatural.dispose();
+      texContrast.dispose();
+      texNormal.dispose();
+      texRoughness.dispose();
+
+      // Dispose geometries & materials
+      wtGeo.dispose();
+      wtMat.dispose();
+      wtWireGeo.dispose();
+      wtWireMat.dispose();
+      tcGeo.dispose();
+      tcMat.dispose();
+      etGeo.dispose();
+      etMat.dispose();
+
+      brainMaterials.forEach((m) => m.dispose());
+
       if (mountEl && renderer.domElement && mountEl.contains(renderer.domElement)) {
         mountEl.removeChild(renderer.domElement);
       }
     };
   }, []);
+
+  // Update Brain Appearance Preset in Real-Time Without Reloading Model
+  useEffect(() => {
+    const { 
+      brainMaterials, 
+      ambientLight, 
+      keyLight, 
+      fillLight, 
+      rimLight 
+    } = threeStateRef.current;
+    const { regions, natural, contrast, normal, roughness } = texturesRef.current;
+
+    const preset = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === activeAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
+
+    // Select matching multi-shade texture
+    const activeDiffuse = preset.textureKey === 'regions' 
+      ? regions 
+      : preset.textureKey === 'contrast' 
+      ? contrast 
+      : preset.textureKey === 'natural' 
+      ? natural 
+      : null;
+
+    // Update lighting for current appearance
+    if (ambientLight) {
+      ambientLight.color.set(preset.ambientColor);
+      ambientLight.intensity = preset.ambientIntensity;
+    }
+    if (keyLight) {
+      keyLight.color.set(preset.keyColor);
+      keyLight.intensity = preset.keyIntensity;
+    }
+    if (fillLight) {
+      fillLight.color.set(preset.fillColor);
+      fillLight.intensity = preset.fillIntensity;
+    }
+    if (rimLight) {
+      rimLight.color.set(preset.rimColor);
+      rimLight.intensity = preset.rimIntensity;
+    }
+
+    // Update physical material properties in place
+    brainMaterials.forEach((mat) => {
+      mat.color.set(preset.color);
+      mat.map = activeDiffuse;
+      mat.normalMap = normal;
+      if (mat.normalScale) {
+        mat.normalScale.set(preset.normalScale, preset.normalScale);
+      }
+      mat.roughness = preset.roughness;
+      mat.roughnessMap = roughness;
+      mat.metalness = preset.metalness;
+      mat.clearcoat = preset.clearcoat;
+      mat.clearcoatRoughness = preset.clearcoatRoughness;
+      if (mat.sheenColor) {
+        mat.sheenColor.set(preset.sheenColor);
+      }
+      mat.needsUpdate = true;
+    });
+  }, [activeAppearance]);
 
   // Update Brain Model Opacity & Visibility
   useEffect(() => {
@@ -326,7 +619,8 @@ export default function MedicalViewer({
     }
     brainMaterials.forEach((mat) => {
       mat.opacity = layers.mri ? opacity : 0.0;
-      mat.depthWrite = opacity > 0.85;
+      mat.transparent = opacity < 0.99;
+      mat.depthWrite = opacity > 0.82;
       mat.needsUpdate = true;
     });
   }, [layers.mri, opacity]);
@@ -384,7 +678,6 @@ export default function MedicalViewer({
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
 
-    // Deep dark medical background
     ctx.fillStyle = '#060A12';
     ctx.fillRect(0, 0, width, height);
 
@@ -463,125 +756,193 @@ export default function MedicalViewer({
     ctx.restore();
   }, [viewMode, axialSlice, coronalSlice, sagittalSlice, layers, opacity, subregions]);
 
+  const currentOption = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === activeAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
+
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full flex flex-col bg-medical-darkest rounded-xl overflow-hidden border border-medical-border select-none min-h-[460px]"
+      className="relative w-full h-full min-h-0 flex flex-col bg-medical-darkest rounded-xl overflow-hidden border border-medical-border select-none group shadow-lg"
     >
       {/* Top Floating Viewport HUD */}
-      <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
-        <div className="px-3 py-1.5 rounded-lg bg-medical-base/90 border border-medical-border/80 backdrop-blur-md text-xs font-mono text-white flex items-center gap-2 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-medical-teal animate-pulse"></span>
+      <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-2 pointer-events-none">
+        <div className="px-2.5 py-1 rounded-md bg-medical-base/90 border border-medical-border/80 backdrop-blur-md text-[11px] font-mono text-white flex items-center gap-1.5 shadow-md">
+          <span className="w-2 h-2 rounded-full bg-medical-teal animate-pulse shrink-0"></span>
           <span className="font-semibold uppercase tracking-wider">
-            {viewMode === '3d' ? '3D Human Brain Anatomy' : `${viewMode} Plane`}
+            {viewMode === '3d' ? '3D Anatomy' : `${viewMode} Plane`}
           </span>
           <span className="text-medical-muted text-[10px] hidden sm:inline">
             {viewMode === '3d' 
-              ? 'GLTF 3D Mesh • Adaptive UNETR' 
-              : `Slice ${viewMode === 'axial' ? axialSlice : viewMode === 'coronal' ? coronalSlice : sagittalSlice}`}
+              ? '• Atlas' 
+              : `• Slice ${viewMode === 'axial' ? axialSlice : viewMode === 'coronal' ? coronalSlice : sagittalSlice}`}
           </span>
         </div>
-
-        {viewMode === '3d' && (
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-medical-surface/80 border border-medical-teal/30 text-[11px] font-mono text-medical-tealLight">
-            <Sparkles className="w-3 h-3 text-medical-teal" />
-            <span>3D Model: Human Brain (GLB)</span>
-          </div>
-        )}
       </div>
 
-      {/* Floating Viewport Quick Controls (Auto-Rotate, Zoom, Reset) */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-medical-base/90 border border-medical-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg">
-        {viewMode === '3d' && (
+      {/* Top Right Maximize / Restore Action Button */}
+      {onToggleMaximize && (
+        <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1">
           <button
-            onClick={() => setAutoRotate(prev => !prev)}
-            className={`p-1.5 rounded transition-colors ${
-              autoRotate 
-                ? 'bg-medical-teal text-medical-darkest' 
-                : 'hover:bg-medical-surface text-medical-muted hover:text-white'
-            }`}
-            title={autoRotate ? 'Pause Auto-Rotation' : 'Enable Auto-Rotation'}
+            onClick={onToggleMaximize}
+            className="p-1 rounded-md bg-medical-base/90 border border-medical-border/80 text-medical-muted hover:text-white hover:bg-medical-surface transition-colors shadow-md"
+            title={isMaximized ? 'Restore View (Esc)' : 'Maximize Whole Screen'}
+            aria-label={isMaximized ? 'Restore View' : 'Maximize Whole Screen'}
           >
-            {autoRotate ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isMaximized ? (
+              <Minimize2 className="w-3.5 h-3.5 text-medical-teal" />
+            ) : (
+              <Maximize2 className="w-3.5 h-3.5" />
+            )}
           </button>
-        )}
-        <button
-          onClick={() => handleZoom(0.85)}
-          className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
-          title="Zoom In"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => handleZoom(1.15)}
-          className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
-          title="Zoom Out"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </button>
-        <button
-          onClick={handleResetCamera}
-          className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
-          title="Reset Camera View"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* 3D WebGL Three.js Viewport (Visible in 3D Mode) */}
-      <div
-        ref={threeMountRef}
-        className={`w-full h-full flex-1 cursor-grab active:cursor-grabbing ${
-          viewMode === '3d' ? 'block' : 'hidden'
-        }`}
-      />
-
-      {/* Loading Overlay for 3D Brain Model */}
-      {viewMode === '3d' && modelLoading && (
-        <div className="absolute inset-0 bg-medical-darkest/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-medical-teal animate-spin" />
-          <div className="text-center space-y-1">
-            <p className="text-sm font-semibold text-white">Loading 3D Anatomical Brain Mesh...</p>
-            <p className="text-xs text-medical-muted font-mono">Parsing Rotten Brain.glb & textures</p>
-          </div>
         </div>
       )}
 
-      {/* Error Overlay if GLB fails */}
-      {viewMode === '3d' && modelLoadError && (
-        <div className="absolute inset-0 bg-red-950/40 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 text-center">
-          <p className="text-sm font-semibold text-red-300">Failed to load 3D Brain model</p>
-          <p className="text-xs text-medical-muted font-mono mt-1">{modelLoadError}</p>
-        </div>
-      )}
-
-      {/* 2D Orthogonal Multi-Planar Slice Viewport (Visible in 2D Slicing Modes) */}
-      <div
-        className={`w-full h-full flex-1 flex items-center justify-center p-4 ${
-          viewMode !== '3d' ? 'block' : 'hidden'
-        }`}
-      >
-        <canvas
-          ref={canvas2dRef}
-          width={700}
-          height={550}
-          className="max-w-full max-h-full object-contain rounded-lg border border-medical-border/60 shadow-2xl"
+      {/* Main 3D / 2D Viewport Area */}
+      <div className="relative flex-1 w-full h-full overflow-hidden">
+        {/* 3D WebGL Three.js Viewport (Visible in 3D Mode) */}
+        <div
+          ref={threeMountRef}
+          className={`w-full h-full cursor-grab active:cursor-grabbing ${
+            viewMode === '3d' ? 'block' : 'hidden'
+          }`}
         />
+
+        {/* Loading Overlay for 3D Brain Model */}
+        {viewMode === '3d' && modelLoading && (
+          <div className="absolute inset-0 bg-medical-darkest/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 text-medical-teal animate-spin" />
+            <div className="text-center space-y-1">
+              <p className="text-sm font-semibold text-white">Loading 3D Anatomical Brain Mesh...</p>
+              <p className="text-xs text-medical-muted font-mono">Applying multi-shade anatomical textures & gyri</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Overlay if GLB fails */}
+        {viewMode === '3d' && modelLoadError && (
+          <div className="absolute inset-0 bg-red-950/40 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 text-center">
+            <p className="text-sm font-semibold text-red-300">Failed to load 3D Brain model</p>
+            <p className="text-xs text-medical-muted font-mono mt-1">{modelLoadError}</p>
+          </div>
+        )}
+
+        {/* 2D Orthogonal Multi-Planar Slice Viewport (Visible in 2D Slicing Modes) */}
+        <div
+          className={`w-full h-full flex items-center justify-center p-4 ${
+            viewMode !== '3d' ? 'block' : 'hidden'
+          }`}
+        >
+          <canvas
+            ref={canvas2dRef}
+            width={700}
+            height={550}
+            className="max-w-full max-h-full object-contain rounded-lg border border-medical-border/60 shadow-2xl"
+          />
+        </div>
+
+        {/* Floating Viewport Quick Controls Pill at Bottom Right (Palette + swatch, Play, Zoom In, Zoom Out, Reset) */}
+        <div className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-medical-base/90 border border-medical-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity">
+          {viewMode === '3d' && (
+            <div className="relative">
+              <button
+                onClick={() => setShowPaletteMenu(prev => !prev)}
+                className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono ${
+                  showPaletteMenu
+                    ? 'bg-medical-teal text-medical-darkest'
+                    : 'hover:bg-medical-surface text-medical-muted hover:text-white'
+                }`}
+                title="Brain Appearance Presets"
+                aria-label="Brain Appearance Presets"
+              >
+                <Palette className="w-4 h-4" />
+                <span 
+                  className="w-2.5 h-2.5 rounded-full border border-black/40 shadow-sm inline-block shrink-0"
+                  style={{ backgroundColor: currentOption.swatchColor }}
+                />
+              </button>
+
+              {/* Appearance dropdown popover - opens upward */}
+              {showPaletteMenu && (
+                <div className="absolute right-0 bottom-full mb-2 w-56 bg-medical-card/95 border border-medical-border rounded-lg shadow-2xl p-1.5 z-40 backdrop-blur-md">
+                  <div className="text-[10px] font-mono uppercase text-medical-muted px-2 py-1 border-b border-medical-border/60 mb-1">
+                    Brain Appearance
+                  </div>
+                  {BRAIN_APPEARANCE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleSelectAppearance(opt.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium text-left transition-colors ${
+                        activeAppearance === opt.id
+                          ? 'bg-medical-teal/20 text-medical-tealLight'
+                          : 'text-white hover:bg-medical-surface'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/30 flex-shrink-0"
+                          style={{ backgroundColor: opt.swatchColor }}
+                        />
+                        <span>{opt.name}</span>
+                      </div>
+                      {activeAppearance === opt.id && <Check className="w-3.5 h-3.5 text-medical-teal" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {viewMode === '3d' && (
+            <button
+              onClick={() => setAutoRotate(prev => !prev)}
+              className={`p-1.5 rounded transition-colors ${
+                autoRotate 
+                  ? 'bg-medical-teal text-medical-darkest' 
+                  : 'hover:bg-medical-surface text-medical-muted hover:text-white'
+              }`}
+              title={autoRotate ? 'Pause Auto-Rotation' : 'Enable Auto-Rotation'}
+              aria-label="Toggle Auto-Rotation"
+            >
+              {autoRotate ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+          )}
+
+          <button
+            onClick={() => handleZoom(0.85)}
+            className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
+            title="Zoom In"
+            aria-label="Zoom In"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleZoom(1.15)}
+            className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
+            title="Zoom Out"
+            aria-label="Zoom Out"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleResetCamera}
+            className="p-1.5 rounded hover:bg-medical-surface text-medical-muted hover:text-white transition-colors"
+            title="Reset Camera View"
+            aria-label="Reset Camera"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Bottom Floating Metadata HUD */}
-      <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between text-[11px] font-mono text-medical-muted bg-medical-base/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-medical-border/60 shadow-lg">
-        <div className="flex items-center gap-3">
-          <span className="text-white font-medium">Model: Human Brain 3D</span>
-          <span className="hidden sm:inline border-l border-medical-border pl-3">
-            Source: <code className="text-medical-tealLight">human-brain/Rotten Brain.glb</code>
-          </span>
-          <span className="hidden md:inline border-l border-medical-border pl-3">
-            Anatomical Surface: PBR Gyri & Sulci
-          </span>
+      {/* Bottom Viewer Footer Bar (Matches OrthogonalSliceViewer 24px footer) */}
+      <div className="h-6 px-2.5 bg-medical-base/95 border-t border-medical-border/60 flex items-center justify-between text-[10px] font-mono text-medical-muted z-10 shrink-0 select-none">
+        <div className="flex items-center gap-1.5 min-w-0 truncate">
+          <span>MODEL: <strong className="text-white uppercase">HUMAN BRAIN</strong></span>
+          <span className="text-medical-border/80 shrink-0">•</span>
+          <span className="text-medical-tealLight truncate">{currentOption.name}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span>Opacity: {Math.round(opacity * 100)}%</span>
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          <span>{Math.round(opacity * 100)}%</span>
+          <span className="text-medical-border/80">•</span>
           <span className="text-emerald-400 font-semibold">{fps} FPS</span>
         </div>
       </div>

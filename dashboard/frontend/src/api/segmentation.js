@@ -145,3 +145,12 @@ export async function runPatientPrediction(patientId) {
   });
 }
 
+/**
+ * Fetches quantitative tumor burden, affected slice extents, relative intracranial percentage,
+ * and experimental research categorization for a patient based on real MRI and segmentation masks.
+ * GET /api/patients/{patient_id}/tumor-burden?seg_source={seg_source}
+ */
+export async function getPatientTumorBurden(patientId, segSource = 'ground_truth') {
+  return request(`/api/patients/${patientId}/tumor-burden?seg_source=${encodeURIComponent(segSource)}`);
+}
+

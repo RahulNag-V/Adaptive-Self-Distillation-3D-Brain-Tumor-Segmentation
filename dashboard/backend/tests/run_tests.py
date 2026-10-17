@@ -31,6 +31,15 @@ from tests.test_volume_mpr_and_coordinates import (
     test_canonical_ras_orientation,
     test_model_readiness,
 )
+from tests.test_tumor_burden import (
+    test_burden_config_loading,
+    test_synthetic_label_mapping_and_volume,
+    test_slice_wise_area_and_peak_identification,
+    test_empty_mask_handling,
+    test_relative_intracranial_burden_calculation,
+    test_real_patient_tumor_burden_analysis,
+    test_nonexistent_patient_error_handling,
+)
 
 if __name__ == "__main__":
     print("=" * 70)
@@ -49,6 +58,13 @@ if __name__ == "__main__":
         ("Active Sequence Switching (FLAIR, T1, T1CE, T2)", test_active_sequence_switching),
         ("BraTS Segmentation Label Mapping (WT, TC, ET)", test_segmentation_label_mapping),
         ("Canonical RAS Affine & Orientation", test_canonical_ras_orientation),
+        ("Tumor Burden Config & Disclaimers", test_burden_config_loading),
+        ("Tumor Burden Synthetic Voxel/cm3 Math", test_synthetic_label_mapping_and_volume),
+        ("Tumor Burden Slice-wise Area & Peak Detection", test_slice_wise_area_and_peak_identification),
+        ("Tumor Burden Empty Mask Handling", test_empty_mask_handling),
+        ("Tumor Burden Relative Intracranial %", test_relative_intracranial_burden_calculation),
+        ("Tumor Burden Real Patient Ground Truth (BraTS2021_01017)", test_real_patient_tumor_burden_analysis),
+        ("Tumor Burden Error Handling", test_nonexistent_patient_error_handling),
     ]
 
     passed = 0
