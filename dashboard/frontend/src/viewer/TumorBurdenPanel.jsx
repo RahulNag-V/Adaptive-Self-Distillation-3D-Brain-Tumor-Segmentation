@@ -174,67 +174,79 @@ export default function TumorBurdenPanel({
         </div>
       </div>
 
-      {/* 2. Experimental Research Category & Mandatory Non-Clinical Disclaimer */}
-      {cat && (
-        <div
-          className="p-3 rounded-xl border space-y-2 transition-all shadow-sm"
-          style={{
-            backgroundColor: `${cat.color}12`,
-            borderColor: `${cat.color}45`
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2.5 h-2.5 rounded-full animate-pulse shadow-sm"
-                style={{ backgroundColor: cat.color }}
-              />
-              <span className="text-[10px] font-mono uppercase tracking-wider text-medical-muted font-semibold">
-                Volumetric Burden Category
-              </span>
-            </div>
+      {/* 2. Structured Quantitative Burden & Non-Clinical Severity Status */}
+      <div className="p-3 rounded-xl bg-medical-card border border-medical-border space-y-2.5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <span
-              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shadow-sm"
-              style={{
-                backgroundColor: `${cat.color}25`,
-                borderColor: `${cat.color}70`,
-                color: '#FFFFFF'
-              }}
-            >
-              {cat.category}
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: cat?.color || '#0d9488' }}
+            />
+            <span className="text-[10px] font-mono uppercase tracking-wider text-medical-muted font-semibold">
+              Burden & Severity Assessment
+            </span>
+          </div>
+          <span
+            className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shadow-sm"
+            style={{
+              backgroundColor: `${cat?.color || '#0d9488'}25`,
+              borderColor: `${cat?.color || '#0d9488'}70`,
+              color: '#FFFFFF'
+            }}
+          >
+            {cat?.category || 'Measured'}
+          </span>
+        </div>
+
+        {/* Explicit Section 4 Specification Rows */}
+        <div className="space-y-1.5 pt-2 border-t border-medical-border/60 text-[11px] font-mono">
+          <div className="flex items-center justify-between">
+            <span className="text-medical-muted">Tumor burden:</span>
+            <span className="text-white font-semibold flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <span>Quantitative measurement available ({wt?.volume_cm3?.toFixed(2)} cm³)</span>
             </span>
           </div>
 
-          <p className="text-xs text-white/90 leading-tight">
-            {cat.description}
-          </p>
+          <div className="flex items-center justify-between">
+            <span className="text-medical-muted">Category:</span>
+            <span className="text-medical-tealLight font-semibold">
+              Experimental research category ({cat?.category})
+            </span>
+          </div>
 
-          {/* Mandatory Non-Clinical Disclaimer */}
-          <div className="pt-2 border-t border-white/10 space-y-1.5">
-            <div className="flex items-start gap-1.5 text-[10px] text-amber-300 font-mono leading-tight">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-              <span>
-                <strong>EXPERIMENTAL / NON-CLINICAL:</strong> Categorization describes segmentation volume extent only. Does NOT establish WHO tumor grade, malignancy, or prognosis.
-              </span>
-            </div>
-
-            <button
-              onClick={() => setShowDisclaimerDetails(!showDisclaimerDetails)}
-              className="text-[10px] text-medical-teal hover:underline flex items-center gap-0.5 font-mono"
-            >
-              <Info className="w-2.5 h-2.5" />
-              <span>{showDisclaimerDetails ? 'Hide RANO/BraTS Citation' : 'View Threshold Research Citation'}</span>
-            </button>
-
-            {showDisclaimerDetails && (
-              <div className="p-2 rounded bg-black/40 border border-white/10 text-[10px] text-medical-muted font-mono space-y-1">
-                <p><strong>Methodology:</strong> {cat.citation}</p>
-                <p><strong>Disclaimer:</strong> {cat.clinical_severity_disclaimer}</p>
-              </div>
-            )}
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-medical-muted shrink-0">Clinical severity:</span>
+            <span className="text-amber-300 text-right font-medium">
+              Not determined by segmentation-volume calculation
+            </span>
           </div>
         </div>
-      )}
+
+        {/* Factual Context & Research Citations Toggle */}
+        <div className="p-2 rounded-lg bg-medical-surface/80 border border-medical-border/50 text-[10px] text-medical-muted font-mono leading-tight space-y-1">
+          <p className="text-medical-muted/90 leading-tight">
+            {cat?.description || 'Volumetric spatial extent derived from real NIfTI segmentation mask.'}
+          </p>
+          <div className="pt-1 flex items-center justify-between">
+            <button
+              onClick={() => setShowDisclaimerDetails(!showDisclaimerDetails)}
+              className="text-[10px] text-medical-teal hover:underline flex items-center gap-0.5"
+            >
+              <Info className="w-2.5 h-2.5" />
+              <span>{showDisclaimerDetails ? 'Hide Research Methodology' : 'View Threshold Research Methodology'}</span>
+            </button>
+            <span className="text-[9px] text-medical-muted/60">Non-Diagnostic</span>
+          </div>
+
+          {showDisclaimerDetails && (
+            <div className="mt-1.5 pt-1.5 border-t border-medical-border/50 text-[9px] text-medical-muted space-y-1">
+              <p><strong>Research Citation:</strong> {cat?.citation}</p>
+              <p><strong>Guidance:</strong> {cat?.clinical_severity_disclaimer}</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* 3. Volumetric Measurement Cards: WT, TC, ET */}
       <div className="space-y-2">
