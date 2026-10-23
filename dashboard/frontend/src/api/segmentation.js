@@ -24,6 +24,7 @@ export async function uploadMRI(files) {
   if (files.t1ce) formData.append('t1ce', files.t1ce);
   if (files.t2) formData.append('t2', files.t2);
   if (files.seg) formData.append('seg', files.seg);
+  if (files.ct) formData.append('ct', files.ct);
 
   return request('/api/upload', {
     method: 'POST',
@@ -119,6 +120,7 @@ export function getSliceUrl({
   showEt = true,
   opacity = 0.75,
   showOverlay = true,
+  timestamp = null,
 }) {
   const params = new URLSearchParams({
     patient_id: patientId,
@@ -132,6 +134,9 @@ export function getSliceUrl({
     opacity: String(opacity),
     show_overlay: String(showOverlay),
   });
+  if (timestamp) {
+    params.append('t', String(timestamp));
+  }
   return `${API_BASE_URL}/api/volume/slice?${params.toString()}`;
 }
 

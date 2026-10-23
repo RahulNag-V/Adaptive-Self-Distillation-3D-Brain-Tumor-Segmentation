@@ -102,10 +102,19 @@ export default function OrthogonalSliceViewer({
   showControls = true,
   isMaximized = false,
   onToggleMaximize,
+  isEditing = false,
+  brushMode = 'paint', // 'paint' | 'erase'
+  activeLabel = 1, // 1: NCR, 2: ED, 3: ET, 0: Erase
+  brushRadius = 4,
+  onStrokeComplete,
+  segTimestamp = null,
 }) {
   const containerRef = useRef(null);
   const viewportRef = useRef(null);
   const imageRef = useRef(null);
+  const paintCanvasRef = useRef(null);
+  const isDrawingRef = useRef(false);
+  const strokePointsRef = useRef([]);
 
   const cfg = PLANE_CONFIG[plane] || PLANE_CONFIG.axial;
 
@@ -172,6 +181,88 @@ export default function OrthogonalSliceViewer({
   const baseWidth = Math.max(20, Math.round(nativeW * fitScale));
   const baseHeight = Math.max(20, Math.round(nativeH * fitScale));
 
+  // Clear canvas when sliceIndex, plane, or segTimestamp changes
+  useEffect(() => {
+    const canvas = paintCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }, [sliceIndex, plane, isEditing, segTimestamp]);
+
+  const getCanvasVoxelCoords = (e) => {
+    const canvas = paintCanvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    if (clickX < 0 || clickX > rect.width || clickY < 0 || clickY > rect.height) return null;
+    const u = clickX / rect.width;
+    const v = clickY / rect.height;
+    const px = Math.max(0, Math.min(nativeW - 1, Math.round(u * (nativeW - 1))));
+    const py = Math.max(0, Math.min(nativeH - 1, Math.round(v * (nativeH - 1))));
+    return { px, py };
+  };
+
+  const drawBrushPoint = (px, py) => {
+    const canvas = paintCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.save();
+    if (brushMode === 'erase' || activeLabel === 0) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 1.0)';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      if (activeLabel === 1) ctx.fillStyle = 'rgba(239, 68, 68, 0.85)'; // NCR Red
+      else if (activeLabel === 2) ctx.fillStyle = 'rgba(16, 185, 129, 0.85)'; // ED Green
+      else if (activeLabel === 3) ctx.fillStyle = 'rgba(245, 158, 11, 0.85)'; // ET Yellow
+      else ctx.fillStyle = 'rgba(20, 184, 166, 0.85)';
+    }
+    ctx.beginPath();
+    ctx.arc(px, py, Math.max(1, brushRadius), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const handlePaintMouseDown = (e) => {
+    if (e.button !== 0 || !isEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const coords = getCanvasVoxelCoords(e);
+    if (!coords) return;
+    isDrawingRef.current = true;
+    strokePointsRef.current = [[coords.px, coords.py]];
+    drawBrushPoint(coords.px, coords.py);
+  };
+
+  const handlePaintMouseMove = (e) => {
+    if (!isDrawingRef.current || !isEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const coords = getCanvasVoxelCoords(e);
+    if (!coords) return;
+    strokePointsRef.current.push([coords.px, coords.py]);
+    drawBrushPoint(coords.px, coords.py);
+  };
+
+  const handlePaintMouseUp = (e) => {
+    if (!isDrawingRef.current || !isEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    isDrawingRef.current = false;
+    const pts = strokePointsRef.current;
+    strokePointsRef.current = [];
+    if (pts.length > 0 && onStrokeComplete) {
+      onStrokeComplete({
+        plane,
+        slice_index: sliceIndex,
+        label: brushMode === 'erase' ? 0 : activeLabel,
+        brush_radius: brushRadius,
+        points: pts,
+      });
+    }
+  };
+
   // Compute slice URL
   const sliceUrl = patientId
     ? getSliceUrl({
@@ -185,6 +276,7 @@ export default function OrthogonalSliceViewer({
         showEt: subregions.et,
         opacity,
         showOverlay,
+        timestamp: segTimestamp,
       })
     : '';
 
@@ -363,6 +455,12 @@ export default function OrthogonalSliceViewer({
           <span className="px-1.5 py-0.5 rounded bg-medical-surface/80 border border-medical-border/80 text-[10px] font-mono text-white font-semibold shadow-sm shrink-0">
             {isCompact ? `${sliceIndex + 1}/${totalSlices}` : `Slice ${sliceIndex + 1} / ${totalSlices}`}
           </span>
+
+          {isEditing && (
+            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-[9px] font-mono text-amber-300 font-bold uppercase animate-pulse shrink-0">
+              EDIT: {brushMode === 'erase' ? 'Eraser' : `L${activeLabel}`} (R:{brushRadius})
+            </span>
+          )}
         </div>
 
         {/* Right: Quick Crosshair & Fit Controls */}
@@ -459,6 +557,27 @@ export default function OrthogonalSliceViewer({
               Loading MRI slice...
             </div>
           )}
+
+          {/* Interactive Segmentation Paint Canvas */}
+          <canvas
+            ref={paintCanvasRef}
+            width={nativeW}
+            height={nativeH}
+            style={{
+              width: `${baseWidth}px`,
+              height: `${baseHeight}px`,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              zIndex: 15,
+              cursor: isEditing ? (brushMode === 'erase' ? 'cell' : 'crosshair') : 'default',
+              pointerEvents: isEditing ? 'auto' : 'none',
+            }}
+            onMouseDown={handlePaintMouseDown}
+            onMouseMove={handlePaintMouseMove}
+            onMouseUp={handlePaintMouseUp}
+            onMouseLeave={handlePaintMouseUp}
+          />
 
           {/* Synchronized Thin Crosshairs & Center Target Reticle */}
           {showCrosshair && imgLoaded && (

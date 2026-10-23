@@ -40,6 +40,15 @@ from tests.test_tumor_burden import (
     test_real_patient_tumor_burden_analysis,
     test_nonexistent_patient_error_handling,
 )
+from tests.test_adaptive_hitl_workflow import (
+    test_model_task_catalog,
+    test_ct_upload_and_compatibility_rejection,
+    test_dicom_deidentification,
+    test_interactive_voxel_editing_and_coordinate_mapping,
+    test_annotation_lifecycle_and_review,
+    test_dataset_leakage_guard_and_ingestion,
+    test_training_candidate_evaluation_and_promotion,
+)
 
 if __name__ == "__main__":
     print("=" * 70)
@@ -65,6 +74,13 @@ if __name__ == "__main__":
         ("Tumor Burden Relative Intracranial %", test_relative_intracranial_burden_calculation),
         ("Tumor Burden Real Patient Ground Truth (BraTS2021_01017)", test_real_patient_tumor_burden_analysis),
         ("Tumor Burden Error Handling", test_nonexistent_patient_error_handling),
+        ("Adaptive: Model & Task Catalog Declaration", test_model_task_catalog),
+        ("Adaptive: CT Scan Upload & AI Incompatibility Guard", test_ct_upload_and_compatibility_rejection),
+        ("Adaptive: DICOM De-identification & Sanitization", test_dicom_deidentification),
+        ("Adaptive: Interactive Voxel Editing & Coordinate Mapping", test_interactive_voxel_editing_and_coordinate_mapping),
+        ("Adaptive: Annotation Lifecycle & Clinical Review", test_annotation_lifecycle_and_review),
+        ("Adaptive: Dataset Leakage Guard & Splitting", test_dataset_leakage_guard_and_ingestion),
+        ("Adaptive: Training Candidate Evaluation & Promotion/Rollback", test_training_candidate_evaluation_and_promotion),
     ]
 
     passed = 0

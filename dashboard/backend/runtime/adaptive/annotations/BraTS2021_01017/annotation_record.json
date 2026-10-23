@@ -1,0 +1,69 @@
+{
+  "annotation_id": "247d4acf-abe2-4351-9455-5aade175e3fc",
+  "patient_id": "BraTS2021_01017",
+  "seg_source": "ground_truth",
+  "status": "Included in Training Dataset",
+  "created_at": "2026-10-17 11:08:21 UTC",
+  "updated_at": "2026-10-17 11:10:43 UTC",
+  "annotator_id": "system_initial",
+  "model_version": "v1.0.0-adaptive-unetr",
+  "total_edits_count": 0,
+  "total_voxels_modified": 0,
+  "history": [
+    {
+      "action": "initial_creation",
+      "timestamp": "2026-10-17 11:08:21 UTC",
+      "description": "Initialized from ground_truth source mask."
+    },
+    {
+      "action": "review_approve",
+      "timestamp": "2026-10-17 11:08:21 UTC",
+      "reviewer": "supervisory_neuro_radiologist",
+      "decision": "approved",
+      "reason": "Verified expert contour refinement of necrotic core and edema boundaries for adaptive training."
+    },
+    {
+      "action": "review_approve",
+      "timestamp": "2026-10-17 11:09:26 UTC",
+      "reviewer": "supervisory_neuro_radiologist",
+      "decision": "approved",
+      "reason": "Verified expert contour refinement of necrotic core and edema boundaries for adaptive training."
+    },
+    {
+      "action": "ingested_into_training_dataset",
+      "timestamp": "2026-10-17 11:09:27 UTC",
+      "dataset_version": "v1.0.0-adaptive"
+    },
+    {
+      "action": "review_approve",
+      "timestamp": "2026-10-17 11:10:34 UTC",
+      "reviewer": "supervisory_neuro_radiologist",
+      "decision": "approved",
+      "reason": "Verified expert contour refinement of necrotic core and edema boundaries for adaptive training."
+    },
+    {
+      "action": "ingested_into_training_dataset",
+      "timestamp": "2026-10-17 11:10:34 UTC",
+      "dataset_version": "v1.0.0-adaptive"
+    },
+    {
+      "action": "review_approve",
+      "timestamp": "2026-10-17 11:10:43 UTC",
+      "reviewer": "supervisory_neuro_radiologist",
+      "decision": "approved",
+      "reason": "Verified expert contour refinement of necrotic core and edema boundaries for adaptive training."
+    },
+    {
+      "action": "ingested_into_training_dataset",
+      "timestamp": "2026-10-17 11:10:43 UTC",
+      "dataset_version": "v1.0.0-adaptive"
+    }
+  ],
+  "undo_stack_size": 0,
+  "redo_stack_size": 0,
+  "review_decision": "approved",
+  "reviewer_id": "supervisory_neuro_radiologist",
+  "review_notes": "Verified expert contour refinement of necrotic core and edema boundaries for adaptive training.",
+  "review_timestamp": "2026-10-17 11:10:43 UTC",
+  "is_approved_for_training": true
+}

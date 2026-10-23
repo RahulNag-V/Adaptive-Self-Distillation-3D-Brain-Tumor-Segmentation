@@ -1,0 +1,25 @@
+[
+  {
+    "job_id": "job-8a9be891",
+    "candidate_version": "test_candidate_ui",
+    "status": "completed",
+    "progress_percent": 100,
+    "current_epoch": 0,
+    "total_epochs": 1,
+    "learning_rate": 0.0001,
+    "dataset_version": "v1.0.0-adaptive",
+    "training_samples_count": 1,
+    "started_at": "2026-10-17 11:09:48 UTC",
+    "completed_at": "2026-10-17 11:09:49 UTC",
+    "loss_history": [
+      {
+        "epoch": 1,
+        "loss": 0.3488
+      }
+    ],
+    "checkpoint_path": "D:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\dashboard\\checkpoints\\adaptive\\candidates\\test_candidate_ui\\model.pth",
+    "base_checkpoint_path": "D:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\dashboard\\checkpoints\\adaptive\\best.pth",
+    "notes": "Test fine-tuning",
+    "error": null
+  }
+]

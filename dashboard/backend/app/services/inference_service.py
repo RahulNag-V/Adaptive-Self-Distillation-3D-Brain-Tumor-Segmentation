@@ -138,6 +138,21 @@ class InferenceService:
                 )
             # Label map: argmax over class channels [B, 1, H, W, D]
             pred_labels = torch.argmax(outputs, dim=1, keepdim=True)
+            probs = torch.softmax(outputs, dim=1)
+            max_probs, _ = torch.max(probs, dim=1)
+            mean_conf = round(float(max_probs.mean().cpu()), 3)
+            entropy = -torch.sum(probs * torch.log(probs + 1e-7), dim=1)
+            fg_mask = pred_labels.squeeze(1) > 0
+            if fg_mask.any():
+                mean_fg_entropy = round(float(entropy[fg_mask].mean().cpu()), 4)
+            else:
+                mean_fg_entropy = round(float(entropy.mean().cpu()), 4)
+            uncertainty_info = {
+                "mean_prediction_confidence": mean_conf,
+                "mean_foreground_entropy": mean_fg_entropy,
+                "confidence_metric": "Softmax Maximum Probability (0.0 to 1.0)",
+                "entropy_metric": "Shannon Entropy in nats (lower = higher certainty)"
+            }
         inference_time = round(time.time() - start_time, 3)
 
         # 3. Ground Truth Evaluation if seg was provided
@@ -200,6 +215,8 @@ class InferenceService:
             "inference_time_seconds": inference_time,
             "device": cls._device,
             "model": "Adaptive Self-Distillation (UNETR)",
+            "model_version": "1.0.0",
+            "uncertainty_indicators": uncertainty_info,
             "regions": regions_summary,
             "ground_truth_available": gt_metrics is not None,
             "metrics": gt_metrics,

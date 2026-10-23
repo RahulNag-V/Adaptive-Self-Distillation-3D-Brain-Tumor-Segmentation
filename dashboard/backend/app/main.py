@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
+from app.api.adaptive_routes import router as adaptive_router
 from app.services.inference_service import InferenceService
 
 
@@ -42,6 +43,7 @@ app.add_middleware(
 
 # Register API routes
 app.include_router(router)
+app.include_router(adaptive_router)
 
 
 @app.get("/")

@@ -6,6 +6,7 @@ import ViewerPage from './pages/ViewerPage';
 import ResultsPage from './pages/ResultsPage';
 import AboutPage from './pages/AboutPage';
 import ClassificationPage from './pages/ClassificationPage';
+import AdaptiveDashboardPage from './pages/AdaptiveDashboardPage';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -65,11 +66,25 @@ export default function App() {
         return (
           <UploadPage 
             onNavigate={setActiveTab} 
-            onSegmentationComplete={handleSegmentationComplete} 
+            onSegmentationComplete={handleSegmentationComplete}
+            onOpenViewer={(sessionData) => {
+              setLiveResult(sessionData);
+              setActiveTab('viewer');
+            }}
           />
         );
       case 'viewer':
         return <ViewerPage currentResult={liveResult} onNavigate={setActiveTab} />;
+      case 'adaptive':
+        return (
+          <AdaptiveDashboardPage 
+            onNavigate={setActiveTab}
+            onOpenPatientInViewer={(patientId) => {
+              setLiveResult({ session_id: patientId });
+              setActiveTab('viewer');
+            }}
+          />
+        );
       case 'results':
         return (
           <ResultsPage 

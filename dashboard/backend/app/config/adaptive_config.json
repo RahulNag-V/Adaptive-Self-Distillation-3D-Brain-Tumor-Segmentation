@@ -1,0 +1,95 @@
+{
+  "system_version": "1.0.0",
+  "storage": {
+    "annotations_dir": "dashboard/backend/runtime/adaptive/annotations",
+    "dataset_dir": "dashboard/backend/runtime/adaptive/dataset",
+    "candidates_dir": "checkpoints/adaptive/candidates",
+    "registry_file": "dashboard/backend/runtime/adaptive/model_registry.json"
+  },
+  "supported_modalities_and_tasks": {
+    "brain_mri_multimodal": {
+      "modality_name": "Brain MRI (Multimodal)",
+      "required_sequences": ["FLAIR", "T1", "T1CE", "T2"],
+      "supported_tasks": ["brain_tumor_segmentation"],
+      "active_model_id": "unetr-adaptive-v1.0.0",
+      "is_ai_prediction_supported": true,
+      "description": "Standard BraTS 4-sequence cranial MRI co-registered and skull-stripped.",
+      "model_specification": {
+        "model_name": "Adaptive Self-Distillation UNETR (Production)",
+        "version": "1.0.0",
+        "checkpoint_version": "v1.0.0-adaptive",
+        "checkpoint_path": "checkpoints/adaptive/best.pth",
+        "supported_modalities": ["FLAIR", "T1", "T1ce", "T2"],
+        "expected_input_dimensions_and_channels": "[4, 96, 96, 96] sliding-window ROI",
+        "input_channels": 4,
+        "required_preprocessing": "Per-channel Z-score intensity normalization, SRI24 co-registration, skull stripping, and spatial sliding-window chunking (ROI 96x96x96, overlap 0.25).",
+        "output_label_definitions": {
+          "label_0": "Background",
+          "label_1": "Necrotic and Non-Enhancing Tumor Core (NCR)",
+          "label_2": "Peritumoral Edema (ED)",
+          "label_3": "GD-Enhancing Tumor (ET)",
+          "derived_subregions": {
+            "WT": "Whole Tumor (NCR + ED + ET, labels 1+2+3)",
+            "TC": "Tumor Core (NCR + ET, labels 1+3)",
+            "ET": "Enhancing Tumor (ET, label 3)"
+          }
+        },
+        "training_dataset_information": "BraTS 2021 verified subset (40 train subjects, 10 fixed validation subjects).",
+        "validation_metrics": {
+          "WT_dice": 0.908,
+          "TC_dice": 0.852,
+          "ET_dice": 0.824,
+          "mean_dice": 0.861,
+          "mean_hd95_mm": 66.63,
+          "fixed_validation_cohort_size": 10
+        },
+        "known_limitations": "Requires all 4 co-registered multimodal MRI sequences (FLAIR, T1, T1ce, T2). Incompatible with CT Hounsfield data, non-brain anatomical structures, or single-sequence inputs."
+      }
+    },
+    "ct_head": {
+      "modality_name": "Computed Tomography (CT Head)",
+      "required_sequences": ["CT"],
+      "supported_tasks": ["head_ct_anatomical_review", "ct_lesion_annotation"],
+      "active_model_id": null,
+      "is_ai_prediction_supported": false,
+      "unsupported_reason": "Active UNETR model is trained strictly for multimodal Brain MRI (FLAIR/T1/T1ce/T2). CT Hounsfield-unit data is incompatible with MRI intensity weights. AI prediction is withheld to prevent clinical hazard. Manual annotation, interactive voxel correction, and candidate dataset curation are fully supported.",
+      "description": "Cranial CT volumetric scan in calibrated Hounsfield Units (HU).",
+      "model_specification": {
+        "model_name": "None (CT AI Inference Withheld)",
+        "version": null,
+        "checkpoint_version": null,
+        "checkpoint_path": null,
+        "supported_modalities": ["CT"],
+        "expected_input_dimensions_and_channels": "[1, D, H, W] calibrated HU volume",
+        "input_channels": 1,
+        "required_preprocessing": "Hounsfield windowing (Brain: C:40 W:80; Subdural: C:75 W:215; Bone: C:400 W:1800).",
+        "output_label_definitions": {
+          "label_0": "Normal Tissue / Background",
+          "label_1": "Hemorrhage / Hyperdense Lesion",
+          "label_2": "Edema / Hypodense Lesion",
+          "label_3": "Calcinosis / Mass Effect"
+        },
+        "training_dataset_information": "No production CT segmentation dataset approved yet. Candidate dataset collection in progress via verified human corrections.",
+        "validation_metrics": null,
+        "known_limitations": "No CT-trained model checkpoint deployed in current production registry. Inference withheld."
+      }
+    }
+  },
+  "promotion_criteria": {
+    "min_approved_samples_for_training": 1,
+    "max_allowed_wt_dice_regression": 0.015,
+    "max_allowed_tc_dice_regression": 0.02,
+    "max_allowed_et_dice_regression": 0.02,
+    "require_human_promotion_approval": true,
+    "citation": "Safe Medical AI Continuous Learning Guidelines (RANO / MedPerf continuous evaluation baseline criteria)."
+  },
+  "training_hyperparameters": {
+    "base_learning_rate": 0.0001,
+    "batch_size": 1,
+    "roi_size": [96, 96, 96],
+    "default_epochs": 2,
+    "mixed_precision": true,
+    "optimizer": "AdamW",
+    "weight_decay": 0.00001
+  }
+}

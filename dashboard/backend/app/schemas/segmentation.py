@@ -36,6 +36,12 @@ class ValidationResponse(BaseModel):
     has_ground_truth: bool = False
     details: List[ModalityFileInfo] = []
     notes: List[str] = []
+    modality_type: Optional[str] = "MRI"
+    modality_name: Optional[str] = "Brain MRI (Multimodal)"
+    is_ai_prediction_supported: bool = True
+    compatible_model: Optional[str] = "unetr-adaptive-v1.0.0"
+    unsupported_reason: Optional[str] = None
+    dicom_metadata: Optional[Dict[str, Any]] = None
 
 
 class UploadResponse(BaseModel):
@@ -77,6 +83,8 @@ class SegmentationResponse(BaseModel):
     ground_truth_available: bool = False
     metrics: Optional[Dict[str, Optional[float]]] = None
     note: Optional[str] = None
+    model_version: Optional[str] = "1.0.0"
+    uncertainty_indicators: Optional[Dict[str, Any]] = None
 
 
 class ErrorDetail(BaseModel):

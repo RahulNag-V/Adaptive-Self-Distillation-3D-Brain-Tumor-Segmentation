@@ -10,7 +10,7 @@ from typing import Tuple, List, Dict, Optional, Any
 import nibabel as nib
 import numpy as np
 
-ALLOWED_EXTENSIONS = (".nii", ".nii.gz")
+ALLOWED_EXTENSIONS = (".nii", ".nii.gz", ".dcm", ".zip")
 DISALLOWED_EXTENSIONS = (
     ".exe", ".bat", ".cmd", ".sh", ".py", ".bin", ".dll", ".so",
     ".vbs", ".ps1", ".jar", ".msi", ".scr", ".com"
@@ -42,7 +42,7 @@ def validate_file_security(filename: str, file_size: int = 0) -> Tuple[bool, str
 
     has_valid_ext = any(lower_name.endswith(ext) for ext in ALLOWED_EXTENSIONS)
     if not has_valid_ext:
-        return False, f"File must be a NIfTI image (.nii or .nii.gz). Received: {filename}"
+        return False, f"File must be a medical image (.nii, .nii.gz, .dcm) or DICOM archive (.zip). Received: {filename}"
 
     if file_size > MAX_FILE_SIZE:
         return False, f"File size exceeds allowable limit (500 MB): {file_size / (1024*1024):.1f} MB"

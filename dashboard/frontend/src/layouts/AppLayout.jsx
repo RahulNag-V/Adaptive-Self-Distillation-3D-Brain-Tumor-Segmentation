@@ -15,7 +15,8 @@ import {
   Cpu,
   Image as ImageIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { useServerStatus } from '../hooks/useServerStatus';
 
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'upload', label: 'Upload Scan', icon: UploadCloud },
   { id: 'viewer', label: '3D Viewer', icon: Box },
+  { id: 'adaptive', label: 'Adaptive Learning', icon: RefreshCw },
   { id: 'classify', label: '2D Classification', icon: ImageIcon },
   { id: 'results', label: 'Results', icon: BarChart3 },
   { id: 'about', label: 'About', icon: Info },

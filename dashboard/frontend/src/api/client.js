@@ -39,4 +39,20 @@ export async function request(endpoint, options = {}) {
   }
 }
 
+export const client = {
+  get: async (endpoint) => {
+    const data = await request(endpoint, { method: 'GET' });
+    return { data };
+  },
+  post: async (endpoint, body) => {
+    const data = await request(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    return { data };
+  },
+};
+
+export default client;
 export { API_BASE_URL };

@@ -47,10 +47,12 @@ async def upload_modalities(
     t1: UploadFile = File(None),
     t1ce: UploadFile = File(None),
     t2: UploadFile = File(None),
-    seg: UploadFile = File(None)
+    seg: UploadFile = File(None),
+    ct: UploadFile = File(None)
 ):
     """
-    Accepts 4 required NIfTI modalities + optional ground truth seg.
+    Accepts MRI modalities (FLAIR, T1, T1ce, T2) or CT scan + optional ground truth seg.
+    Supports NIfTI (.nii, .nii.gz) and DICOM series (.dcm or .zip).
     Saves them to an isolated session directory with standardized names.
     """
     session_id = str(uuid.uuid4())
@@ -60,11 +62,12 @@ async def upload_modalities(
     if t1ce and t1ce.filename: received["t1ce"] = t1ce
     if t2 and t2.filename: received["t2"] = t2
     if seg and seg.filename: received["seg"] = seg
+    if ct and ct.filename: received["ct"] = ct
 
     if not received:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No MRI modalities provided in the upload request."
+            detail="No medical scan files (MRI or CT) provided in the upload request."
         )
 
     try:
@@ -152,7 +155,8 @@ async def validate_session(request: ValidationRequest):
         )
 
     modalities_found = list(inspections.keys())
-    missing = [m for m in REQUIRED_MODALITIES if m not in modalities_found]
+    is_ct = meta.get("modality_type") == "CT"
+    missing = [] if is_ct else [m for m in REQUIRED_MODALITIES if m not in modalities_found]
 
     return ValidationResponse(
         is_valid=is_valid,
@@ -161,7 +165,13 @@ async def validate_session(request: ValidationRequest):
         missing_modalities=missing,
         has_ground_truth=has_ground_truth,
         details=file_details,
-        notes=notes
+        notes=notes,
+        modality_type=meta.get("modality_type", "MRI"),
+        modality_name=meta.get("modality_name", "Brain MRI (Multimodal)"),
+        is_ai_prediction_supported=meta.get("is_ai_prediction_supported", True),
+        compatible_model=meta.get("compatible_model"),
+        unsupported_reason=meta.get("unsupported_reason"),
+        dicom_metadata=meta.get("dicom_metadata")
     )
 
 
@@ -169,8 +179,25 @@ async def validate_session(request: ValidationRequest):
 async def run_segmentation(request: SegmentationRequest):
     """
     Executes real Adaptive Self-Distillation sliding-window inference on the validated session.
+    Guards strictly against executing MRI weights on incompatible CT data.
     """
     session_id = request.session_id
+    is_valid, notes, meta, _ = ValidationService.validate_session(session_id)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Session validation failed: {'; '.join(notes)}"
+        )
+
+    if not meta.get("is_ai_prediction_supported", True):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=meta.get(
+                "unsupported_reason",
+                "Compatible AI model unavailable for this modality. Inference withheld to prevent hazard."
+            )
+        )
+
     try:
         result = InferenceService.run_segmentation(session_id)
         return SegmentationResponse(**result)

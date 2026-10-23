@@ -15,9 +15,11 @@ import numpy as np
 from PIL import Image
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data" / "raw" / "BraTS2021" / "BraTS2021_Training_Data"
 VAL_SPLIT_FILE = PROJECT_ROOT / "data" / "splits" / "val.txt"
 SESSIONS_DIR = PROJECT_ROOT / "neuroseg3d_sessions"
+SESSIONS_RUNTIME_DIR = BACKEND_DIR / "runtime" / "sessions"
 
 logger = logging.getLogger("neuroseg3d.volume")
 
@@ -87,8 +89,23 @@ class VolumeService:
         candidate = DATA_DIR / subject_id
         if candidate.exists():
             return candidate
+        # Check runtime sessions folder
+        session_runtime = SESSIONS_RUNTIME_DIR / subject_id
+        if session_runtime.exists():
+            return session_runtime
         # Check session folder
         session_cand = SESSIONS_DIR / subject_id
+        if session_cand.exists():
+            return session_cand
+        return None
+
+    @classmethod
+    def _find_session_dir(cls, session_id: str) -> Optional[Path]:
+        """Finds session directory in runtime/sessions or legacy sessions folder."""
+        session_runtime = SESSIONS_RUNTIME_DIR / session_id
+        if session_runtime.exists():
+            return session_runtime
+        session_cand = SESSIONS_DIR / session_id
         if session_cand.exists():
             return session_cand
         return None
@@ -111,6 +128,8 @@ class VolumeService:
 
         # Determine file path
         target_path: Optional[Path] = None
+        ANNOTATIONS_BASE = BACKEND_DIR / "runtime" / "adaptive" / "annotations"
+
         if kind.lower() in ["flair", "t1", "t1ce", "t2", "seg"]:
             # Standard BraTS naming
             p1 = subj_dir / f"{subject_id}_{kind.lower()}.nii.gz"
@@ -121,9 +140,42 @@ class VolumeService:
                 target_path = p2
         elif kind.lower() == "pred":
             # Check session prediction
-            p = SESSIONS_DIR / subject_id / "prediction.nii.gz"
-            if p.exists():
-                target_path = p
+            p1 = SESSIONS_RUNTIME_DIR / subject_id / "prediction.nii.gz"
+            p2 = SESSIONS_DIR / subject_id / "prediction.nii.gz"
+            if p1.exists():
+                target_path = p1
+            elif p2.exists():
+                target_path = p2
+        elif kind.lower() in ["corrected", "annotation"]:
+            # Check active human correction mask
+            p_corr = ANNOTATIONS_BASE / subject_id / "corrected_seg.nii.gz"
+            if p_corr.exists():
+                target_path = p_corr
+            else:
+                # Fallback to prediction or ground truth
+                p_pred1 = SESSIONS_RUNTIME_DIR / subject_id / "prediction.nii.gz"
+                p_pred2 = SESSIONS_DIR / subject_id / "prediction.nii.gz"
+                if p_pred1.exists():
+                    target_path = p_pred1
+                elif p_pred2.exists():
+                    target_path = p_pred2
+                elif (subj_dir / f"{subject_id}_seg.nii.gz").exists():
+                    target_path = subj_dir / f"{subject_id}_seg.nii.gz"
+        elif kind.lower() in ["original", "orig", "original_prediction"]:
+            p_orig = ANNOTATIONS_BASE / subject_id / "original_seg.nii.gz"
+            if p_orig.exists():
+                target_path = p_orig
+            else:
+                p_pred = SESSIONS_DIR / subject_id / "prediction.nii.gz"
+                if p_pred.exists():
+                    target_path = p_pred
+        elif kind.lower() == "ct":
+            p1 = subj_dir / f"{subject_id}_ct.nii.gz"
+            p2 = subj_dir / "ct.nii.gz"
+            if p1.exists():
+                target_path = p1
+            elif p2.exists():
+                target_path = p2
 
         if not target_path or not target_path.exists():
             return None
@@ -137,7 +189,6 @@ class VolumeService:
                 if len(cls._cache) >= cls._cache_max_size:
                     cls._cache.popitem(last=False)
                 cls._cache[cache_key] = arr
-
             return arr
         except Exception as e:
             logger.error(f"Error loading {target_path}: {e}")
@@ -151,7 +202,7 @@ class VolumeService:
         # Load FLAIR or first available modality for geometry
         vol = cls.get_volume_array(subject_id, "flair")
         if vol is None:
-            for m in ["t1", "t1ce", "t2"]:
+            for m in ["t1", "t1ce", "t2", "ct"]:
                 vol = cls.get_volume_array(subject_id, m)
                 if vol is not None:
                     break
@@ -187,6 +238,7 @@ class VolumeService:
             }
 
         pred_vol = cls.get_volume_array(subject_id, "pred")
+        corr_vol = cls.get_volume_array(subject_id, "corrected")
 
         return {
             "patient_id": subject_id,
@@ -196,9 +248,10 @@ class VolumeService:
                 "sagittal": shape_x,  # X slices (0 .. shape_x - 1)
             },
             "voxel_spacing": [1.0, 1.0, 1.0],
-            "modalities": ["FLAIR", "T1", "T1CE", "T2"],
+            "modalities": ["FLAIR", "T1", "T1CE", "T2"] if cls.get_volume_array(subject_id, "flair") is not None else ["CT"],
             "has_ground_truth": seg_vol is not None,
             "has_prediction": pred_vol is not None,
+            "has_correction": corr_vol is not None,
             "volumetrics": volumetrics
         }
 
@@ -252,6 +305,10 @@ class VolumeService:
             seg_vol = cls.get_volume_array(subject_id, "seg")
         elif seg_source in ["prediction", "pred"]:
             seg_vol = cls.get_volume_array(subject_id, "pred")
+        elif seg_source in ["corrected", "annotation"]:
+            seg_vol = cls.get_volume_array(subject_id, "corrected")
+        elif seg_source in ["original", "orig", "original_prediction"]:
+            seg_vol = cls.get_volume_array(subject_id, "original")
         else:
             seg_vol = None
 
@@ -277,14 +334,20 @@ class VolumeService:
             mri_slice = np.rot90(mri_2d)
             seg_slice = np.rot90(seg_2d) if seg_2d is not None else None
 
-        # 1. Grayscale MRI Windowing (1% to 99% robust contrast normalization)
-        fg = mri_slice[mri_slice > 0]
-        if len(fg) > 0:
-            p1 = float(np.percentile(fg, 1))
-            p99 = float(np.percentile(fg, 99))
-            norm = np.clip((mri_slice - p1) / (p99 - p1 + 1e-5) * 255.0, 0, 255).astype(np.uint8)
+        # 1. Grayscale Windowing (CT Brain Window or MRI 1% to 99% robust contrast normalization)
+        if modality == "ct":
+            w_min, w_max = 0.0, 80.0
+            if float(np.max(mri_slice)) <= 1.5 and float(np.min(mri_slice)) >= -0.5:
+                w_min, w_max = float(np.percentile(mri_slice, 1)), float(np.percentile(mri_slice, 99))
+            norm = np.clip((mri_slice - w_min) / (w_max - w_min + 1e-5) * 255.0, 0, 255).astype(np.uint8)
         else:
-            norm = np.zeros_like(mri_slice, dtype=np.uint8)
+            fg = mri_slice[mri_slice > 0]
+            if len(fg) > 0:
+                p1 = float(np.percentile(fg, 1))
+                p99 = float(np.percentile(fg, 99))
+                norm = np.clip((mri_slice - p1) / (p99 - p1 + 1e-5) * 255.0, 0, 255).astype(np.uint8)
+            else:
+                norm = np.zeros_like(mri_slice, dtype=np.uint8)
 
         # Convert to RGBA
         rgb = np.stack([norm, norm, norm, np.full_like(norm, 255)], axis=-1)
