@@ -34,3 +34,6 @@ logs/
 results/logs/
 *.log
 events.out.tfevents.*
+
+# Firebase CLI cache
+.firebase/
