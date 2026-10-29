@@ -21,10 +21,10 @@ export default function AboutPage() {
           <span>RESEARCH & METHODOLOGY</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-white">
-          About NeuroSeg 3D
+          About NeuroVision AI
         </h1>
         <p className="text-sm text-medical-muted leading-relaxed">
-          NeuroSeg 3D is an academic research platform for 3D brain tumor segmentation
+          NeuroVision AI is an academic research platform for 3D brain tumor segmentation
           using an Adaptive Self-Distillation framework.
         </p>
       </div>
@@ -95,7 +95,7 @@ export default function AboutPage() {
             3D Brain tumor segmentation requires precise structural differentiation between heterogeneous tissue compartments: non-enhancing solid core, necrotic core, peritumoral vasogenic edema, and contrast-enhancing tumor margins.
           </p>
           <p>
-            Standard multi-objective distillation often suffers from negative gradient interference when auxiliary losses (masked patch classification and dense voxel reconstruction) are weighted equally. NeuroSeg 3D implements dynamic EMA loss-ratio balancing that adjusts loss coefficients once per epoch to align the auxiliary gradients with primary segmentation objectives.
+            Standard multi-objective distillation often suffers from negative gradient interference when auxiliary losses (masked patch classification and dense voxel reconstruction) are weighted equally. NeuroVision AI implements dynamic EMA loss-ratio balancing that adjusts loss coefficients once per epoch to align the auxiliary gradients with primary segmentation objectives.
           </p>
         </div>
       </div>

@@ -30,13 +30,52 @@ const NAV_ITEMS = [
   { id: 'about', label: 'About', icon: Info },
 ];
 
+const ROUTE_METADATA = {
+  overview: {
+    section: 'WORKSPACE',
+    title: 'Platform Overview & Experimental Setup',
+    subtitle: 'Adaptive Self-Distillation • UNETR 3D • EfficientNet-B0 2D',
+  },
+  upload: {
+    section: 'INGESTION',
+    title: 'Scan Ingestion & Pre-processing Pipeline',
+    subtitle: 'Multimodal NIfTI (FLAIR, T1, T1ce, T2) & Volumetric CT',
+  },
+  viewer: {
+    section: 'WORKSTATION',
+    title: 'Multiplanar MPR & 3D Volumetric Segmentation',
+    subtitle: 'Synchronized Axial, Coronal, Sagittal & Surface Mesh',
+  },
+  adaptive: {
+    section: 'SUPERVISORY QUEUE',
+    title: 'Continual Distillation & Human-in-the-Loop',
+    subtitle: 'Clinical review queue, model candidates & versioned promotion',
+  },
+  classify: {
+    section: 'PATHOLOGY',
+    title: '2D Brain MRI Slice Classification',
+    subtitle: 'EfficientNet-B0 histopathological inference & class probabilities',
+  },
+  results: {
+    section: 'QUANTITATIVE REPORT',
+    title: 'Volumetric Burden & Validation Metrics',
+    subtitle: 'Dice Similarity Coefficients, HD95 & tissue compartment volumes',
+  },
+  about: {
+    section: 'SPECIFICATIONS',
+    title: 'Research Methodology & Model Architecture',
+    subtitle: 'MONAI UNETR ViT, EMA loss balancing & BraTS 2021 cohort',
+  },
+};
+
 export default function AppLayout({ activeTab, onTabChange, children }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const currentMeta = ROUTE_METADATA[activeTab] || ROUTE_METADATA.overview;
   
   // Collapsible sidebar state with localStorage persistence
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('neuroseg_sidebar_collapsed') === 'true';
+      return localStorage.getItem('neurovision_sidebar_collapsed') === 'true';
     }
     return false;
   });
@@ -47,7 +86,7 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
     setIsCollapsed((prev) => {
       const next = !prev;
       if (typeof window !== 'undefined') {
-        localStorage.setItem('neuroseg_sidebar_collapsed', String(next));
+        localStorage.setItem('neurovision_sidebar_collapsed', String(next));
       }
       return next;
     });
@@ -92,8 +131,8 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
               </div>
               <div className="min-w-0 truncate">
                 <div className="font-bold text-base tracking-tight text-white flex items-center gap-1 leading-tight truncate">
-                  <span>NeuroSeg</span>
-                  <span className="text-medical-teal">3D</span>
+                  <span>NeuroVision</span>
+                  <span className="text-medical-teal">AI</span>
                 </div>
                 <span className="text-[10px] uppercase tracking-wider text-medical-muted font-mono block -mt-0.5 truncate">
                   Medical AI Platform
@@ -217,9 +256,9 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
                       : 'text-medical-muted hover:text-white hover:bg-medical-surface/80'
                   }`}
                 >
-                  {/* Subtle active left indicator bar */}
+                  {/* Crisp active left indicator bar */}
                   {isActive && (
-                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-medical-teal shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-medical-teal" />
                   )}
                   <Icon className={`w-4 h-4 shrink-0 transition-colors ${
                     isActive ? 'text-medical-teal' : 'text-medical-muted group-hover:text-white'
@@ -309,9 +348,9 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Header */}
+        {/* Top Clinical Header */}
         <header className="h-16 bg-medical-base border-b border-medical-border px-4 lg:px-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             {/* Mobile Menu Hamburger */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
@@ -321,17 +360,29 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
               <Menu className="w-5 h-5" />
             </button>
 
-            <div>
-              <h1 className="text-base lg:text-lg font-semibold text-white tracking-tight leading-none">
-                3D Brain Tumor Segmentation
-              </h1>
-              <p className="text-xs text-medical-muted mt-1 hidden sm:block">
-                AI-assisted volumetric analysis • Multimodal MRI
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-medical-teal px-1.5 py-0.2 rounded bg-medical-teal/10 border border-medical-teal/20">
+                  {currentMeta.section}
+                </span>
+                <h1 className="text-sm lg:text-base font-semibold text-white tracking-tight truncate">
+                  {currentMeta.title}
+                </h1>
+              </div>
+              <p className="text-xs text-medical-muted mt-0.5 truncate hidden sm:block">
+                {currentMeta.subtitle}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Study Cohort Tag */}
+            <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-medical-card border border-medical-border text-[11px] font-mono text-medical-muted">
+              <span className="text-white font-medium">BraTS2021</span>
+              <span className="text-medical-border">•</span>
+              <span className="text-medical-cyan">1.0mm³ Iso</span>
+            </div>
+
             {/* Server & Engine Status indicator badge */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-medical-card border border-medical-border text-xs shadow-sm">
               <span className={`w-2 h-2 rounded-full ${
@@ -340,11 +391,11 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
               <span className={`font-medium text-[11px] ${
                 serverStatus === 'ready' ? 'text-emerald-300' : 'text-amber-300'
               }`}>
-                {serverStatus === 'ready' ? 'Model Ready' : 'Connecting...'}
+                {serverStatus === 'ready' ? 'Engine Ready' : 'Connecting...'}
               </span>
               {serverStatus === 'offline' && (
                 <span className="text-[10px] text-amber-400/90 font-mono border-l border-medical-border pl-2">
-                  (UI Demo Mode)
+                  (Demo Mode)
                 </span>
               )}
             </div>

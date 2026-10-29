@@ -44,7 +44,7 @@ export default function SliceCoordinatesPanel({
             <span className="w-2 h-2 rounded-full bg-medical-teal" />
             <span>Axial Slice (Z)</span>
           </span>
-          <span className="font-mono text-medical-tealLight font-bold">
+          <span className="font-mono font-tabular text-medical-tealLight font-bold">
             {safeAxial + 1} / {totalAxial}
           </span>
         </div>
@@ -67,7 +67,7 @@ export default function SliceCoordinatesPanel({
             <span className="w-2 h-2 rounded-full bg-medical-cyan" />
             <span>Coronal Slice (Y)</span>
           </span>
-          <span className="font-mono text-medical-cyan font-bold">
+          <span className="font-mono font-tabular text-medical-cyan font-bold">
             {safeCoronal + 1} / {totalCoronal}
           </span>
         </div>
@@ -90,7 +90,7 @@ export default function SliceCoordinatesPanel({
             <span className="w-2 h-2 rounded-full bg-medical-blueLight" />
             <span>Sagittal Slice (X)</span>
           </span>
-          <span className="font-mono text-medical-blueLight font-bold">
+          <span className="font-mono font-tabular text-medical-blueLight font-bold">
             {safeSagittal + 1} / {totalSagittal}
           </span>
         </div>

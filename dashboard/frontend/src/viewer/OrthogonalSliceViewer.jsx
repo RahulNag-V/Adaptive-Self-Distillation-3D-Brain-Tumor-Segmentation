@@ -452,7 +452,7 @@ export default function OrthogonalSliceViewer({
             </>
           )}
 
-          <span className="px-1.5 py-0.5 rounded bg-medical-surface/80 border border-medical-border/80 text-[10px] font-mono text-white font-semibold shadow-sm shrink-0">
+          <span className="px-1.5 py-0.5 rounded bg-medical-surface/80 border border-medical-border/80 text-[10px] font-mono font-tabular text-white font-semibold shadow-sm shrink-0">
             {isCompact ? `${sliceIndex + 1}/${totalSlices}` : `Slice ${sliceIndex + 1} / ${totalSlices}`}
           </span>
 
@@ -720,14 +720,14 @@ export default function OrthogonalSliceViewer({
             <>
               <span className="text-medical-border/80 shrink-0">•</span>
               <span className="truncate">
-                VOX: <strong className="text-medical-tealLight">[{crosshair?.x ?? 0},{crosshair?.y ?? 0},{crosshair?.z ?? 0}]</strong>
+                VOX: <strong className="text-medical-tealLight font-tabular">[{crosshair?.x ?? 0},{crosshair?.y ?? 0},{crosshair?.z ?? 0}]</strong>
               </span>
             </>
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0 ml-1">
           <span>
-            ZOOM: <strong className="text-white">{(zoom * 100).toFixed(0)}%</strong>
+            ZOOM: <strong className="text-white font-tabular">{(zoom * 100).toFixed(0)}%</strong>
           </span>
           {!isCompact && (
             <>

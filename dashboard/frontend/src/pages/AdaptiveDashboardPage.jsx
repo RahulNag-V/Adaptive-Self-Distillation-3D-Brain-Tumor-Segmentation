@@ -237,7 +237,7 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-medical-teal/15 text-medical-teal border border-medical-teal/30 uppercase">
-              NeuroSeg 3D Continuous Improvement
+              NeuroVision AI Continuous Improvement
             </span>
             <span className="text-xs text-medical-muted font-mono">Phase 7: Governance & Registry</span>
           </div>
@@ -273,9 +273,9 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
 
           <button
             onClick={() => setShowTrainModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-medical-teal hover:bg-medical-tealLight text-medical-darkest font-semibold text-xs transition-all shadow-md"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-medical-teal hover:bg-medical-tealLight text-medical-darkest font-semibold text-xs transition-colors shadow-sm"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3.5 h-3.5" />
             <span>Trigger Adaptive Fine-Tuning</span>
           </button>
         </div>
@@ -738,7 +738,7 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-medical-base border border-medical-teal/50 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-2 border-b border-medical-border pb-3">
-              <Sparkles className="w-5 h-5 text-medical-teal" />
+              <Cpu className="w-5 h-5 text-medical-teal" />
               <h3 className="font-bold text-white text-base">Trigger Adaptive Fine-Tuning</h3>
             </div>
 

@@ -12,13 +12,14 @@ import {
   Sliders, 
   Eye, 
   Layers, 
-  Sparkles, 
   Loader2, 
   Play, 
   Pause,
   Palette,
   Check,
-  Info
+  Info,
+  Compass,
+  Sun
 } from 'lucide-react';
 
 /**
@@ -71,6 +72,18 @@ export const BRAIN_APPEARANCE_OPTIONS = [
     fillIntensity: 0.65,
     rimColor: 0xf0e6dc,
     rimIntensity: 0.85,
+    // High-visibility bottom / inferior illumination
+    bottomFillColor: 0xffede6,
+    bottomFillIntensity: 1.30,
+    bottomRimColor: 0x93c5fd,
+    bottomRimIntensity: 1.05,
+    bottomLateralColor: 0xfed7aa,
+    bottomLateralIntensity: 0.85,
+    bottomAccentColor: 0xfbcfe8,
+    bottomAccentIntensity: 0.70,
+    bottomBounceGround: 0xfdeee7,
+    bottomBounceSky: 0x475569,
+    bottomBounceIntensity: 0.65,
   },
   {
     id: 'natural',
@@ -94,6 +107,18 @@ export const BRAIN_APPEARANCE_OPTIONS = [
     fillIntensity: 0.65,
     rimColor: 0xf0e6dc,
     rimIntensity: 0.85,
+    // High-visibility bottom / inferior illumination
+    bottomFillColor: 0xffede6,
+    bottomFillIntensity: 1.25,
+    bottomRimColor: 0xbfdbfe,
+    bottomRimIntensity: 0.95,
+    bottomLateralColor: 0xffedd5,
+    bottomLateralIntensity: 0.80,
+    bottomAccentColor: 0xfecdd3,
+    bottomAccentIntensity: 0.65,
+    bottomBounceGround: 0xfdeee7,
+    bottomBounceSky: 0x475569,
+    bottomBounceIntensity: 0.60,
   },
   {
     id: 'contrast',
@@ -117,6 +142,18 @@ export const BRAIN_APPEARANCE_OPTIONS = [
     fillIntensity: 0.60,
     rimColor: 0xfff8f2,
     rimIntensity: 1.05,
+    // High-visibility bottom / inferior illumination
+    bottomFillColor: 0xfff3ea,
+    bottomFillIntensity: 1.45,
+    bottomRimColor: 0x60a5fa,
+    bottomRimIntensity: 1.20,
+    bottomLateralColor: 0xfcbba1,
+    bottomLateralIntensity: 0.95,
+    bottomAccentColor: 0xf472b6,
+    bottomAccentIntensity: 0.75,
+    bottomBounceGround: 0xffedd5,
+    bottomBounceSky: 0x334155,
+    bottomBounceIntensity: 0.70,
   },
   {
     id: 'original',
@@ -140,6 +177,18 @@ export const BRAIN_APPEARANCE_OPTIONS = [
     fillIntensity: 0.50,
     rimColor: 0x94a3b8,
     rimIntensity: 0.75,
+    // High-visibility bottom / inferior illumination
+    bottomFillColor: 0xe0f2fe,
+    bottomFillIntensity: 1.35,
+    bottomRimColor: 0x38bdf8,
+    bottomRimIntensity: 1.15,
+    bottomLateralColor: 0xbae6fd,
+    bottomLateralIntensity: 0.85,
+    bottomAccentColor: 0x7dd3fc,
+    bottomAccentIntensity: 0.75,
+    bottomBounceGround: 0xe2e8f0,
+    bottomBounceSky: 0x1e293b,
+    bottomBounceIntensity: 0.65,
   },
 ];
 
@@ -164,6 +213,7 @@ export default function MedicalViewer({
   // Appearance state (syncs with prop or manages locally)
   const [activeAppearance, setActiveAppearance] = useState(brainAppearance);
   const [showPaletteMenu, setShowPaletteMenu] = useState(false);
+  const [showAngleMenu, setShowAngleMenu] = useState(false);
 
   useEffect(() => {
     setActiveAppearance(brainAppearance);
@@ -199,6 +249,10 @@ export default function MedicalViewer({
     fillLight: null,
     rimLight: null,
     bottomFill: null,
+    bottomRimLight: null,
+    bottomLateralFill: null,
+    bottomAccentLight: null,
+    bottomBounceLight: null,
     tumorGlowLight: null,
     tumorGroup: null,
     wtMesh: null,
@@ -254,25 +308,52 @@ export default function MedicalViewer({
     controls.maxDistance = 8.0;
     controls.target.set(0, 0, 0);
 
-    // 5. Scientifically Inspired Anatomical Lighting
-    const ambientLight = new THREE.AmbientLight(0x5a4844, 0.68);
+    // 5. Scientifically Inspired Anatomical Lighting (Superior & Inferior 360° Illumination)
+    const initPreset = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === activeAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
+
+    const ambientLight = new THREE.AmbientLight(initPreset.ambientColor, initPreset.ambientIntensity);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xfff4eb, 1.35);
+    const keyLight = new THREE.DirectionalLight(initPreset.keyColor, initPreset.keyIntensity);
     keyLight.position.set(3.5, 4.5, 3.0);
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0xd8988e, 0.65);
+    const fillLight = new THREE.DirectionalLight(initPreset.fillColor, initPreset.fillIntensity);
     fillLight.position.set(-3.5, 1.5, 2.5);
     scene.add(fillLight);
 
-    const rimLight = new THREE.DirectionalLight(0xf0e6dc, 0.85);
+    const rimLight = new THREE.DirectionalLight(initPreset.rimColor, initPreset.rimIntensity);
     rimLight.position.set(0, 3.5, -4.0);
     scene.add(rimLight);
 
-    const bottomFill = new THREE.DirectionalLight(0x2d1f24, 0.35);
-    bottomFill.position.set(0, -3.5, 0);
+    // High-Visibility Bottom / Inferior Illumination Rig
+    // Direct upward illumination on the ventral surface (temporal poles, optic chiasm, pons)
+    const bottomFill = new THREE.DirectionalLight(initPreset.bottomFillColor, initPreset.bottomFillIntensity);
+    bottomFill.position.set(0, -4.2, 1.5);
     scene.add(bottomFill);
+
+    // Inferior posterior rim light highlighting cerebellum folia & tonsils against dark background
+    const bottomRimLight = new THREE.DirectionalLight(initPreset.bottomRimColor, initPreset.bottomRimIntensity);
+    bottomRimLight.position.set(0, -4.0, -3.2);
+    scene.add(bottomRimLight);
+
+    // Left inferior lateral fill revealing deep ventral sulcal clefts
+    const bottomLateralFill = new THREE.DirectionalLight(initPreset.bottomLateralColor, initPreset.bottomLateralIntensity);
+    bottomLateralFill.position.set(-3.2, -3.6, 0.5);
+    scene.add(bottomLateralFill);
+
+    // Right inferior accent light providing symmetric bilateral volumetric radiance
+    const bottomAccentLight = new THREE.DirectionalLight(initPreset.bottomAccentColor, initPreset.bottomAccentIntensity);
+    bottomAccentLight.position.set(3.2, -3.6, 0.5);
+    scene.add(bottomAccentLight);
+
+    // Upward-directed ground bounce ambient eliminating black crevice shadows
+    const bottomBounceLight = new THREE.HemisphereLight(
+      initPreset.bottomBounceSky,
+      initPreset.bottomBounceGround,
+      initPreset.bottomBounceIntensity
+    );
+    scene.add(bottomBounceLight);
 
     const tumorGlowLight = new THREE.PointLight(0x10b981, 1.3, 2.8);
     tumorGlowLight.position.set(0.42, 0.22, 0.28);
@@ -462,6 +543,10 @@ export default function MedicalViewer({
       fillLight,
       rimLight,
       bottomFill,
+      bottomRimLight,
+      bottomLateralFill,
+      bottomAccentLight,
+      bottomBounceLight,
       tumorGlowLight,
       tumorGroup,
       wtMesh,
@@ -558,7 +643,12 @@ export default function MedicalViewer({
       ambientLight, 
       keyLight, 
       fillLight, 
-      rimLight 
+      rimLight,
+      bottomFill,
+      bottomRimLight,
+      bottomLateralFill,
+      bottomAccentLight,
+      bottomBounceLight
     } = threeStateRef.current;
     const { regions, natural, contrast, normal, roughness } = texturesRef.current;
 
@@ -573,7 +663,7 @@ export default function MedicalViewer({
       ? natural 
       : null;
 
-    // Update lighting for current appearance
+    // Update superior lighting for current appearance
     if (ambientLight) {
       ambientLight.color.set(preset.ambientColor);
       ambientLight.intensity = preset.ambientIntensity;
@@ -589,6 +679,29 @@ export default function MedicalViewer({
     if (rimLight) {
       rimLight.color.set(preset.rimColor);
       rimLight.intensity = preset.rimIntensity;
+    }
+
+    // Update inferior / bottom lighting rig
+    if (bottomFill) {
+      bottomFill.color.set(preset.bottomFillColor);
+      bottomFill.intensity = preset.bottomFillIntensity;
+    }
+    if (bottomRimLight) {
+      bottomRimLight.color.set(preset.bottomRimColor);
+      bottomRimLight.intensity = preset.bottomRimIntensity;
+    }
+    if (bottomLateralFill) {
+      bottomLateralFill.color.set(preset.bottomLateralColor);
+      bottomLateralFill.intensity = preset.bottomLateralIntensity;
+    }
+    if (bottomAccentLight) {
+      bottomAccentLight.color.set(preset.bottomAccentColor);
+      bottomAccentLight.intensity = preset.bottomAccentIntensity;
+    }
+    if (bottomBounceLight) {
+      bottomBounceLight.groundColor.set(preset.bottomBounceGround);
+      bottomBounceLight.color.set(preset.bottomBounceSky);
+      bottomBounceLight.intensity = preset.bottomBounceIntensity;
     }
 
     // Update physical material properties in place
@@ -665,6 +778,27 @@ export default function MedicalViewer({
     controls.update();
     if (onResetView) onResetView();
   }, [onResetView]);
+
+  const handleViewAngle = useCallback((angle) => {
+    const { camera, controls } = threeStateRef.current;
+    if (!camera || !controls) return;
+    if (angle === 'inferior') {
+      // Bottom / Underside aspect looking up at the illuminated cerebellum, brainstem & inferior temporal lobes
+      camera.position.set(0, -3.2, 1.2);
+    } else if (angle === 'superior') {
+      // Top / Superior aspect looking down
+      camera.position.set(0, 3.4, 0.4);
+    } else if (angle === 'lateral') {
+      // Lateral right aspect
+      camera.position.set(3.6, 0.2, 0);
+    } else {
+      // Default isometric view
+      camera.position.set(0, 0.6, 3.8);
+    }
+    controls.target.set(0, 0, 0);
+    controls.update();
+    setShowAngleMenu(false);
+  }, []);
 
   // 2D Orthogonal Slice Canvas Rendering (Axial, Coronal, Sagittal)
   useEffect(() => {
@@ -776,6 +910,12 @@ export default function MedicalViewer({
               : `• Slice ${viewMode === 'axial' ? axialSlice : viewMode === 'coronal' ? coronalSlice : sagittalSlice}`}
           </span>
         </div>
+        {viewMode === '3d' && (
+          <div className="px-2 py-1 rounded-md bg-medical-base/90 border border-medical-border/80 backdrop-blur-md text-[10px] font-mono text-emerald-400 flex items-center gap-1.5 shadow-md">
+            <Sun className="w-3 h-3 text-amber-400 shrink-0" />
+            <span className="hidden md:inline">360° Bottom Illum. Active</span>
+          </div>
+        )}
       </div>
 
       {/* Top Right Maximize / Restore Action Button */}
@@ -892,6 +1032,63 @@ export default function MedicalViewer({
           )}
 
           {viewMode === '3d' && (
+            <div className="relative">
+              <button
+                onClick={() => setShowAngleMenu(prev => !prev)}
+                className={`p-1.5 rounded transition-colors flex items-center gap-1 text-xs font-mono ${
+                  showAngleMenu
+                    ? 'bg-medical-teal text-medical-darkest'
+                    : 'hover:bg-medical-surface text-medical-muted hover:text-white'
+                }`}
+                title="Camera Orientations (Default, Underside/Inferior, Superior, Lateral)"
+                aria-label="Camera Orientations"
+              >
+                <Compass className="w-4 h-4" />
+              </button>
+
+              {/* Orientation dropdown popover - opens upward */}
+              {showAngleMenu && (
+                <div className="absolute right-0 bottom-full mb-2 w-48 bg-medical-card/95 border border-medical-border rounded-lg shadow-2xl p-1.5 z-40 backdrop-blur-md">
+                  <div className="text-[10px] font-mono uppercase text-medical-muted px-2 py-1 border-b border-medical-border/60 mb-1">
+                    Anatomical View
+                  </div>
+                  <button
+                    onClick={() => handleViewAngle('default')}
+                    className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
+                  >
+                    <span>Default Anterior</span>
+                    <span className="text-[10px] text-medical-muted font-mono">Front</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewAngle('inferior')}
+                    className="w-full px-2.5 py-1.5 rounded text-xs font-semibold text-left text-emerald-300 hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors flex items-center justify-between my-0.5"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Sun className="w-3 h-3 text-amber-400" />
+                      Underside (Inferior)
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono">Bottom</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewAngle('superior')}
+                    className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
+                  >
+                    <span>Superior View</span>
+                    <span className="text-[10px] text-medical-muted font-mono">Top</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewAngle('lateral')}
+                    className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
+                  >
+                    <span>Lateral View</span>
+                    <span className="text-[10px] text-medical-muted font-mono">Right</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {viewMode === '3d' && (
             <button
               onClick={() => setAutoRotate(prev => !prev)}
               className={`p-1.5 rounded transition-colors ${
@@ -941,9 +1138,9 @@ export default function MedicalViewer({
           <span className="text-medical-tealLight truncate">{currentOption.name}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
-          <span>{Math.round(opacity * 100)}%</span>
+          <span className="font-tabular">{Math.round(opacity * 100)}%</span>
           <span className="text-medical-border/80">•</span>
-          <span className="text-emerald-400 font-semibold">{fps} FPS</span>
+          <span className="text-emerald-400 font-semibold font-tabular">{fps} FPS</span>
         </div>
       </div>
     </div>

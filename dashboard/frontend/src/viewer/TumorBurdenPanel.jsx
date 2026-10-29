@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Database,
   ExternalLink,
+  FileCheck,
   Flame,
   HelpCircle,
   Info,
@@ -421,21 +422,21 @@ export default function TumorBurdenPanel({
           <div className="grid grid-cols-3 gap-1.5 text-center font-mono text-[10px]">
             <div className="p-1.5 rounded bg-indigo-950/40 border border-indigo-500/20">
               <span className="text-indigo-300 block">WT Dice</span>
-              <span className="text-xs font-bold text-white">{(val.dice_scores?.WT * 100).toFixed(1)}%</span>
+              <span className="text-xs font-bold text-white font-tabular">{(val.dice_scores?.WT * 100).toFixed(1)}%</span>
             </div>
             <div className="p-1.5 rounded bg-indigo-950/40 border border-indigo-500/20">
               <span className="text-indigo-300 block">TC Dice</span>
-              <span className="text-xs font-bold text-white">{(val.dice_scores?.TC * 100).toFixed(1)}%</span>
+              <span className="text-xs font-bold text-white font-tabular">{(val.dice_scores?.TC * 100).toFixed(1)}%</span>
             </div>
             <div className="p-1.5 rounded bg-indigo-950/40 border border-indigo-500/20">
               <span className="text-indigo-300 block">ET Dice</span>
-              <span className="text-xs font-bold text-white">{(val.dice_scores?.ET * 100).toFixed(1)}%</span>
+              <span className="text-xs font-bold text-white font-tabular">{(val.dice_scores?.ET * 100).toFixed(1)}%</span>
             </div>
           </div>
 
           <div className="flex items-center justify-between text-[10px] font-mono text-indigo-200/80 pt-1 border-t border-indigo-500/20">
             <span>WT Volume Difference (ΔV):</span>
-            <span className="font-bold text-white">{val.volume_difference_cm3?.WT > 0 ? `+${val.volume_difference_cm3?.WT}` : val.volume_difference_cm3?.WT} cm³</span>
+            <span className="font-bold text-white font-tabular">{val.volume_difference_cm3?.WT > 0 ? `+${val.volume_difference_cm3?.WT}` : val.volume_difference_cm3?.WT} cm³</span>
           </div>
         </div>
       )}
@@ -444,7 +445,7 @@ export default function TumorBurdenPanel({
       {interp?.summary && (
         <div className="p-3 rounded-xl bg-medical-card border border-medical-border space-y-1.5">
           <div className="flex items-center gap-1.5 text-xs font-bold text-white font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-medical-teal" />
+            <FileCheck className="w-3.5 h-3.5 text-medical-teal" />
             <span>Quantitative Summary</span>
           </div>
           <p className="text-[11px] text-medical-muted leading-relaxed">

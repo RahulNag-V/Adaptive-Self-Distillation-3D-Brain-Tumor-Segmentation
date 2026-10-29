@@ -3,16 +3,36 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    font-family: 'Times New Roman', Times, serif !important;
-  }
-  body, button, input, select, textarea, kbd, code, pre, span, p, div, h1, h2, h3, h4, h5, h6, label, a {
-    font-family: 'Times New Roman', Times, serif !important;
+  :root {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
     @apply bg-medical-darkest text-medical-text;
-    font-family: 'Times New Roman', Times, serif !important;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+  code, kbd, samp, pre, .font-mono {
+    font-family: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-feature-settings: 'tnum';
+  }
+}
+
+/* Tabular figures utility for precise coordinate & volumetric numbers */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* PACS workstation card & panel style */
+.workstation-panel {
+  background-color: #0b0f17;
+  border: 1px solid #1f2e45;
+}
+
+.workstation-card {
+  background-color: #111827;
+  border: 1px solid #1f2e45;
 }
 
 /* Custom dark scrollbar for medical imaging look */

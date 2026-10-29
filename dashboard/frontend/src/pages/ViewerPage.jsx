@@ -468,9 +468,9 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           {/* Correction Mode Button */}
           <button
             onClick={() => setIsEditing(prev => !prev)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-md ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-bold transition-colors shadow-sm ${
               isEditing
-                ? 'bg-amber-400 text-medical-darkest border-amber-300 shadow-amber-400/20'
+                ? 'bg-amber-400 text-medical-darkest border-amber-300'
                 : 'bg-medical-card text-amber-300 border-amber-400/50 hover:bg-amber-400/10'
             }`}
           >
@@ -656,8 +656,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       {/* 3. CLINICAL WORKSPACE: LEFT (PROJECTIONS) | CENTER (VIEWPORTS) | RIGHT (LAYERS) */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0 overflow-hidden">
         
-        {/* LEFT COLUMN: Projection Mode & Slice Coordinates Panel (3 cols on lg) */}
-        <div className="lg:col-span-3 bg-medical-base border border-medical-border rounded-xl p-3.5 flex flex-col justify-between space-y-3 overflow-y-auto">
+        {/* LEFT COLUMN: Projection Mode & Slice Coordinates Panel (3 cols on lg, 2 cols on xl) */}
+        <div className="lg:col-span-3 xl:col-span-2 bg-medical-base border border-medical-border rounded-xl p-3.5 flex flex-col justify-between space-y-3 overflow-y-auto">
           <div className="space-y-3">
             {/* Projection / Layout Mode Selector */}
             <div className="space-y-1.5">
@@ -726,8 +726,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           </div>
         </div>
 
-        {/* CENTER COLUMN: Interactive 3D & 2D Multi-Planar Reconstruction (6 cols on lg) */}
-        <div className="lg:col-span-6 flex flex-col min-h-0 h-full overflow-hidden">
+        {/* CENTER COLUMN: Interactive 3D & 2D Multi-Planar Reconstruction (6 cols on lg, 7 cols on xl, 8 on 2xl) */}
+        <div className="lg:col-span-6 xl:col-span-7 2xl:col-span-8 flex flex-col min-h-0 h-full overflow-hidden">
           {viewLayout === 'quad' ? (
             /* QUAD MPR VIEW: 2x2 Synchronized Grid (3D + Axial + Coronal + Sagittal) */
             <div className="grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-2 h-full min-h-0">
@@ -934,8 +934,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           )}
         </div>
 
-        {/* RIGHT COLUMN: Layer Visibility & Quantitative Volumetrics (3 cols on lg) */}
-        <div className="lg:col-span-3 bg-medical-base border border-medical-border rounded-xl p-3.5 flex flex-col justify-between space-y-3 overflow-y-auto">
+        {/* RIGHT COLUMN: Layer Visibility & Quantitative Volumetrics (3 cols on lg/xl, 2 on 2xl) */}
+        <div className="lg:col-span-3 xl:col-span-3 2xl:col-span-2 bg-medical-base border border-medical-border rounded-xl p-3.5 flex flex-col justify-between space-y-3 overflow-y-auto">
           <div className="space-y-4">
             {/* Header Tabs */}
             <div className="flex items-center gap-1 p-1 bg-medical-card rounded-lg border border-medical-border text-xs">

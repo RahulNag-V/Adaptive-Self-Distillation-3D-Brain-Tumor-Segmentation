@@ -168,7 +168,7 @@ export default function ResultsPage({ currentResult, onNavigate, onClearLiveResu
             <span className="text-xs text-medical-muted font-mono uppercase tracking-wider block">
               Mean Dice
             </span>
-            <div className="text-2xl sm:text-3xl font-bold font-mono text-white">
+            <div className="text-2xl sm:text-3xl font-bold font-mono font-tabular text-white">
               {displayData.groundTruthProvided && displayData.meanDice !== null ? (
                 displayData.meanDice.toFixed(4)
               ) : (
@@ -186,7 +186,7 @@ export default function ResultsPage({ currentResult, onNavigate, onClearLiveResu
               <span className="text-xs text-medical-muted font-mono uppercase tracking-wider">WT Dice</span>
               <span className="w-2.5 h-2.5 rounded-full bg-tumor-wt"></span>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold font-mono text-emerald-400">
+            <div className="text-2xl sm:text-3xl font-bold font-mono font-tabular text-emerald-400">
               {displayData.groundTruthProvided && displayData.wtDice !== null ? (
                 displayData.wtDice.toFixed(4)
               ) : (
@@ -204,7 +204,7 @@ export default function ResultsPage({ currentResult, onNavigate, onClearLiveResu
               <span className="text-xs text-medical-muted font-mono uppercase tracking-wider">TC Dice</span>
               <span className="w-2.5 h-2.5 rounded-full bg-tumor-tc"></span>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold font-mono text-amber-400">
+            <div className="text-2xl sm:text-3xl font-bold font-mono font-tabular text-amber-400">
               {displayData.groundTruthProvided && displayData.tcDice !== null ? (
                 displayData.tcDice.toFixed(4)
               ) : (
@@ -222,7 +222,7 @@ export default function ResultsPage({ currentResult, onNavigate, onClearLiveResu
               <span className="text-xs text-medical-muted font-mono uppercase tracking-wider">ET Dice</span>
               <span className="w-2.5 h-2.5 rounded-full bg-tumor-et"></span>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold font-mono text-red-400">
+            <div className="text-2xl sm:text-3xl font-bold font-mono font-tabular text-red-400">
               {displayData.groundTruthProvided && displayData.etDice !== null ? (
                 displayData.etDice.toFixed(4)
               ) : (
@@ -239,9 +239,9 @@ export default function ResultsPage({ currentResult, onNavigate, onClearLiveResu
             <span className="text-xs text-medical-muted font-mono uppercase tracking-wider block">
               Mean HD95
             </span>
-            <div className="text-2xl sm:text-3xl font-bold font-mono text-medical-cyan">
+            <div className="text-2xl sm:text-3xl font-bold font-mono font-tabular text-medical-cyan">
               {displayData.groundTruthProvided && displayData.meanHd95 !== null ? (
-                <span>{displayData.meanHd95.toFixed(2)} <span className="text-sm font-normal text-medical-muted">vx</span></span>
+                <span>{displayData.meanHd95.toFixed(2)} <span className="text-sm font-normal text-medical-muted font-sans">vx</span></span>
               ) : (
                 <span className="text-medical-muted text-lg">N/A</span>
               )}

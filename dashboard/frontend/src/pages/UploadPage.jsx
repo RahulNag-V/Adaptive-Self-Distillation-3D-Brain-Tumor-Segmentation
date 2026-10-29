@@ -17,7 +17,8 @@ import {
   Activity,
   AlertTriangle,
   ExternalLink,
-  Cpu
+  Cpu,
+  Database
 } from 'lucide-react';
 import { uploadMRI, validateMRI, runSegmentation, loadValidationSubject } from '../api/segmentation';
 import { getCatalog } from '../api/adaptive';
@@ -401,10 +402,10 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
         <button
           onClick={handleLoadValidationCase}
           disabled={isRunning}
-          className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-teal/40 text-xs font-medium text-medical-tealLight transition-all disabled:opacity-50 shadow-sm"
+          className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-border hover:border-medical-teal/60 text-xs font-mono font-medium text-medical-tealLight transition-colors disabled:opacity-50 shadow-sm"
         >
-          <Sparkles className="w-3.5 h-3.5 text-medical-teal" />
-          <span>Load Validation Case: BraTS2021_01069</span>
+          <Database className="w-3.5 h-3.5 text-medical-teal" />
+          <span>Load Validation Subject: BraTS2021_01069</span>
         </button>
       </div>
 
@@ -519,7 +520,7 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
                   onDrop={(e) => handleMriDrop(id, e)}
                   className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all min-h-[220px] ${
                     fileData
-                      ? 'bg-medical-card border-medical-teal/50 shadow-sm shadow-medical-teal/10'
+                      ? 'bg-medical-card border-medical-teal/60 shadow-sm'
                       : 'bg-medical-base border-dashed border-medical-border hover:border-medical-borderLight hover:bg-medical-card/40'
                   }`}
                 >

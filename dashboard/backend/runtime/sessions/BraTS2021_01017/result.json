@@ -27,9 +27,16 @@
   "tumor_voxels": 388901,
   "tumor_volume_mm3": 388901.0,
   "tumor_volume_cm3": 388.901,
-  "inference_time_seconds": 4.504,
+  "inference_time_seconds": 2.534,
   "device": "cuda",
   "model": "Adaptive Self-Distillation (UNETR)",
+  "model_version": "1.0.0",
+  "uncertainty_indicators": {
+    "mean_prediction_confidence": 0.501,
+    "mean_foreground_entropy": 1.0622,
+    "confidence_metric": "Softmax Maximum Probability (0.0 to 1.0)",
+    "entropy_metric": "Shannon Entropy in nats (lower = higher certainty)"
+  },
   "regions": {
     "WT": {
       "voxel_count": 388901,

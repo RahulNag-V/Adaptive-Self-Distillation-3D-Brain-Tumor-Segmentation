@@ -13,7 +13,8 @@ import {
   ArrowRight, 
   RefreshCw,
   BarChart2,
-  Info
+  Info,
+  Activity
 } from 'lucide-react';
 import { classifyImage } from '../api/classification';
 
@@ -137,7 +138,7 @@ export default function ClassificationPage({ onNavigate }) {
       {/* HEADER SECTION */}
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-medical-teal/15 border border-medical-teal/30 text-medical-tealLight text-xs font-mono tracking-wide">
-          <Sparkles className="w-3.5 h-3.5 text-medical-teal" />
+          <Activity className="w-3.5 h-3.5 text-medical-teal" />
           <span>SECONDARY CLASSIFICATION MODEL • EFFICIENTNET-B0</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
@@ -326,7 +327,7 @@ export default function ClassificationPage({ onNavigate }) {
                   <span className="text-xs font-mono uppercase tracking-wider text-medical-muted block">
                     Confidence
                   </span>
-                  <span className="text-2xl font-bold text-emerald-400 font-mono mt-1 block">
+                  <span className="text-2xl font-bold text-emerald-400 font-mono font-tabular mt-1 block">
                     {(result.confidence * 100).toFixed(2)}%
                   </span>
                 </div>
@@ -375,7 +376,7 @@ export default function ClassificationPage({ onNavigate }) {
                           <span className={`font-medium ${isWinner ? 'text-white font-semibold' : 'text-medical-muted'}`}>
                             {cfg.label}
                           </span>
-                          <span className="font-mono text-xs text-medical-text font-semibold">
+                          <span className="font-mono font-tabular text-xs text-medical-text font-semibold">
                             {pct}%
                           </span>
                         </div>

@@ -31,7 +31,7 @@ export async function request(endpoint, options = {}) {
     return await response.json();
   } catch (err) {
     if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-      const connErr = new Error('Cannot connect to NeuroSeg 3D backend server. Please verify backend is running on ' + API_BASE_URL);
+      const connErr = new Error('Cannot connect to NeuroVision AI backend server. Please verify backend is running on ' + API_BASE_URL);
       connErr.status = 503;
       throw connErr;
     }
