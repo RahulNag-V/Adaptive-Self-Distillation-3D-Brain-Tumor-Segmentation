@@ -1,39 +1,43 @@
-# Virtual Environment
-.venv/
-venv/
-env/
-
-# Python Cache & Bytecode
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
+*.pyd
 
-# Editor & Notebook Metadata
-.ipynb_checkpoints/
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE & Editor files
 .vscode/
 .idea/
-.pytest_cache/
+*.swp
+*.swo
 
-# Large Datasets & Medical Imaging Archives
+# Node / Frontend
+node_modules/
+dashboard/frontend/node_modules/
+dashboard/frontend/.firebase/
+dashboard/frontend/.env.local
+
+# Large Datasets & Raw Data
 data/raw/
-data/processed/
-*.zip
-*.tar.gz
 *.nii
 *.nii.gz
 
-# Checkpoints & Model Weights (50+ GB)
+# Runtime temporary sessions & caches
+dashboard/backend/runtime/
+
+# Checkpoints & Model Weights (large binaries)
 checkpoints/
+dashboard/checkpoints/
 *.pth
 *.pt
-*.ckpt
+*.bin
+*.onnx
 
-# Runtime Logs & Tensorboard
-logs/
-results/logs/
-*.log
-events.out.tfevents.*
-
-# Firebase CLI cache
-.firebase/
+# OS specific
+.DS_Store
+Thumbs.db
