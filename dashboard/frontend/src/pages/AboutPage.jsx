@@ -15,18 +15,25 @@ export default function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8">
       {/* Header */}
-      <div className="space-y-3 border-b border-medical-border pb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-medical-card border border-medical-border text-xs font-mono text-medical-muted">
-          <FlaskConical className="w-3.5 h-3.5 text-medical-teal" />
-          <span>RESEARCH & METHODOLOGY</span>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-medical-border pb-6">
+        <img
+          src="/logo-circle.png"
+          alt="NeuroVision AI Logo"
+          className="w-20 h-20 rounded-full object-cover shrink-0 shadow-2xl ring-2 ring-medical-teal/40"
+        />
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-medical-card border border-medical-border text-xs font-mono text-medical-muted">
+            <FlaskConical className="w-3.5 h-3.5 text-medical-teal" />
+            <span>RESEARCH & METHODOLOGY</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            About NeuroVision AI
+          </h1>
+          <p className="text-sm text-medical-muted leading-relaxed">
+            NeuroVision AI is an academic research platform for 3D brain tumor segmentation
+            using an Adaptive Self-Distillation framework. AI For A Healthier Tomorrow.
+          </p>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          About NeuroVision AI
-        </h1>
-        <p className="text-sm text-medical-muted leading-relaxed">
-          NeuroVision AI is an academic research platform for 3D brain tumor segmentation
-          using an Adaptive Self-Distillation framework.
-        </p>
       </div>
 
       {/* CORE SPECIFICATIONS */}

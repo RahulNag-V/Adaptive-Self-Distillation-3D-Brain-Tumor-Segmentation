@@ -167,4 +167,3 @@ export async function getPatientTumorBurden(patientId, segSource = 'ground_truth
 export async function getPatientTumorMesh(patientId, segSource = 'ground_truth') {
   return request(`/api/patients/${patientId}/mesh?seg_source=${encodeURIComponent(segSource)}`);
 }
-

@@ -126,30 +126,36 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
           }`}>
             {/* Expanded Header: Logo + Product Name */}
             <div className={`flex items-center gap-2.5 min-w-0 ${isCollapsed ? 'lg:hidden' : 'flex'}`}>
-              <div className="w-9 h-9 rounded-lg bg-medical-teal/15 border border-medical-teal/40 flex items-center justify-center text-medical-tealLight shrink-0 shadow-sm">
-                <Brain className="w-5 h-5 text-medical-teal" />
-              </div>
+              <img 
+                src="/logo-circle.png" 
+                alt="NeuroVision AI Logo" 
+                className="w-9 h-9 rounded-full object-cover shrink-0 shadow-md ring-1 ring-medical-teal/40 hover:scale-105 transition-transform" 
+              />
               <div className="min-w-0 truncate">
                 <div className="font-bold text-base tracking-tight text-white flex items-center gap-1 leading-tight truncate">
                   <span>NeuroVision</span>
                   <span className="text-medical-teal">AI</span>
                 </div>
                 <span className="text-[10px] uppercase tracking-wider text-medical-muted font-mono block -mt-0.5 truncate">
-                  Medical AI Platform
+                  AI For A Healthier Tomorrow
                 </span>
               </div>
             </div>
 
-            {/* Collapsed Header: Centered Expand Control */}
+            {/* Collapsed Header: Centered Logo with Expand Tooltip/Action */}
             {isCollapsed && (
               <div className="hidden lg:flex items-center justify-center">
                 <button
                   onClick={toggleSidebar}
-                  className="p-2 rounded-lg text-medical-muted hover:text-white hover:bg-medical-surface border border-transparent hover:border-medical-border/70 transition-colors"
-                  title="Expand sidebar"
+                  className="p-1 rounded-full text-medical-muted hover:ring-2 hover:ring-medical-teal/60 transition-all group"
+                  title="Expand sidebar • NeuroVision AI"
                   aria-label="Expand sidebar"
                 >
-                  <PanelLeftOpen className="w-5 h-5 text-medical-teal" />
+                  <img 
+                    src="/logo-circle.png" 
+                    alt="NeuroVision AI Logo" 
+                    className="w-9 h-9 rounded-full object-cover shrink-0 shadow-md group-hover:scale-105 transition-transform" 
+                  />
                 </button>
               </div>
             )}

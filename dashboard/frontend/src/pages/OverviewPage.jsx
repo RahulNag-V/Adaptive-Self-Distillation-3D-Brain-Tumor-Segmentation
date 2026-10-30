@@ -21,21 +21,28 @@ export default function OverviewPage({ onNavigate }) {
       {/* 1. CLINICAL WORKSPACE HEADER PANEL */}
       <section className="rounded-xl bg-medical-base border border-medical-border p-6 lg:p-7 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2.5 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-medical-card border border-medical-border text-[11px] font-mono text-medical-teal">
-              <span className="w-2 h-2 rounded-full bg-medical-teal animate-pulse" />
-              <span>RESEARCH PLATFORM • MONAI 3D ENGINE • FP16 ACTIVE</span>
+          <div className="flex items-start gap-4 sm:gap-5 max-w-3xl">
+            <img
+              src="/logo-circle.png"
+              alt="NeuroVision AI Logo"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shrink-0 shadow-xl ring-2 ring-medical-teal/40 hidden sm:block"
+            />
+            <div className="space-y-2.5">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-medical-card border border-medical-border text-[11px] font-mono text-medical-teal">
+                <span className="w-2 h-2 rounded-full bg-medical-teal animate-pulse" />
+                <span>RESEARCH PLATFORM • MONAI 3D ENGINE • FP16 ACTIVE</span>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                NeuroVision AI Diagnostic & Research Workstation
+              </h1>
+
+              <p className="text-sm text-medical-muted leading-relaxed">
+                Multi-modal 3D brain tumor segmentation and sub-region volumetric analysis powered by 
+                Adaptive Self-Distillation and UNETR. Integrates synchronized orthogonal multi-planar reconstruction (MPR), 
+                interactive human-in-the-loop (HITL) boundary correction, and 2D histological classification.
+              </p>
             </div>
-
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              NeuroVision AI Diagnostic & Research Workstation
-            </h1>
-
-            <p className="text-sm text-medical-muted leading-relaxed">
-              Multi-modal 3D brain tumor segmentation and sub-region volumetric analysis powered by 
-              Adaptive Self-Distillation and UNETR. Integrates synchronized orthogonal multi-planar reconstruction (MPR), 
-              interactive human-in-the-loop (HITL) boundary correction, and 2D histological classification.
-            </p>
           </div>
 
           {/* Quick Launch Buttons */}
