@@ -93,7 +93,7 @@ export const BRAIN_APPEARANCE_OPTIONS = [
     badge: 'Unified Cortex',
     description: 'Realistic warm pinkish-beige cerebral cortex with natural sulcal depth and rose-brown shading',
     textureKey: 'natural',
-    color: '#D9A69B',
+    color: 0xffffff,
     roughness: 0.52,
     metalness: 0.02,
     clearcoat: 0.18,
@@ -223,10 +223,27 @@ export default function MedicalViewer({
   const [activeAppearance, setActiveAppearance] = useState(brainAppearance);
   const [showPaletteMenu, setShowPaletteMenu] = useState(false);
   const [showAngleMenu, setShowAngleMenu] = useState(false);
+  const controlsRef = useRef(null);
 
   useEffect(() => {
     setActiveAppearance(brainAppearance);
   }, [brainAppearance]);
+
+  // Click-outside listener to dismiss floating menus
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (controlsRef.current && !controlsRef.current.contains(e.target)) {
+        setShowPaletteMenu(false);
+        setShowAngleMenu(false);
+      }
+    };
+    if (showPaletteMenu || showAngleMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPaletteMenu, showAngleMenu]);
 
   const handleSelectAppearance = (optId) => {
     setActiveAppearance(optId);
@@ -1110,112 +1127,127 @@ export default function MedicalViewer({
         </div>
 
         {/* Floating Viewport Quick Controls Pill at Bottom Right (Palette + swatch, Play, Zoom In, Zoom Out, Reset) */}
-        <div className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-medical-base/90 border border-medical-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity">
-          {viewMode === '3d' && (
-            <div className="relative">
-              <button
-                onClick={() => setShowPaletteMenu(prev => !prev)}
-                className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono ${
-                  showPaletteMenu
-                    ? 'bg-medical-teal text-medical-darkest'
-                    : 'hover:bg-medical-surface text-medical-muted hover:text-white'
-                }`}
-                title="Brain Appearance Presets"
-                aria-label="Brain Appearance Presets"
-              >
-                <Palette className="w-4 h-4" />
-                <span 
-                  className="w-2.5 h-2.5 rounded-full border border-black/40 shadow-sm inline-block shrink-0"
-                  style={{ backgroundColor: currentOption.swatchColor }}
-                />
-              </button>
-
-              {/* Appearance dropdown popover - opens upward */}
-              {showPaletteMenu && (
-                <div className="absolute right-0 bottom-full mb-2 w-56 bg-medical-card/95 border border-medical-border rounded-lg shadow-2xl p-1.5 z-40 backdrop-blur-md">
-                  <div className="text-[10px] font-mono uppercase text-medical-muted px-2 py-1 border-b border-medical-border/60 mb-1">
-                    Brain Appearance
-                  </div>
-                  {BRAIN_APPEARANCE_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => handleSelectAppearance(opt.id)}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium text-left transition-colors ${
-                        activeAppearance === opt.id
-                          ? 'bg-medical-teal/20 text-medical-tealLight'
-                          : 'text-white hover:bg-medical-surface'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-3 h-3 rounded-full border border-black/30 flex-shrink-0"
-                          style={{ backgroundColor: opt.swatchColor }}
-                        />
-                        <span>{opt.name}</span>
+        <div
+          ref={controlsRef}
+          className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-medical-base/90 border border-medical-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity"
+        >
+          {/* Appearance dropdown popover - opens upward aligned to right of controls pill so it NEVER clips! */}
+          {viewMode === '3d' && showPaletteMenu && (
+            <div className="absolute right-0 bottom-full mb-2 w-64 max-w-[calc(100vw-3rem)] bg-medical-card/95 border border-medical-border rounded-lg shadow-2xl p-2 z-40 backdrop-blur-md">
+              <div className="flex items-center justify-between pb-1.5 border-b border-medical-border/60 mb-1.5">
+                <span className="text-[10px] font-mono uppercase text-medical-muted font-bold tracking-wider">
+                  3D Brain Appearance
+                </span>
+                <span className="text-[9px] font-mono text-medical-tealLight">
+                  {BRAIN_APPEARANCE_OPTIONS.length} Presets
+                </span>
+              </div>
+              <div className="space-y-1">
+                {BRAIN_APPEARANCE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleSelectAppearance(opt.id)}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium text-left transition-colors ${
+                      activeAppearance === opt.id
+                        ? 'bg-medical-teal/20 text-medical-tealLight border border-medical-teal/30'
+                        : 'text-white hover:bg-medical-surface border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full border border-black/40 shadow-sm shrink-0"
+                        style={{ backgroundColor: opt.swatchColor }}
+                      />
+                      <div className="min-w-0">
+                        <span className="block truncate font-semibold text-xs text-white">{opt.name}</span>
+                        <span className="block truncate text-[10px] text-medical-muted font-mono">{opt.badge}</span>
                       </div>
-                      {activeAppearance === opt.id && <Check className="w-3.5 h-3.5 text-medical-teal" />}
-                    </button>
-                  ))}
-                </div>
-              )}
+                    </div>
+                    {activeAppearance === opt.id && <Check className="w-4 h-4 text-medical-teal shrink-0 ml-1.5" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Orientation dropdown popover - opens upward aligned to right of controls pill */}
+          {viewMode === '3d' && showAngleMenu && (
+            <div className="absolute right-0 bottom-full mb-2 w-52 max-w-[calc(100vw-3rem)] bg-medical-card/95 border border-medical-border rounded-lg shadow-2xl p-1.5 z-40 backdrop-blur-md">
+              <div className="text-[10px] font-mono uppercase text-medical-muted px-2 py-1 border-b border-medical-border/60 mb-1 font-bold">
+                Anatomical View
+              </div>
+              <button
+                onClick={() => handleViewAngle('default')}
+                className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
+              >
+                <span>Default Anterior</span>
+                <span className="text-[10px] text-medical-muted font-mono">Front</span>
+              </button>
+              <button
+                onClick={() => handleViewAngle('inferior')}
+                className="w-full px-2.5 py-1.5 rounded text-xs font-semibold text-left text-emerald-300 hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors flex items-center justify-between my-0.5"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Sun className="w-3 h-3 text-amber-400" />
+                  Underside (Inferior)
+                </span>
+                <span className="text-[10px] text-emerald-400 font-mono">Bottom</span>
+              </button>
+              <button
+                onClick={() => handleViewAngle('superior')}
+                className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
+              >
+                <span>Superior View</span>
+                <span className="text-[10px] text-medical-muted font-mono">Top</span>
+              </button>
+              <button
+                onClick={() => handleViewAngle('lateral')}
+                className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
+              >
+                <span>Lateral View</span>
+                <span className="text-[10px] text-medical-muted font-mono">Right</span>
+              </button>
             </div>
           )}
 
           {viewMode === '3d' && (
-            <div className="relative">
-              <button
-                onClick={() => setShowAngleMenu(prev => !prev)}
-                className={`p-1.5 rounded transition-colors flex items-center gap-1 text-xs font-mono ${
-                  showAngleMenu
-                    ? 'bg-medical-teal text-medical-darkest'
-                    : 'hover:bg-medical-surface text-medical-muted hover:text-white'
-                }`}
-                title="Camera Orientations (Default, Underside/Inferior, Superior, Lateral)"
-                aria-label="Camera Orientations"
-              >
-                <Compass className="w-4 h-4" />
-              </button>
+            <button
+              onClick={() => {
+                setShowPaletteMenu(prev => !prev);
+                setShowAngleMenu(false);
+              }}
+              className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono ${
+                showPaletteMenu
+                  ? 'bg-medical-teal text-medical-darkest'
+                  : 'hover:bg-medical-surface text-medical-muted hover:text-white'
+              }`}
+              title="Brain Appearance Presets"
+              aria-label="Brain Appearance Presets"
+            >
+              <Palette className="w-4 h-4" />
+              <span 
+                className="w-2.5 h-2.5 rounded-full border border-black/40 shadow-sm inline-block shrink-0"
+                style={{ backgroundColor: currentOption.swatchColor }}
+              />
+            </button>
+          )}
 
-              {/* Orientation dropdown popover - opens upward */}
-              {showAngleMenu && (
-                <div className="absolute right-0 bottom-full mb-2 w-48 bg-medical-card/95 border border-medical-border rounded-lg shadow-2xl p-1.5 z-40 backdrop-blur-md">
-                  <div className="text-[10px] font-mono uppercase text-medical-muted px-2 py-1 border-b border-medical-border/60 mb-1">
-                    Anatomical View
-                  </div>
-                  <button
-                    onClick={() => handleViewAngle('default')}
-                    className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
-                  >
-                    <span>Default Anterior</span>
-                    <span className="text-[10px] text-medical-muted font-mono">Front</span>
-                  </button>
-                  <button
-                    onClick={() => handleViewAngle('inferior')}
-                    className="w-full px-2.5 py-1.5 rounded text-xs font-semibold text-left text-emerald-300 hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors flex items-center justify-between my-0.5"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <Sun className="w-3 h-3 text-amber-400" />
-                      Underside (Inferior)
-                    </span>
-                    <span className="text-[10px] text-emerald-400 font-mono">Bottom</span>
-                  </button>
-                  <button
-                    onClick={() => handleViewAngle('superior')}
-                    className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
-                  >
-                    <span>Superior View</span>
-                    <span className="text-[10px] text-medical-muted font-mono">Top</span>
-                  </button>
-                  <button
-                    onClick={() => handleViewAngle('lateral')}
-                    className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-white hover:bg-medical-surface transition-colors flex items-center justify-between"
-                  >
-                    <span>Lateral View</span>
-                    <span className="text-[10px] text-medical-muted font-mono">Right</span>
-                  </button>
-                </div>
-              )}
-            </div>
+          {viewMode === '3d' && (
+            <button
+              onClick={() => {
+                setShowAngleMenu(prev => !prev);
+                setShowPaletteMenu(false);
+              }}
+              className={`p-1.5 rounded transition-colors flex items-center gap-1 text-xs font-mono ${
+                showAngleMenu
+                  ? 'bg-medical-teal text-medical-darkest'
+                  : 'hover:bg-medical-surface text-medical-muted hover:text-white'
+              }`}
+              title="Camera Orientations (Default, Underside/Inferior, Superior, Lateral)"
+              aria-label="Camera Orientations"
+            >
+              <Compass className="w-4 h-4" />
+            </button>
           )}
 
           {viewMode === '3d' && (

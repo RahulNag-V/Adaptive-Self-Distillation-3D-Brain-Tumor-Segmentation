@@ -7,6 +7,7 @@ import ResultsPage from './pages/ResultsPage';
 import AboutPage from './pages/AboutPage';
 import ClassificationPage from './pages/ClassificationPage';
 import AdaptiveDashboardPage from './pages/AdaptiveDashboardPage';
+import CinematicIntro from './components/CinematicIntro';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -50,6 +51,7 @@ class ErrorBoundary extends React.Component {
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [liveResult, setLiveResult] = useState(null);
+  const [showIntro, setShowIntro] = useState(true);
 
   const handleSegmentationComplete = (result) => {
     setLiveResult(result);
@@ -102,7 +104,14 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <AppLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {showIntro && (
+        <CinematicIntro onComplete={() => setShowIntro(false)} />
+      )}
+      <AppLayout 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        onPlayIntro={() => setShowIntro(true)}
+      >
         <ErrorBoundary>
           {renderActivePage()}
         </ErrorBoundary>

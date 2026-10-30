@@ -41,3 +41,6 @@ dashboard/checkpoints/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Scratch & temporary
+scratch/

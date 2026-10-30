@@ -789,6 +789,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   modality={activeMriModality}
                   segSource={segSource}
                   subregions={subregions}
+                  onToggleSubregion={toggleSubregion}
                   opacity={opacity}
                   showOverlay={layers.tumor || layers.overlay}
                   crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -818,6 +819,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   modality={activeMriModality}
                   segSource={segSource}
                   subregions={subregions}
+                  onToggleSubregion={toggleSubregion}
                   opacity={opacity}
                   showOverlay={layers.tumor || layers.overlay}
                   crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -847,6 +849,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   modality={activeMriModality}
                   segSource={segSource}
                   subregions={subregions}
+                  onToggleSubregion={toggleSubregion}
                   opacity={opacity}
                   showOverlay={layers.tumor || layers.overlay}
                   crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -892,6 +895,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 modality={activeMriModality}
                 segSource={segSource}
                 subregions={subregions}
+                onToggleSubregion={toggleSubregion}
                 opacity={opacity}
                 showOverlay={layers.tumor || layers.overlay}
                 crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -920,6 +924,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 modality={activeMriModality}
                 segSource={segSource}
                 subregions={subregions}
+                onToggleSubregion={toggleSubregion}
                 opacity={opacity}
                 showOverlay={layers.tumor || layers.overlay}
                 crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -948,6 +953,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 modality={activeMriModality}
                 segSource={segSource}
                 subregions={subregions}
+                onToggleSubregion={toggleSubregion}
                 opacity={opacity}
                 showOverlay={layers.tumor || layers.overlay}
                 crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -1162,6 +1168,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 modality={activeMriModality}
                 segSource={segSource}
                 subregions={subregions}
+                onToggleSubregion={toggleSubregion}
                 opacity={opacity}
                 showOverlay={layers.tumor || layers.overlay}
                 crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -1189,6 +1196,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 modality={activeMriModality}
                 segSource={segSource}
                 subregions={subregions}
+                onToggleSubregion={toggleSubregion}
                 opacity={opacity}
                 showOverlay={layers.tumor || layers.overlay}
                 crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
@@ -1216,6 +1224,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 modality={activeMriModality}
                 segSource={segSource}
                 subregions={subregions}
+                onToggleSubregion={toggleSubregion}
                 opacity={opacity}
                 showOverlay={layers.tumor || layers.overlay}
                 crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}

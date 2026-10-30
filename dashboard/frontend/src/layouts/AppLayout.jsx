@@ -16,7 +16,8 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Film
 } from 'lucide-react';
 import { useServerStatus } from '../hooks/useServerStatus';
 
@@ -68,7 +69,7 @@ const ROUTE_METADATA = {
   },
 };
 
-export default function AppLayout({ activeTab, onTabChange, children }) {
+export default function AppLayout({ activeTab, onTabChange, onPlayIntro, children }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const currentMeta = ROUTE_METADATA[activeTab] || ROUTE_METADATA.overview;
   
@@ -382,6 +383,19 @@ export default function AppLayout({ activeTab, onTabChange, children }) {
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
+            {/* Play Intro Button */}
+            {onPlayIntro && (
+              <button
+                onClick={onPlayIntro}
+                type="button"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-border hover:border-medical-teal/40 text-medical-muted hover:text-white text-[11px] font-mono transition-all shadow-sm"
+                title="Play 4K Cinematic Intro Video"
+              >
+                <Film className="w-3.5 h-3.5 text-medical-teal" />
+                <span className="hidden sm:inline font-medium">Intro</span>
+              </button>
+            )}
+
             {/* Study Cohort Tag */}
             <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-medical-card border border-medical-border text-[11px] font-mono text-medical-muted">
               <span className="text-white font-medium">BraTS2021</span>

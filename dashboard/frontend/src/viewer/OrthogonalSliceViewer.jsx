@@ -92,6 +92,7 @@ export default function OrthogonalSliceViewer({
   modality = 'flair',
   segSource = 'ground_truth',
   subregions = { wt: true, tc: true, et: true },
+  onToggleSubregion,
   opacity = 0.75,
   showOverlay = true,
   crosshair = { x: 120, y: 120, z: 78 },
@@ -127,6 +128,22 @@ export default function OrthogonalSliceViewer({
   const [showLegend, setShowLegend] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const controlsRef = useRef(null);
+
+  // Click-outside listener to dismiss BraTS legend popover
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (controlsRef.current && !controlsRef.current.contains(e.target)) {
+        setShowLegend(false);
+      }
+    };
+    if (showLegend) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showLegend]);
 
   // Cine Mode: continuous automated slice cycling
   useEffect(() => {
@@ -614,35 +631,84 @@ export default function OrthogonalSliceViewer({
           )}
         </div>
 
-        {/* Floating In-Viewer Segmentation Color Legend */}
-        {showLegend && showOverlay && (
-          <div className="absolute bottom-2 left-2 z-20 flex flex-col gap-1 p-2 rounded-lg bg-medical-darkest/95 border border-medical-border/90 backdrop-blur-md text-[10px] font-mono shadow-2xl pointer-events-none max-w-[210px]">
-            <div className="flex items-center justify-between pb-1 border-b border-medical-border/60 text-medical-muted font-bold text-[9px] uppercase tracking-wider">
-              <span>BraTS Legend</span>
-              <span className="text-medical-teal font-normal">{Math.round(opacity * 100)}%</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#EAB308] flex-shrink-0 shadow-sm" />
-              <span className="text-white font-medium">Whole Tumor (WT)</span>
-              <span className="text-medical-muted text-[9px]">• Yellow</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#F43F5E] flex-shrink-0 shadow-sm" />
-              <span className="text-white font-medium">Tumor Core (TC)</span>
-              <span className="text-medical-muted text-[9px]">• Coral</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#06B6D4] flex-shrink-0 shadow-sm" />
-              <span className="text-white font-medium">Enhancing (ET)</span>
-              <span className="text-medical-muted text-[9px]">• Cyan</span>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Viewport Quick Controls Pill at Bottom Right (Palette + swatch, Play, Zoom In, Zoom Out, Reset) */}
+        {/* Floating Viewport Quick Controls Pill at Bottom Right */}
         {showControls && (
-          <div className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-medical-base/90 border border-medical-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity">
-            {/* Palette Button with Color Swatch Dot */}
+          <div
+            ref={controlsRef}
+            className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-medical-base/90 border border-medical-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity"
+          >
+            {/* Segmentation Color Legend popover - opens upward aligned to right, NEVER overlapping controls! */}
+            {showLegend && showOverlay && (
+              <div className="absolute right-0 bottom-full mb-2 w-60 max-w-[calc(100vw-3rem)] bg-medical-darkest/95 border border-medical-border/90 backdrop-blur-md p-2 rounded-lg shadow-2xl z-40 text-[10px] font-mono animate-fadeIn">
+                <div className="flex items-center justify-between pb-1.5 border-b border-medical-border/60 text-medical-muted font-bold text-[9px] uppercase tracking-wider mb-1.5">
+                  <span className="flex items-center gap-1.5 text-white">
+                    <span className="w-2 h-2 rounded-full bg-medical-teal animate-pulse" />
+                    BraTS Segmentation
+                  </span>
+                  <span className="text-medical-teal font-normal">{Math.round(opacity * 100)}%</span>
+                </div>
+                <div className="space-y-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onToggleSubregion && onToggleSubregion('wt')}
+                    className={`w-full flex items-center justify-between p-1.5 rounded transition-colors ${
+                      subregions.wt
+                        ? 'bg-amber-950/40 border border-amber-500/40 text-white'
+                        : 'bg-medical-card/60 border border-medical-border/60 text-medical-muted hover:text-white'
+                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-amber-900/30' : 'cursor-default'}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-3 h-3 rounded-sm bg-[#EAB308] shrink-0 shadow-sm ${!subregions.wt ? 'opacity-30' : ''}`} />
+                      <span className="font-medium truncate">Whole Tumor (WT)</span>
+                    </div>
+                    <span className="text-amber-400 font-mono text-[9px] shrink-0 ml-1.5">
+                      {subregions.wt ? 'Yellow' : 'Off'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onToggleSubregion && onToggleSubregion('tc')}
+                    className={`w-full flex items-center justify-between p-1.5 rounded transition-colors ${
+                      subregions.tc
+                        ? 'bg-rose-950/40 border border-rose-500/40 text-white'
+                        : 'bg-medical-card/60 border border-medical-border/60 text-medical-muted hover:text-white'
+                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-rose-900/30' : 'cursor-default'}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-3 h-3 rounded-sm bg-[#F43F5E] shrink-0 shadow-sm ${!subregions.tc ? 'opacity-30' : ''}`} />
+                      <span className="font-medium truncate">Tumor Core (TC)</span>
+                    </div>
+                    <span className="text-rose-400 font-mono text-[9px] shrink-0 ml-1.5">
+                      {subregions.tc ? 'Coral' : 'Off'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onToggleSubregion && onToggleSubregion('et')}
+                    className={`w-full flex items-center justify-between p-1.5 rounded transition-colors ${
+                      subregions.et
+                        ? 'bg-cyan-950/40 border border-cyan-500/40 text-white'
+                        : 'bg-medical-card/60 border border-medical-border/60 text-medical-muted hover:text-white'
+                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-cyan-900/30' : 'cursor-default'}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-3 h-3 rounded-sm bg-[#06B6D4] shrink-0 shadow-sm ${!subregions.et ? 'opacity-30' : ''}`} />
+                      <span className="font-medium truncate">Enhancing (ET)</span>
+                    </div>
+                    <span className="text-cyan-400 font-mono text-[9px] shrink-0 ml-1.5">
+                      {subregions.et ? 'Cyan' : 'Off'}
+                    </span>
+                  </button>
+                </div>
+                {onToggleSubregion && (
+                  <div className="text-[9px] text-medical-muted/80 text-center pt-1 mt-1 border-t border-medical-border/40">
+                    Click layer to toggle visibility
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Palette Button with authentic BraTS 3-color swatch */}
             <button
               onClick={() => setShowLegend((prev) => !prev)}
               className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono ${
@@ -650,13 +716,12 @@ export default function OrthogonalSliceViewer({
                   ? 'bg-medical-teal text-medical-darkest'
                   : 'hover:bg-medical-surface text-medical-muted hover:text-white'
               }`}
-              title={showLegend ? 'Hide BraTS Palette' : 'Show BraTS Palette'}
+              title={showLegend ? 'Hide BraTS Palette Legend' : 'Show BraTS Palette Legend'}
               aria-label="Toggle Segmentation Legend"
             >
               <Palette className="w-4 h-4" />
               <span 
-                className="w-2.5 h-2.5 rounded-full border border-black/40 shadow-sm inline-block shrink-0"
-                style={{ backgroundColor: '#E8A598' }}
+                className="w-2.5 h-2.5 rounded-full border border-black/50 shadow-sm inline-block shrink-0 bg-gradient-to-tr from-[#EAB308] via-[#F43F5E] to-[#06B6D4]"
               />
             </button>
 
