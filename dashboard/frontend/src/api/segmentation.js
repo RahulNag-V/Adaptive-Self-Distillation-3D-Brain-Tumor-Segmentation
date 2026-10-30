@@ -159,3 +159,12 @@ export async function getPatientTumorBurden(patientId, segSource = 'ground_truth
   return request(`/api/patients/${patientId}/tumor-burden?seg_source=${encodeURIComponent(segSource)}`);
 }
 
+/**
+ * Fetches authentic 3D surface meshes (WT, TC, ET) extracted from the real volumetric
+ * segmentation mask using Marching Cubes, formatted and scaled for Three.js.
+ * GET /api/patients/{patient_id}/mesh?seg_source={seg_source}
+ */
+export async function getPatientTumorMesh(patientId, segSource = 'ground_truth') {
+  return request(`/api/patients/${patientId}/mesh?seg_source=${encodeURIComponent(segSource)}`);
+}
+

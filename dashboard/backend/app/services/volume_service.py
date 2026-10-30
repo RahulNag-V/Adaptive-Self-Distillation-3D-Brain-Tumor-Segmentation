@@ -364,10 +364,13 @@ class VolumeService:
             is_tc = (seg_slice == 1) | is_et
             is_wt = (seg_slice == 2) | is_tc
 
-            # Colors (RGB)
-            c_wt = np.array([16, 185, 129], dtype=np.float32)   # Green
-            c_tc = np.array([245, 158, 11], dtype=np.float32)   # Amber
-            c_et = np.array([239, 68, 68], dtype=np.float32)    # Red
+            # Standardized Medical Palette:
+            # WT: Yellow (#EAB308)
+            # TC: Coral Red (#F43F5E)
+            # ET: Cyan (#06B6D4)
+            c_wt = np.array([234, 179, 8], dtype=np.float32)    # Yellow #EAB308
+            c_tc = np.array([244, 63, 94], dtype=np.float32)   # Coral Red #F43F5E
+            c_et = np.array([6, 182, 212], dtype=np.float32)    # Cyan #06B6D4
 
             blend_rgb = rgb[:, :, :3].astype(np.float32)
 
@@ -394,3 +397,105 @@ class VolumeService:
         buf = io.BytesIO()
         img.save(buf, format="PNG", compress_level=1)  # compress_level=1 for max speed
         return buf.getvalue()
+
+    @classmethod
+    def extract_tumor_mesh(
+        cls,
+        subject_id: str,
+        seg_source: str = "ground_truth"
+    ) -> Dict[str, Any]:
+        """
+        Extracts 3D surface meshes (WT, TC, ET) from the real volumetric segmentation mask
+        using Marching Cubes, formatted and scaled for direct Three.js rendering.
+        """
+        import skimage.measure
+
+        clean_id = subject_id.strip()
+        
+        # Load the segmentation volume
+        if seg_source in ["ground_truth", "gt"]:
+            seg_vol = cls.get_volume_array(clean_id, "seg")
+        elif seg_source in ["prediction", "pred"]:
+            seg_vol = cls.get_volume_array(clean_id, "pred")
+        elif seg_source in ["corrected", "annotation"]:
+            seg_vol = cls.get_volume_array(clean_id, "corrected")
+        elif seg_source in ["original", "orig"]:
+            seg_vol = cls.get_volume_array(clean_id, "original")
+        else:
+            seg_vol = None
+
+        if seg_vol is None:
+            return {
+                "patient_id": clean_id,
+                "seg_source": seg_source,
+                "has_mesh": False,
+                "error": "Segmentation mask not available for this patient.",
+                "surfaces": {}
+            }
+
+        # BraTS labels: 1=NCR, 2=ED, 3=ET (or 4=ET)
+        masks = {
+            "wt": (seg_vol == 1) | (seg_vol == 2) | (seg_vol == 3) | (seg_vol == 4),
+            "tc": (seg_vol == 1) | (seg_vol == 3) | (seg_vol == 4),
+            "et": (seg_vol == 3) | (seg_vol == 4)
+        }
+
+        surfaces = {}
+        step = 2  # Downsample 2x for fast marching cubes and lightweight mesh
+        center = np.array([120.0, 120.0, 77.5], dtype=np.float32)
+        scale = 80.0  # Scale to fit Three.js unit sphere reference anatomy
+
+        for key, mask in masks.items():
+            voxels = int(np.count_nonzero(mask))
+            if voxels < 10:
+                surfaces[key] = None
+                continue
+
+            sub_mask = mask[::step, ::step, ::step]
+            if np.count_nonzero(sub_mask) < 4:
+                surfaces[key] = None
+                continue
+
+            try:
+                verts, faces, normals, _ = skimage.measure.marching_cubes(
+                    sub_mask,
+                    level=0.5,
+                    spacing=(step, step, step)
+                )
+
+                # Map coordinates to Three.js world space:
+                # BraTS X (Sagittal L-R) -> Three.js X
+                # BraTS Z (Axial I-S) -> Three.js Y (Up)
+                # BraTS Y (Coronal P-A) -> Three.js Z
+                three_x = (verts[:, 0] - center[0]) / scale
+                three_y = (verts[:, 2] - center[2]) / scale
+                three_z = (verts[:, 1] - center[1]) / scale
+
+                three_verts = np.column_stack([three_x, three_y, three_z]).astype(np.float32)
+
+                # Reorient normals
+                norm_x = normals[:, 0]
+                norm_y = normals[:, 2]
+                norm_z = normals[:, 1]
+                three_normals = np.column_stack([norm_x, norm_y, norm_z]).astype(np.float32)
+
+                # Flatten positions, normals, and indices
+                surfaces[key] = {
+                    "voxel_count": voxels,
+                    "vertex_count": len(verts),
+                    "face_count": len(faces),
+                    "positions": np.round(three_verts.flatten(), 4).tolist(),
+                    "normals": np.round(three_normals.flatten(), 4).tolist(),
+                    "indices": faces.flatten().tolist()
+                }
+            except Exception as e:
+                logger.warning(f"Failed to generate {key} surface for {clean_id}: {e}")
+                surfaces[key] = None
+
+        return {
+            "patient_id": clean_id,
+            "seg_source": seg_source,
+            "has_mesh": any(v is not None for v in surfaces.values()),
+            "surfaces": surfaces
+        }
+

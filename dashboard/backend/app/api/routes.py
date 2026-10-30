@@ -335,6 +335,19 @@ async def get_patient_tumor_burden(
     return result
 
 
+@router.get("/patients/{patient_id}/mesh")
+async def get_patient_tumor_mesh(
+    patient_id: str,
+    seg_source: str = Query("ground_truth", description="ground_truth, prediction, or corrected")
+):
+    """
+    Extracts authentic 3D surface meshes (WT, TC, ET) from the real volumetric segmentation mask
+    using Marching Cubes, formatted and scaled for direct Three.js rendering.
+    """
+    clean_id = sanitize_filename(patient_id)
+    return VolumeService.extract_tumor_mesh(clean_id, seg_source=seg_source)
+
+
 @router.get("/volume/slice")
 async def get_volume_slice(
     patient_id: str = Query(..., description="Patient ID e.g. BraTS2021_01017"),

@@ -213,10 +213,10 @@ export default function OrthogonalSliceViewer({
       ctx.fillStyle = 'rgba(0, 0, 0, 1.0)';
     } else {
       ctx.globalCompositeOperation = 'source-over';
-      if (activeLabel === 1) ctx.fillStyle = 'rgba(239, 68, 68, 0.85)'; // NCR Red
-      else if (activeLabel === 2) ctx.fillStyle = 'rgba(16, 185, 129, 0.85)'; // ED Green
-      else if (activeLabel === 3) ctx.fillStyle = 'rgba(245, 158, 11, 0.85)'; // ET Yellow
-      else ctx.fillStyle = 'rgba(20, 184, 166, 0.85)';
+      if (activeLabel === 1) ctx.fillStyle = 'rgba(244, 63, 94, 0.85)'; // TC Coral Red
+      else if (activeLabel === 2) ctx.fillStyle = 'rgba(234, 179, 8, 0.85)'; // WT Yellow (Edema)
+      else if (activeLabel === 3) ctx.fillStyle = 'rgba(6, 182, 212, 0.85)'; // ET Cyan
+      else ctx.fillStyle = 'rgba(6, 182, 212, 0.85)';
     }
     ctx.beginPath();
     ctx.arc(px, py, Math.max(1, brushRadius), 0, Math.PI * 2);
@@ -622,19 +622,19 @@ export default function OrthogonalSliceViewer({
               <span className="text-medical-teal font-normal">{Math.round(opacity * 100)}%</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#10B981] flex-shrink-0 shadow-sm" />
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#EAB308] flex-shrink-0 shadow-sm" />
               <span className="text-white font-medium">Whole Tumor (WT)</span>
-              <span className="text-medical-muted text-[9px]">• Edema</span>
+              <span className="text-medical-muted text-[9px]">• Yellow</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#F59E0B] flex-shrink-0 shadow-sm" />
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#F43F5E] flex-shrink-0 shadow-sm" />
               <span className="text-white font-medium">Tumor Core (TC)</span>
-              <span className="text-medical-muted text-[9px]">• Necrotic</span>
+              <span className="text-medical-muted text-[9px]">• Coral</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#EF4444] flex-shrink-0 shadow-sm" />
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#06B6D4] flex-shrink-0 shadow-sm" />
               <span className="text-white font-medium">Enhancing (ET)</span>
-              <span className="text-medical-muted text-[9px]">• Active</span>
+              <span className="text-medical-muted text-[9px]">• Cyan</span>
             </div>
           </div>
         )}

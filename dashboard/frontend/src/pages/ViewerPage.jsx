@@ -396,51 +396,55 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
   return (
     <div className="h-full flex flex-col p-3 lg:p-4 space-y-2.5 overflow-hidden">
-      {/* 1. TOP BANNER / CASE IDENTIFIER & HITL STATUS BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-medical-base border border-medical-border px-3.5 py-2 rounded-xl shadow-md">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-medical-teal animate-pulse" />
-            <span className="text-xs text-medical-muted uppercase font-mono font-semibold">Case:</span>
-          </div>
+      {/* 1. TOP TOOLBAR: THREE LOGICAL GROUPS + PERSISTENT COMPACT LEGEND */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-medical-base border border-medical-border px-3.5 py-2 rounded-xl shadow-md shrink-0">
+        {/* Left: Group 1 (Case) & Group 2 (Mask Source) */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* GROUP 1: CASE */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-medical-teal animate-pulse" />
+              <span className="text-xs text-medical-muted uppercase font-mono font-semibold">Case:</span>
+            </div>
 
-          {/* Patient Selector Dropdown */}
-          <select
-            value={selectedPatientId}
-            onChange={(e) => setSelectedPatientId(e.target.value)}
-            className="bg-medical-card border border-medical-teal/40 hover:border-medical-teal text-white text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-medical-teal cursor-pointer"
-          >
-            {currentResult && (
-              <option value={currentResult.session_id}>
-                Live Session: {currentResult.session_id.substring(0, 16)}...
-              </option>
-            )}
-            {patients.length > 0 ? (
-              patients.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.id} {p.is_validation ? '(Validation Split)' : ''}
+            {/* Patient Selector Dropdown */}
+            <select
+              value={selectedPatientId}
+              onChange={(e) => setSelectedPatientId(e.target.value)}
+              className="bg-medical-card border border-medical-teal/40 hover:border-medical-teal text-white text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-medical-teal cursor-pointer"
+            >
+              {currentResult && (
+                <option value={currentResult.session_id}>
+                  Live Session: {currentResult.session_id.substring(0, 16)}...
                 </option>
-              ))
-            ) : (
-              <option value="BraTS2021_01017">BraTS2021_01017 (Training)</option>
-            )}
-          </select>
+              )}
+              {patients.length > 0 ? (
+                patients.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.id} {p.is_validation ? '(Val)' : '(Train)'}
+                  </option>
+                ))
+              ) : (
+                <option value="BraTS2021_01017">BraTS2021_01017 (Train)</option>
+              )}
+            </select>
 
-          {/* Annotation Lifecycle State Badge */}
-          {annotationRecord && (
-            <div className="flex items-center gap-1.5 border-l border-medical-border pl-2.5">
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${stateBadgeStyle(annotationRecord.status)}`}>
+            {/* Dataset split badge */}
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-medical-card border border-medical-border text-medical-muted hidden sm:inline">
+              BraTS 2021
+            </span>
+
+            {/* Annotation Lifecycle State Badge */}
+            {annotationRecord && (
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${stateBadgeStyle(annotationRecord.status)} hidden md:inline`}>
                 {annotationRecord.status} (v{annotationRecord.version || 1})
               </span>
-              {annotationRecord.edit_history?.length > 0 && (
-                <span className="text-[10px] font-mono text-medical-muted">
-                  {annotationRecord.edit_history.length} edit{annotationRecord.edit_history.length > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Seg Source Toggle (Prediction vs Corrected vs Ground Truth) */}
+          <div className="h-4 w-px bg-medical-border/80 hidden sm:block" />
+
+          {/* GROUP 2: MASK SOURCE */}
           <div className="flex items-center gap-1 bg-medical-card border border-medical-border p-0.5 rounded-lg text-xs font-mono">
             <span className="text-[10px] text-medical-muted px-1.5">Mask:</span>
             {[
@@ -463,36 +467,62 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           </div>
         </div>
 
-        {/* Right Header Controls: Interactive Editor Toggle & Sequence Selector */}
-        <div className="flex items-center gap-2">
-          {/* Correction Mode Button */}
-          <button
-            onClick={() => setIsEditing(prev => !prev)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono font-bold transition-colors shadow-sm ${
-              isEditing
-                ? 'bg-amber-400 text-medical-darkest border-amber-300'
-                : 'bg-medical-card text-amber-300 border-amber-400/50 hover:bg-amber-400/10'
-            }`}
-          >
-            <Paintbrush className="w-3.5 h-3.5" />
-            <span>{isEditing ? 'Exit Editor' : 'Correct Segmentation'}</span>
-          </button>
+        {/* Right: Persistent Compact Legend & Group 3 (Image & Editing) */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* PERSISTENT COMPACT SEGMENTATION LEGEND */}
+          <div className="hidden lg:flex items-center gap-2.5 px-2.5 py-1 rounded-lg bg-medical-card/80 border border-medical-border text-[11px] font-mono shadow-sm">
+            <span className="text-medical-muted uppercase text-[9px] font-bold tracking-wider">Legend:</span>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-slate-400" />
+              <span className="text-slate-300">MRI</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-[#EAB308]" />
+              <span className="text-yellow-400 font-medium">WT</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-[#F43F5E]" />
+              <span className="text-rose-400 font-medium">TC</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-[#06B6D4]" />
+              <span className="text-cyan-400 font-medium">ET</span>
+            </div>
+          </div>
 
-          {/* Modality Selector Buttons */}
-          <div className="flex items-center gap-1 bg-medical-card border border-medical-border p-0.5 rounded-lg text-xs font-mono">
-            {['flair', 't1', 't1ce', 't2'].map((mod) => (
-              <button
-                key={mod}
-                onClick={() => setActiveMriModality(mod)}
-                className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold transition-all ${
-                  activeMriModality === mod
-                    ? 'bg-medical-teal text-medical-darkest'
-                    : 'text-medical-muted hover:text-white'
-                }`}
-              >
-                {mod}
-              </button>
-            ))}
+          <div className="h-4 w-px bg-medical-border/80 hidden lg:block" />
+
+          {/* GROUP 3: IMAGE & EDITING */}
+          <div className="flex items-center gap-2">
+            {/* Modality Selector Buttons */}
+            <div className="flex items-center gap-1 bg-medical-card border border-medical-border p-0.5 rounded-lg text-xs font-mono">
+              {['flair', 't1', 't1ce', 't2'].map((mod) => (
+                <button
+                  key={mod}
+                  onClick={() => setActiveMriModality(mod)}
+                  className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold transition-all ${
+                    activeMriModality === mod
+                      ? 'bg-medical-teal text-medical-darkest'
+                      : 'text-medical-muted hover:text-white'
+                  }`}
+                >
+                  {mod}
+                </button>
+              ))}
+            </div>
+
+            {/* Correction Mode Button */}
+            <button
+              onClick={() => setIsEditing(prev => !prev)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-colors shadow-sm ${
+                isEditing
+                  ? 'bg-amber-400 text-medical-darkest border-amber-300'
+                  : 'bg-medical-card text-amber-300 border-amber-400/50 hover:bg-amber-400/10'
+              }`}
+            >
+              <Paintbrush className="w-3.5 h-3.5" />
+              <span>{isEditing ? 'Exit Editor' : 'Correct'}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -538,9 +568,9 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               <div className="flex items-center gap-1.5 text-xs font-mono">
                 <span className="text-[11px] text-medical-muted">Label:</span>
                 {[
-                  { id: 1, name: 'NCR / NET', color: '#EF4444', desc: 'Necrotic Core / Non-enhancing' },
-                  { id: 2, name: 'ED (Edema)', color: '#10B981', desc: 'Peritumoral Edema' },
-                  { id: 3, name: 'ET (Enhancing)', color: '#F59E0B', desc: 'Enhancing Active Tumor' },
+                  { id: 1, name: 'TC (Core)', color: '#F43F5E', desc: 'Tumor Core / Necrotic' },
+                  { id: 2, name: 'WT (Edema)', color: '#EAB308', desc: 'Peritumoral Edema' },
+                  { id: 3, name: 'ET (Enhancing)', color: '#06B6D4', desc: 'Enhancing Active Tumor' },
                 ].map(({ id, name, color, desc }) => (
                   <button
                     key={id}
@@ -653,11 +683,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         </div>
       )}
 
-      {/* 3. CLINICAL WORKSPACE: LEFT (PROJECTIONS) | CENTER (VIEWPORTS) | RIGHT (LAYERS) */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0 overflow-hidden">
+      {/* 3. CLINICAL WORKSPACE: LEFT RAIL (PROJECTIONS) | CENTER (VIEWPORTS) | RIGHT (INSPECTOR) */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
         
-        {/* LEFT COLUMN: Projection Mode & Slice Coordinates Panel (3 cols on lg, 2 cols on xl) */}
-        <div className="lg:col-span-3 xl:col-span-2 bg-medical-base border border-medical-border rounded-xl p-3.5 flex flex-col justify-between space-y-3 overflow-y-auto">
+        {/* LEFT RAIL: Navigation, Projection Modes & Slice Coordinates */}
+        <div className="w-full lg:w-[210px] xl:w-[220px] shrink-0 bg-medical-base border border-medical-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto">
           <div className="space-y-3">
             {/* Projection / Layout Mode Selector */}
             <div className="space-y-1.5">
@@ -702,7 +732,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             />
           </div>
 
-          {/* Tool Action Buttons */}
+          {/* Quick Actions */}
           <div className="pt-2 border-t border-medical-border/70 space-y-2">
             <span className="text-[11px] font-mono uppercase tracking-wider text-medical-muted block">
               Quick Actions
@@ -710,14 +740,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 onClick={handleReset}
-                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-medical-surface hover:bg-medical-card border border-medical-border text-white transition-all shadow-sm"
+                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-medical-surface hover:bg-medical-card border border-medical-border text-white transition-all shadow-sm"
               >
                 <RotateCcw className="w-3 h-3 text-medical-muted" />
                 <span>Reset View</span>
               </button>
               <button
                 onClick={() => setViewLayout('quad')}
-                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-medical-surface hover:bg-medical-card border border-medical-border text-white transition-all shadow-sm"
+                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-medical-surface hover:bg-medical-card border border-medical-border text-white transition-all shadow-sm"
               >
                 <Grid className="w-3 h-3 text-medical-teal" />
                 <span>Quad MPR</span>
@@ -726,8 +756,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           </div>
         </div>
 
-        {/* CENTER COLUMN: Interactive 3D & 2D Multi-Planar Reconstruction (6 cols on lg, 7 cols on xl, 8 on 2xl) */}
-        <div className="lg:col-span-6 xl:col-span-7 2xl:col-span-8 flex flex-col min-h-0 h-full overflow-hidden">
+        {/* CENTER COLUMN: Interactive 3D & 2D Multi-Planar Reconstruction (Takes majority of space) */}
+        <div className="flex-1 min-w-0 min-h-0 h-full flex flex-col overflow-hidden">
           {viewLayout === 'quad' ? (
             /* QUAD MPR VIEW: 2x2 Synchronized Grid (3D + Axial + Coronal + Sagittal) */
             <div className="grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-2 h-full min-h-0">
@@ -735,6 +765,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               <div className="h-full min-h-0 overflow-hidden">
                 <MedicalViewer
                   viewMode="3d"
+                  patientId={selectedPatientId}
+                  segSource={segSource}
                   layers={layers}
                   opacity={opacity}
                   subregions={subregions}
@@ -837,6 +869,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="h-full min-h-0 overflow-hidden">
               <MedicalViewer
                 viewMode="3d"
+                patientId={selectedPatientId}
+                segSource={segSource}
                 layers={layers}
                 opacity={opacity}
                 subregions={subregions}
@@ -934,9 +968,9 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           )}
         </div>
 
-        {/* RIGHT COLUMN: Layer Visibility & Quantitative Volumetrics (3 cols on lg/xl, 2 on 2xl) */}
-        <div className="lg:col-span-3 xl:col-span-3 2xl:col-span-2 bg-medical-base border border-medical-border rounded-xl p-3.5 flex flex-col justify-between space-y-3 overflow-y-auto">
-          <div className="space-y-4">
+        {/* RIGHT INSPECTOR: Volumetrics & Layers (Predictable readable width, no text clipping) */}
+        <div className="w-full lg:w-[290px] xl:w-[315px] 2xl:w-[330px] shrink-0 bg-medical-base border border-medical-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto overflow-x-hidden">
+          <div className="space-y-3">
             {/* Header Tabs */}
             <div className="flex items-center gap-1 p-1 bg-medical-card rounded-lg border border-medical-border text-xs">
               <button
@@ -970,35 +1004,61 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               />
             ) : (
               /* TAB 2: Layers & Opacity Control */
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <span className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold block">
-                    Segmentation Overlays
+              <div className="space-y-3.5">
+                {/* Segmentation Overlays */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-medical-muted font-semibold block">
+                    Segmentation Layers
                   </span>
                   {[
-                    { key: 'wt', label: 'Whole Tumor (WT)', color: '#10B981' },
-                    { key: 'tc', label: 'Tumor Core (TC)', color: '#F59E0B' },
-                    { key: 'et', label: 'Enhancing Tumor (ET)', color: '#EF4444' },
-                  ].map(({ key, label, color }) => (
-                    <label key={key} className="flex items-center justify-between p-2 rounded bg-medical-card border border-medical-border text-xs cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded" style={{ backgroundColor: color }} />
-                        <span className="text-white">{label}</span>
+                    { key: 'wt', label: 'Whole Tumor (WT)', color: '#EAB308', desc: 'Labels {1, 2, 3}' },
+                    { key: 'tc', label: 'Tumor Core (TC)', color: '#F43F5E', desc: 'Labels {1, 3}' },
+                    { key: 'et', label: 'Enhancing Tumor (ET)', color: '#06B6D4', desc: 'Label {3}' },
+                  ].map(({ key, label, color, desc }) => (
+                    <label key={key} className="flex items-center justify-between p-2 rounded-lg bg-medical-card border border-medical-border text-xs cursor-pointer hover:bg-medical-surface transition-colors">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-2.5 h-2.5 rounded shrink-0 shadow-sm" style={{ backgroundColor: color }} />
+                        <div className="min-w-0">
+                          <span className="text-white font-medium block truncate">{label}</span>
+                          <span className="text-[10px] text-medical-muted font-mono">{desc}</span>
+                        </div>
                       </div>
                       <input
                         type="checkbox"
                         checked={subregions[key]}
                         onChange={() => toggleSubregion(key)}
-                        className="accent-medical-teal rounded"
+                        className="accent-medical-teal rounded cursor-pointer shrink-0"
                       />
                     </label>
                   ))}
                 </div>
 
+                {/* MRI Background Toggle */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-medical-muted font-semibold block">
+                    Anatomy Background
+                  </span>
+                  <label className="flex items-center justify-between p-2 rounded-lg bg-medical-card border border-medical-border text-xs cursor-pointer hover:bg-medical-surface transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded bg-slate-400 shrink-0" />
+                      <div>
+                        <span className="text-white font-medium block">MRI Anatomy</span>
+                        <span className="text-[10px] text-medical-muted font-mono">Atlas & Scan Background</span>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={layers.mri}
+                      onChange={() => setLayers(prev => ({ ...prev, mri: !prev.mri }))}
+                      className="accent-medical-teal rounded cursor-pointer shrink-0"
+                    />
+                  </label>
+                </div>
+
                 {/* Opacity Slider */}
-                <div className="space-y-1.5 p-3 rounded bg-medical-card border border-medical-border text-xs">
+                <div className="space-y-1.5 p-2.5 rounded-lg bg-medical-card border border-medical-border text-xs">
                   <div className="flex items-center justify-between text-medical-muted font-mono">
-                    <span>Overlay Opacity</span>
+                    <span>Segmentation Opacity</span>
                     <span className="text-white font-bold">{Math.round(opacity * 100)}%</span>
                   </div>
                   <input
@@ -1011,12 +1071,28 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                     className="w-full accent-medical-teal cursor-pointer"
                   />
                 </div>
+
+                {/* Brain Appearance Selector */}
+                <div className="space-y-1.5 p-2.5 rounded-lg bg-medical-card border border-medical-border text-xs">
+                  <span className="text-[11px] text-medical-muted font-mono block">3D Brain Appearance:</span>
+                  <select
+                    value={brainAppearance}
+                    onChange={(e) => setBrainAppearance(e.target.value)}
+                    className="w-full bg-medical-base border border-medical-border text-white text-xs font-mono rounded px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-medical-teal"
+                  >
+                    {BRAIN_APPEARANCE_OPTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.name} ({opt.badge})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
           </div>
 
           {/* Bottom Run Prediction / Pipeline Trigger */}
-          <div className="pt-3 border-t border-medical-border/70">
+          <div className="pt-2 border-t border-medical-border/70">
             <button
               onClick={handleRunPrediction}
               disabled={predicting}
@@ -1064,6 +1140,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {maximizedViewer === '3d' && (
               <MedicalViewer
                 viewMode="3d"
+                patientId={selectedPatientId}
+                segSource={segSource}
                 layers={layers}
                 opacity={opacity}
                 subregions={subregions}
