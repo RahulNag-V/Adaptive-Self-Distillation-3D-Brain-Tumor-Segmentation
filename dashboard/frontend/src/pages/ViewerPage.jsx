@@ -380,15 +380,35 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   };
 
   // Voice Control Integration
-  const { registerViewerHandler } = useVoiceContext();
+  const { registerViewerHandler, updateViewerStatus } = useVoiceContext();
+
+  // Keep shared voice viewer status synchronized
+  useEffect(() => {
+    if (updateViewerStatus) {
+      const planeLabel = viewLayout === 'quad' 
+        ? 'Quad MPR' 
+        : `${viewLayout.toUpperCase()} (${viewLayout === 'axial' ? 'Z' : viewLayout === 'coronal' ? 'Y' : 'X'})`;
+      updateViewerStatus({
+        selectedPatientId,
+        activePlane: planeLabel,
+        coordinates: { x: sagittalSlice, y: coronalSlice, z: axialSlice },
+        dimensions,
+        availablePatients: patients,
+      });
+    }
+  }, [selectedPatientId, viewLayout, sagittalSlice, coronalSlice, axialSlice, dimensions, patients, updateViewerStatus]);
 
   useEffect(() => {
     const unregister = registerViewerHandler((action, cmdRecord) => {
       const { type } = action;
 
-      // 1. Modality Switching
+      // 1. Modality Switching & Cycling
       if (type === 'SET_MODALITY') {
         setActiveMriModality(action.value);
+      } else if (type === 'CYCLE_MODALITY') {
+        const MODALITIES = ['flair', 't1ce', 't1', 't2', 'ct'];
+        const nextMod = MODALITIES[(MODALITIES.indexOf(activeMriModality) + 1) % MODALITIES.length];
+        setActiveMriModality(nextMod);
       }
 
       // 2. Anatomical Plane / Layout
@@ -397,7 +417,72 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         if (maximizedViewer) setMaximizedViewer(null);
       }
 
-      // 3. Slice Navigation
+      // 3. Multi-Axis and Single-Axis Coordinate Controls (Sections 4 & 5)
+      else if (type === 'SET_COORDINATES') {
+        if (action.coordinates.x !== undefined) {
+          setSagittalSlice(Math.max(0, Math.min(dimensions.sagittal - 1, action.coordinates.x)));
+        }
+        if (action.coordinates.y !== undefined) {
+          setCoronalSlice(Math.max(0, Math.min(dimensions.coronal - 1, action.coordinates.y)));
+        }
+        if (action.coordinates.z !== undefined) {
+          setAxialSlice(Math.max(0, Math.min(dimensions.axial - 1, action.coordinates.z)));
+        }
+        if (updateViewerStatus && action.feedback) {
+          updateViewerStatus({ lastFeedback: action.feedback });
+        }
+      }
+
+      else if (type === 'SET_AXIS_COORDINATE') {
+        if (action.axis === 'z') {
+          setAxialSlice(Math.max(0, Math.min(dimensions.axial - 1, action.value)));
+        } else if (action.axis === 'y') {
+          setCoronalSlice(Math.max(0, Math.min(dimensions.coronal - 1, action.value)));
+        } else if (action.axis === 'x') {
+          setSagittalSlice(Math.max(0, Math.min(dimensions.sagittal - 1, action.value)));
+        }
+        if (updateViewerStatus && action.feedback) {
+          updateViewerStatus({ lastFeedback: action.feedback });
+        }
+      }
+
+      // 4. Case Selection & Patient Dataset Controls (Section 6)
+      else if (type === 'SELECT_CASE') {
+        if (action.direction === 'next') {
+          const curIdx = patients.findIndex((p) => p.id === selectedPatientId);
+          const nextIdx = curIdx >= 0 ? (curIdx + 1) % patients.length : 0;
+          if (patients[nextIdx]) {
+            setSelectedPatientId(patients[nextIdx].id);
+            if (updateViewerStatus) updateViewerStatus({ lastFeedback: `Selected case ${patients[nextIdx].id}` });
+          }
+        } else if (action.direction === 'prev') {
+          const curIdx = patients.findIndex((p) => p.id === selectedPatientId);
+          const prevIdx = curIdx > 0 ? curIdx - 1 : Math.max(0, patients.length - 1);
+          if (patients[prevIdx]) {
+            setSelectedPatientId(patients[prevIdx].id);
+            if (updateViewerStatus) updateViewerStatus({ lastFeedback: `Selected case ${patients[prevIdx].id}` });
+          }
+        } else if (action.direction === 'current') {
+          if (updateViewerStatus) updateViewerStatus({ lastFeedback: `Current case is ${selectedPatientId}` });
+        } else if (action.query) {
+          const q = String(action.query).toLowerCase().replace(/[^a-z0-9]/g, '');
+          const found = patients.find((p) => {
+            const pid = p.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return pid === q || pid.endsWith(q) || pid.includes(q);
+          });
+          if (found) {
+            setSelectedPatientId(found.id);
+            if (updateViewerStatus) updateViewerStatus({ lastFeedback: `Selected case ${found.id}` });
+          } else {
+            // Explicit requirement: Preserve current case if not found & display informative message
+            if (updateViewerStatus) {
+              updateViewerStatus({ lastFeedback: `Case not found. The current case has not changed.` });
+            }
+          }
+        }
+      }
+
+      // 5. Slice Navigation
       else if (type === 'STEP_SLICE') {
         const step = action.step || 1;
         const activePlane = maximizedViewer || (viewLayout !== 'quad' ? viewLayout : 'axial');
@@ -432,19 +517,36 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         handleReset();
       }
 
-      // 4. Rotation Controls
-      else if (type === 'ROTATE') {
-        // Apply 2D Slice rotation (90° increments or custom)
+      // 6. Rotation Controls - One-Shot vs Continuous (Section 9)
+      else if (type === 'ROTATE' || type === 'ROTATE_ONCE') {
+        // Apply 2D Slice rotation (90° increments) once
         setSliceRotation((prev) => {
           if (action.direction === '180') return (prev + 180) % 360;
           if (action.direction === 'left') return (prev - (action.degrees || 90) + 360) % 360;
           return (prev + (action.degrees || 90)) % 360;
         });
-        // Dispatch to 3D Three.js camera
+        // Dispatch to 3D Three.js camera (one-shot action)
         setThreeCommand({
-          type: 'ROTATE',
+          type: 'ROTATE_ONCE',
           direction: action.direction,
-          degrees: action.degrees,
+          degrees: action.degrees || 15,
+          id: Date.now(),
+        });
+      }
+
+      else if (type === 'START_CONTINUOUS_ROTATION') {
+        // Continuous rotation on 3D view
+        setThreeCommand({
+          type: 'START_CONTINUOUS_ROTATION',
+          direction: action.direction || 'right',
+          id: Date.now(),
+        });
+      }
+
+      else if (type === 'STOP_ROTATION') {
+        // Halts all continuous movement
+        setThreeCommand({
+          type: 'STOP_ROTATION',
           id: Date.now(),
         });
       }
@@ -458,7 +560,31 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         setThreeCommand({ type: 'SET_CAMERA_ANGLE', angle: action.angle, id: Date.now() });
       }
 
-      // 5. Zoom & Pan Controls
+      // 7. 3D Mesh, Layers & Appearance (Section 3)
+      else if (type === 'TOGGLE_MESH') {
+        setLayers((prev) => ({ ...prev, mri: action.visible }));
+      }
+
+      else if (type === 'SET_BRAIN_APPEARANCE') {
+        setBrainAppearance(action.mode);
+        setThreeCommand({ type: 'SET_BRAIN_APPEARANCE', mode: action.mode, id: Date.now() });
+      }
+
+      else if (type === 'SHOW_LAYERS_PANEL') {
+        setActiveRightTab('layers');
+      }
+
+      else if (type === 'HIDE_LAYERS_PANEL') {
+        setActiveRightTab('burden');
+      }
+
+      else if (type === 'UNSUPPORTED_FEATURE' || type === 'SET_RENDER_MODE') {
+        if (updateViewerStatus && (action.message || action.label)) {
+          updateViewerStatus({ lastFeedback: action.message || action.label });
+        }
+      }
+
+      // 8. Zoom & Pan Controls
       else if (type === 'ZOOM') {
         setSliceZoom((prev) => Math.max(0.4, Math.min(5.0, Number((prev * action.factor).toFixed(2)))));
         setThreeCommand({ type: 'ZOOM', factor: action.factor, id: Date.now() });
@@ -501,7 +627,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         }
       }
 
-      // 6. Segmentation & Overlays
+      // 9. Segmentation & Overlays
       else if (type === 'SET_SEGMENTATION') {
         setLayers((prev) => ({ ...prev, tumor: action.enabled, overlay: action.enabled }));
       }
@@ -535,7 +661,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         toggleSubregion(action.key);
       }
 
-      // 7. Image Display Adjustments
+      // 10. Image Display Adjustments
       else if (type === 'STEP_BRIGHTNESS') {
         setSliceBrightness((prev) => Math.max(40, Math.min(220, prev + action.delta)));
         setThreeCommand({ type: 'STEP_BRIGHTNESS', delta: action.delta, id: Date.now() });
@@ -551,20 +677,27 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       }
 
       else if (type === 'SHOW_COORDINATES') {
-        // Display toast or brief visual HUD feedback
-        console.log(`[VoiceControl] Coordinates: X=${sagittalSlice}, Y=${coronalSlice}, Z=${axialSlice}`);
+        if (updateViewerStatus) {
+          updateViewerStatus({
+            lastFeedback: `Voxel Coordinates: X=${sagittalSlice}, Y=${coronalSlice}, Z=${axialSlice}`,
+          });
+        }
       }
     });
 
     return unregister;
   }, [
     registerViewerHandler,
+    updateViewerStatus,
     dimensions,
     viewLayout,
     maximizedViewer,
     sagittalSlice,
     coronalSlice,
     axialSlice,
+    selectedPatientId,
+    patients,
+    activeMriModality,
     toggleSubregion,
     handleOpenCompare,
   ]);

@@ -17,15 +17,20 @@ import {
   RotateCw,
   Sliders,
   ZoomIn,
-  Navigation
+  Navigation,
+  Compass,
+  FolderOpen
 } from 'lucide-react';
 import { VOICE_COMMANDS_HELP } from '../services/voiceCommandParser';
+import { useVoiceContext } from '../context/VoiceControlContext';
 
 export default function VoiceControlWidget({
   voiceControl,
   activeTab = 'viewer',
   onHelpOpen,
 }) {
+  const { viewerStatus, registerLayoutHandler } = useVoiceContext();
+
   if (!voiceControl) {
     return null;
   }
@@ -47,6 +52,19 @@ export default function VoiceControlWidget({
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [activeHelpCategory, setActiveHelpCategory] = useState('All');
   const [isExpanded, setIsExpanded] = useState(true);
+
+  // Listen for voice layout commands targeting the help panel
+  useEffect(() => {
+    if (!registerLayoutHandler) return;
+    const unregister = registerLayoutHandler((action) => {
+      if (action.type === 'OPEN_HELP_MODAL') {
+        setShowHelpModal(true);
+      } else if (action.type === 'CLOSE_HELP_MODAL') {
+        setShowHelpModal(false);
+      }
+    });
+    return unregister;
+  }, [registerLayoutHandler]);
 
   // Global keyboard shortcut 'v' or 'm' to toggle voice control (when not typing in an input)
   useEffect(() => {
@@ -203,20 +221,58 @@ export default function VoiceControlWidget({
               </div>
             </div>
 
-            {/* Bottom Row: Last Executed Command or Error Banner */}
+            {/* Middle Row: Clinical Telemetry Chips (Case, View Plane, Coordinates) */}
+            {viewerStatus && (
+              <div className="flex items-center gap-2 pt-1 border-t border-medical-border/40 text-[10px] overflow-x-auto">
+                {viewerStatus.selectedPatientId && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-medical-card border border-medical-border text-medical-tealLight shrink-0">
+                    <FolderOpen className="w-2.5 h-2.5 text-medical-teal" />
+                    <span>Case: {viewerStatus.selectedPatientId}</span>
+                  </span>
+                )}
+                {viewerStatus.activePlane && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-medical-card border border-medical-border text-cyan-300 shrink-0">
+                    <Compass className="w-2.5 h-2.5 text-medical-cyan" />
+                    <span>Plane: {viewerStatus.activePlane}</span>
+                  </span>
+                )}
+                {viewerStatus.coordinates && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-medical-card border border-medical-border text-white shrink-0 font-mono">
+                    <span className="text-medical-muted">XYZ:</span>
+                    <span className="text-emerald-300">{viewerStatus.coordinates.x}</span>
+                    <span className="text-medical-border">/</span>
+                    <span className="text-cyan-300">{viewerStatus.coordinates.y}</span>
+                    <span className="text-medical-border">/</span>
+                    <span className="text-teal-300">{viewerStatus.coordinates.z}</span>
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Bottom Row: Last Executed Command, Feedback or Error Banner */}
             {errorMessage ? (
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-300">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
                 <span className="truncate">{errorMessage}</span>
               </div>
+            ) : viewerStatus?.lastFeedback ? (
+              <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-medical-card/90 border border-medical-teal/40 text-[11px] text-white">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <CheckCircle2 className="w-3 h-3 text-medical-teal shrink-0" />
+                  <span className="text-medical-tealLight truncate">{viewerStatus.lastFeedback}</span>
+                </span>
+                {lastCommand && (
+                  <span className="text-[10px] font-mono text-medical-muted/60 shrink-0 ml-2">{lastCommand.timestamp}</span>
+                )}
+              </div>
             ) : lastCommand && lastCommand.success ? (
               <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-medical-card/80 border border-medical-border/60 text-[11px] text-medical-muted">
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 min-w-0">
                   <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
                   <span className="text-white font-medium">Executed:</span>
                   <span className="text-medical-tealLight truncate">{lastCommand.label || lastCommand.text}</span>
                 </span>
-                <span className="text-[10px] font-mono text-medical-muted/60">{lastCommand.timestamp}</span>
+                <span className="text-[10px] font-mono text-medical-muted/60 shrink-0 ml-2">{lastCommand.timestamp}</span>
               </div>
             ) : null}
           </div>

@@ -74,7 +74,7 @@ const ROUTE_METADATA = {
 export default function AppLayout({ activeTab, onTabChange, onPlayIntro, children }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const currentMeta = ROUTE_METADATA[activeTab] || ROUTE_METADATA.overview;
-  const { voiceControl } = useVoiceContext();
+  const { voiceControl, registerLayoutHandler } = useVoiceContext();
   
   // Collapsible sidebar state with localStorage persistence
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -85,6 +85,25 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
   });
 
   const { status: serverStatus } = useServerStatus();
+
+  // Voice Control Layout Handler (Sidebar, Menu, Panels)
+  useEffect(() => {
+    if (!registerLayoutHandler) return;
+    const unregister = registerLayoutHandler((action) => {
+      if (action.type === 'TOGGLE_SIDEBAR') {
+        setIsCollapsed((prev) => {
+          const next = action.collapsed !== undefined ? action.collapsed : !prev;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('neurovision_sidebar_collapsed', String(next));
+          }
+          return next;
+        });
+      } else if (action.type === 'TOGGLE_MENU') {
+        setMobileDrawerOpen((prev) => (action.open !== undefined ? action.open : !prev));
+      }
+    });
+    return unregister;
+  }, [registerLayoutHandler]);
 
   const toggleSidebar = () => {
     setIsCollapsed((prev) => {

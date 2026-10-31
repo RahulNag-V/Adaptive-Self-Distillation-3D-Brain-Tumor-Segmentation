@@ -960,16 +960,32 @@ export default function MedicalViewer({
   useEffect(() => {
     if (!viewerCommand) return;
     const { type } = viewerCommand;
-    if (type === 'ROTATE') {
+    if (type === 'ROTATE' || type === 'ROTATE_ONCE') {
+      // One-shot discrete rotation: rotate once and ensure continuous autoRotate is stopped!
+      setAutoRotate(false);
       handleRotateCamera(viewerCommand.direction, viewerCommand.degrees);
+    } else if (type === 'START_CONTINUOUS_ROTATION') {
+      // Continuous rotation
+      const { controls } = threeStateRef.current;
+      if (controls) {
+        controls.autoRotateSpeed = viewerCommand.direction === 'left' ? -2.2 : 2.2;
+      }
+      setAutoRotate(true);
+    } else if (type === 'STOP_ROTATION') {
+      // Immediately cancel continuous rotation and freeze view
+      setAutoRotate(false);
     } else if (type === 'RESET_ROTATION') {
+      setAutoRotate(false);
       handleResetCamera();
     } else if (type === 'SET_CAMERA_ANGLE') {
       handleViewAngle(viewerCommand.angle);
     } else if (type === 'ZOOM') {
       handleZoom(1 / (viewerCommand.factor || 1.2));
     } else if (type === 'CENTER_VIEW' || type === 'RESET_VIEW') {
+      setAutoRotate(false);
       handleResetCamera();
+    } else if (type === 'SET_BRAIN_APPEARANCE') {
+      handleSelectAppearance(viewerCommand.mode);
     } else if (type === 'STEP_BRIGHTNESS') {
       const { renderer } = threeStateRef.current;
       if (renderer) {
