@@ -19,10 +19,10 @@ import {
 import { classifyImage } from '../api/classification';
 
 const CLASS_CONFIG = {
-  glioma: { label: 'Glioma', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)' },
-  meningioma: { label: 'Meningioma', color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.15)', border: 'rgba(6, 182, 212, 0.4)' },
-  notumor: { label: 'No Tumor', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)' },
-  pituitary: { label: 'Pituitary', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.15)', border: 'rgba(139, 92, 246, 0.4)' }
+  glioma: { label: 'Glioma', color: '#b45309', bg: '#fef3c7', border: '#fcd34d' },
+  meningioma: { label: 'Meningioma', color: '#0369a1', bg: '#e0f2fe', border: '#bae6fd' },
+  notumor: { label: 'No Tumor', color: '#047857', bg: '#d1fae5', border: '#a7f3d0' },
+  pituitary: { label: 'Pituitary', color: '#6d28d9', bg: '#ede9fe', border: '#ddd6fe' }
 };
 
 export default function ClassificationPage({ onNavigate }) {
@@ -134,28 +134,28 @@ export default function ClassificationPage({ onNavigate }) {
   const predictedConfig = result ? CLASS_CONFIG[result.predicted_class] || { label: result.predicted_class, color: '#0ea5e9' } : null;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 animate-fadeIn text-[#16324F]">
       {/* HEADER SECTION */}
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-medical-teal/15 border border-medical-teal/30 text-medical-tealLight text-xs font-mono tracking-wide">
-          <Activity className="w-3.5 h-3.5 text-medical-teal" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono tracking-wide">
+          <Activity className="w-3.5 h-3.5 text-blue-600" />
           <span>SECONDARY CLASSIFICATION MODEL • EFFICIENTNET-B0</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#16324F] tracking-tight">
           2D Brain Tumor Classification
         </h1>
-        <p className="text-sm sm:text-base text-medical-muted">
+        <p className="text-sm sm:text-base text-[#64748B]">
           Upload a brain MRI image for research-oriented image-level classification.
         </p>
       </div>
 
       {/* ERROR BANNER */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-300 text-sm animate-fadeIn">
-          <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-sm animate-fadeIn shadow-sm">
+          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <div className="font-semibold text-red-200">Classification Notice</div>
-            <div>{error}</div>
+            <div className="font-semibold text-rose-900">Classification Notice</div>
+            <div className="text-rose-700">{error}</div>
           </div>
         </div>
       )}
@@ -165,13 +165,13 @@ export default function ClassificationPage({ onNavigate }) {
         
         {/* LEFT COLUMN: UPLOAD & PREVIEW */}
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-medical-card border border-medical-border space-y-5">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-medical-muted font-mono flex items-center justify-between">
+          <div className="p-6 rounded-2xl bg-white border border-[#DCE6F0] shadow-sm space-y-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#64748B] font-mono flex items-center justify-between">
               <span>MRI Image Input</span>
               {selectedFile && (
                 <button
                   onClick={handleClear}
-                  className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 normal-case font-sans"
+                  className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1 normal-case font-sans font-medium"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Remove Image</span>
@@ -188,8 +188,8 @@ export default function ClassificationPage({ onNavigate }) {
                 onClick={() => fileInputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 ${
                   isDragging 
-                    ? 'border-medical-teal bg-medical-teal/10 scale-[0.99]' 
-                    : 'border-medical-border hover:border-medical-teal/60 hover:bg-medical-surface/40'
+                    ? 'border-blue-600 bg-blue-50 scale-[0.99]' 
+                    : 'border-[#CBD5E1] hover:border-blue-500 hover:bg-[#F8FAFC]'
                 }`}
               >
                 <input
@@ -199,14 +199,14 @@ export default function ClassificationPage({ onNavigate }) {
                   accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                   className="hidden"
                 />
-                <div className="w-14 h-14 rounded-full bg-medical-teal/15 border border-medical-teal/30 flex items-center justify-center text-medical-teal">
+                <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
                   <UploadCloud className="w-7 h-7" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-semibold text-[#16324F]">
                     Click to select or drag and drop MRI image
                   </p>
-                  <p className="text-xs text-medical-muted mt-1">
+                  <p className="text-xs text-[#64748B] mt-1">
                     Accepts JPG, JPEG, or PNG brain MRI scans
                   </p>
                 </div>
@@ -214,22 +214,22 @@ export default function ClassificationPage({ onNavigate }) {
             ) : (
               /* Selected Image Preview & File Meta */
               <div className="space-y-4">
-                <div className="relative rounded-xl overflow-hidden bg-black/60 border border-medical-border flex items-center justify-center max-h-[380px]">
+                <div className="relative rounded-xl overflow-hidden bg-slate-950 border border-[#DCE6F0] flex items-center justify-center max-h-[380px]">
                   <img
                     src={previewUrl}
                     alt="Uploaded MRI scan"
                     className="max-h-[380px] w-auto object-contain"
                   />
-                  <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-md text-[11px] font-mono text-medical-cyan">
+                  <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-slate-900/80 backdrop-blur-md text-[11px] font-mono text-sky-300 border border-slate-700">
                     2D Axial View
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-medical-surface border border-medical-border flex items-center justify-between text-xs font-mono">
-                  <div className="truncate max-w-[220px] text-white">
+                <div className="p-3 rounded-lg bg-[#F8FAFC] border border-[#DCE6F0] flex items-center justify-between text-xs font-mono">
+                  <div className="truncate max-w-[220px] text-[#16324F] font-medium">
                     {selectedFile.name}
                   </div>
-                  <div className="text-medical-muted">
+                  <div className="text-[#64748B]">
                     {formatFileSize(selectedFile.size)}
                   </div>
                 </div>
@@ -241,15 +241,15 @@ export default function ClassificationPage({ onNavigate }) {
               <button
                 onClick={handleClassify}
                 disabled={!selectedFile || (loadingState && loadingState !== 'complete')}
-                className={`w-full py-3.5 px-5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-lg ${
+                className={`w-full py-3.5 px-5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm ${
                   !selectedFile || (loadingState && loadingState !== 'complete')
-                    ? 'bg-medical-surface text-medical-muted/50 cursor-not-allowed border border-medical-border/40'
-                    : 'bg-medical-teal hover:bg-medical-tealLight text-medical-darkest shadow-medical-teal/20 hover:shadow-medical-teal/30'
+                    ? 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed border border-[#E2E8F0]'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
                 {loadingState && loadingState !== 'complete' ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-medical-darkest" />
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
                     <span>
                       {loadingState === 'uploading' && 'Uploading image...'}
                       {loadingState === 'classifying' && 'Running classification...'}
@@ -272,27 +272,27 @@ export default function ClassificationPage({ onNavigate }) {
           </div>
 
           {/* Model Limitation Panel */}
-          <div className="p-5 rounded-xl bg-medical-base border border-medical-border/80 space-y-3 text-xs">
-            <div className="flex items-center gap-2 text-medical-muted font-mono uppercase tracking-wider font-semibold">
-              <Info className="w-4 h-4 text-medical-cyan" />
+          <div className="p-5 rounded-xl bg-white border border-[#DCE6F0] shadow-sm space-y-3 text-xs">
+            <div className="flex items-center gap-2 text-[#64748B] font-mono uppercase tracking-wider font-semibold">
+              <Info className="w-4 h-4 text-blue-600" />
               <span>Model Research Benchmarks & Limitations</span>
             </div>
             <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="p-2.5 rounded-lg bg-medical-card border border-medical-border">
-                <div className="text-[10px] text-medical-muted uppercase font-mono">Test Accuracy</div>
-                <div className="text-base font-bold text-white font-mono mt-0.5">95.00%</div>
+              <div className="p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                <div className="text-[10px] text-[#64748B] uppercase font-mono">Test Accuracy</div>
+                <div className="text-base font-bold text-[#16324F] font-mono mt-0.5">95.00%</div>
               </div>
-              <div className="p-2.5 rounded-lg bg-medical-card border border-medical-border">
-                <div className="text-[10px] text-medical-muted uppercase font-mono">Macro F1 Score</div>
-                <div className="text-base font-bold text-white font-mono mt-0.5">94.89%</div>
+              <div className="p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+                <div className="text-[10px] text-[#64748B] uppercase font-mono">Macro F1 Score</div>
+                <div className="text-base font-bold text-[#16324F] font-mono mt-0.5">94.89%</div>
               </div>
             </div>
-            <div className="space-y-1.5 text-medical-muted text-[11px] leading-relaxed pt-1">
+            <div className="space-y-1.5 text-[#64748B] text-[11px] leading-relaxed pt-1">
               <p>
-                <span className="text-amber-300/90 font-medium">• Known Subgroup Sensitivity:</span> Glioma recall on the project test set was 81.25%.
+                <span className="text-amber-800 font-semibold">• Known Subgroup Sensitivity:</span> Glioma recall on the project test set was 81.25%.
               </p>
-              <p className="text-medical-muted/80">
-                • This represents dataset-level research performance on the 1,600-image benchmark and must <strong className="text-white">NOT</strong> be presented as the certainty for the currently uploaded image.
+              <p className="text-[#64748B]">
+                • This represents dataset-level research performance on the 1,600-image benchmark and must <strong className="text-[#16324F]">NOT</strong> be presented as the certainty for the currently uploaded image.
               </p>
             </div>
           </div>
@@ -301,15 +301,15 @@ export default function ClassificationPage({ onNavigate }) {
         {/* RIGHT COLUMN: CLASSIFICATION RESULT PANEL */}
         <div className="space-y-6">
           {result ? (
-            <div className="p-6 rounded-2xl bg-medical-card border border-medical-border space-y-6 animate-fadeIn">
+            <div className="p-6 rounded-2xl bg-white border border-[#DCE6F0] shadow-sm space-y-6 animate-fadeIn">
               
               {/* Result Header */}
-              <div className="flex items-start justify-between border-b border-medical-border pb-4">
+              <div className="flex items-start justify-between border-b border-[#DCE6F0] pb-4">
                 <div>
-                  <span className="text-xs font-mono uppercase tracking-wider text-medical-muted block">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#64748B] block">
                     Classification Result
                   </span>
-                  <div className="text-2xl font-bold text-white mt-1 flex items-center gap-3">
+                  <div className="text-2xl font-bold text-[#16324F] mt-1 flex items-center gap-3">
                     <span 
                       className="px-3 py-1 rounded-lg text-lg font-mono font-bold"
                       style={{ 
@@ -324,10 +324,10 @@ export default function ClassificationPage({ onNavigate }) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-mono uppercase tracking-wider text-medical-muted block">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#64748B] block">
                     Confidence
                   </span>
-                  <span className="text-2xl font-bold text-emerald-400 font-mono font-tabular mt-1 block">
+                  <span className="text-2xl font-bold text-emerald-600 font-mono font-tabular mt-1 block">
                     {(result.confidence * 100).toFixed(2)}%
                   </span>
                 </div>
@@ -335,21 +335,21 @@ export default function ClassificationPage({ onNavigate }) {
 
               {/* Model & Runtime Meta Badges */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-medical-surface border border-medical-border">
-                  <div className="text-[10px] font-mono uppercase text-medical-muted">Model</div>
-                  <div className="text-xs font-semibold text-white mt-0.5 truncate">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div className="text-[10px] font-mono uppercase text-[#64748B]">Model</div>
+                  <div className="text-xs font-semibold text-[#16324F] mt-0.5 truncate">
                     {result.model || 'EfficientNet-B0'}
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-medical-surface border border-medical-border">
-                  <div className="text-[10px] font-mono uppercase text-medical-muted">Device</div>
-                  <div className="text-xs font-semibold text-medical-cyan mt-0.5 truncate">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div className="text-[10px] font-mono uppercase text-[#64748B]">Device</div>
+                  <div className="text-xs font-semibold text-blue-700 mt-0.5 truncate">
                     {result.device || 'CUDA'}
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-medical-surface border border-medical-border">
-                  <div className="text-[10px] font-mono uppercase text-medical-muted">Inference</div>
-                  <div className="text-xs font-semibold text-white mt-0.5 truncate">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div className="text-[10px] font-mono uppercase text-[#64748B]">Inference</div>
+                  <div className="text-xs font-semibold text-[#16324F] mt-0.5 truncate">
                     {result.inference_time_ms ? `${result.inference_time_ms} ms` : `${(result.inference_time_seconds * 1000).toFixed(1)} ms`}
                   </div>
                 </div>
@@ -358,29 +358,29 @@ export default function ClassificationPage({ onNavigate }) {
               {/* Horizontal Class Probability Distribution */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold flex items-center gap-1.5">
-                    <BarChart2 className="w-3.5 h-3.5 text-medical-teal" />
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-[#64748B] font-semibold flex items-center gap-1.5">
+                    <BarChart2 className="w-3.5 h-3.5 text-blue-600" />
                     <span>Probability Distribution</span>
                   </h3>
-                  <span className="text-[11px] text-medical-muted font-mono">All Classes</span>
+                  <span className="text-[11px] text-[#64748B] font-mono">All Classes</span>
                 </div>
 
                 <div className="space-y-2.5">
                   {Object.entries(result.probabilities || {}).map(([cls, prob]) => {
-                    const cfg = CLASS_CONFIG[cls] || { label: cls, color: '#38bdf8' };
+                    const cfg = CLASS_CONFIG[cls] || { label: cls, color: '#2563eb' };
                     const pct = (prob * 100).toFixed(2);
                     const isWinner = cls === result.predicted_class;
                     return (
                       <div key={cls} className="space-y-1">
                         <div className="flex items-center justify-between text-xs">
-                          <span className={`font-medium ${isWinner ? 'text-white font-semibold' : 'text-medical-muted'}`}>
+                          <span className={`font-medium ${isWinner ? 'text-[#16324F] font-bold' : 'text-[#64748B]'}`}>
                             {cfg.label}
                           </span>
-                          <span className="font-mono font-tabular text-xs text-medical-text font-semibold">
+                          <span className="font-mono font-tabular text-xs text-[#16324F] font-semibold">
                             {pct}%
                           </span>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-medical-darkest overflow-hidden border border-medical-border/40">
+                        <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500 ease-out"
                             style={{
@@ -397,7 +397,7 @@ export default function ClassificationPage({ onNavigate }) {
 
               {/* Top-3 Predictions */}
               <div className="space-y-2.5 pt-2">
-                <h3 className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold">
+                <h3 className="text-xs font-mono uppercase tracking-wider text-[#64748B] font-semibold">
                   Top-3 Ranked Classes
                 </h3>
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
@@ -406,28 +406,28 @@ export default function ClassificationPage({ onNavigate }) {
                       key={item.key} 
                       className={`p-2.5 rounded-lg border ${
                         idx === 0 
-                          ? 'bg-medical-teal/10 border-medical-teal/40 text-medical-tealLight' 
-                          : 'bg-medical-surface border-medical-border text-medical-muted'
+                          ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                          : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]'
                       }`}
                     >
-                      <div className="text-[10px] font-mono uppercase text-medical-muted">Rank {idx + 1}</div>
-                      <div className="font-semibold text-white text-xs mt-0.5 truncate">{item.label}</div>
-                      <div className="font-mono text-xs mt-1">{item.percent}%</div>
+                      <div className="text-[10px] font-mono uppercase text-[#64748B]">Rank {idx + 1}</div>
+                      <div className="font-semibold text-[#16324F] text-xs mt-0.5 truncate">{item.label}</div>
+                      <div className="font-mono text-xs mt-1 font-medium">{item.percent}%</div>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Session Control */}
-              <div className="pt-2 flex items-center justify-between border-t border-medical-border/80">
-                <span className="text-[11px] text-medical-muted">
+              <div className="pt-2 flex items-center justify-between border-t border-[#DCE6F0]">
+                <span className="text-[11px] text-[#64748B]">
                   Session data is non-persistent
                 </span>
                 <button
                   onClick={handleClear}
-                  className="px-4 py-2 rounded-lg bg-medical-surface hover:bg-medical-card border border-medical-border text-xs text-white font-medium transition-all flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-lg bg-white hover:bg-[#F8FAFC] border border-[#DCE6F0] text-xs text-[#16324F] font-medium transition-all flex items-center gap-1.5 shadow-sm"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 text-medical-cyan" />
+                  <RefreshCw className="w-3.5 h-3.5 text-blue-600" />
                   <span>New Classification</span>
                 </button>
               </div>
@@ -435,15 +435,15 @@ export default function ClassificationPage({ onNavigate }) {
             </div>
           ) : (
             /* Empty State Guidance */
-            <div className="p-10 rounded-2xl bg-medical-base border border-dashed border-medical-border text-center space-y-4 flex flex-col items-center justify-center min-h-[380px]">
-              <div className="w-16 h-16 rounded-full bg-medical-surface border border-medical-border flex items-center justify-center text-medical-muted">
-                <ImageIcon className="w-8 h-8 text-medical-muted/60" />
+            <div className="p-10 rounded-2xl bg-white border border-dashed border-[#DCE6F0] text-center space-y-4 flex flex-col items-center justify-center min-h-[380px] shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-[#F8FAFC] border border-[#DCE6F0] flex items-center justify-center text-[#64748B]">
+                <ImageIcon className="w-8 h-8 text-[#94A3B8]" />
               </div>
               <div className="max-w-sm space-y-1">
-                <h3 className="text-base font-semibold text-white">
+                <h3 className="text-base font-semibold text-[#16324F]">
                   Awaiting Image Input
                 </h3>
-                <p className="text-xs text-medical-muted leading-relaxed">
+                <p className="text-xs text-[#64748B] leading-relaxed">
                   Upload an axial brain MRI slice on the left panel and click "Classify Image" to generate model probabilities across glioma, meningioma, pituitary, and no tumor.
                 </p>
               </div>
@@ -451,10 +451,10 @@ export default function ClassificationPage({ onNavigate }) {
           )}
 
           {/* Research Disclaimer */}
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-300 text-xs">
-            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              <strong className="text-amber-200">Research and Educational Notice:</strong> For research and educational purposes only. This classifier is not a medical diagnostic tool and must not be used for clinical decision-making.
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-900 text-xs shadow-sm">
+            <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="leading-relaxed text-amber-800">
+              <strong className="text-amber-900 font-semibold">Research and Educational Notice:</strong> For research and educational purposes only. This classifier is not a medical diagnostic tool and must not be used for clinical decision-making.
             </p>
           </div>
         </div>

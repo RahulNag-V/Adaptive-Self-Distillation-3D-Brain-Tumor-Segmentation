@@ -46,21 +46,21 @@ export default function AboutPage({ onNavigate }) {
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 font-sans">
       {/* 1. HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-medical-border pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-[#DCE6F0] pb-6">
         <img
           src="/logo-circle.png"
           alt="NeuroVision AI Logo"
-          className="w-20 h-20 rounded-full object-cover shrink-0 shadow-2xl ring-2 ring-medical-teal/40"
+          className="w-20 h-20 rounded-full object-cover shrink-0 shadow-medical-md ring-2 ring-blue-500/30"
         />
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-medical-card border border-medical-border text-xs font-mono text-medical-teal">
-            <FlaskConical className="w-3.5 h-3.5 text-medical-teal" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-mono text-blue-700">
+            <FlaskConical className="w-3.5 h-3.5 text-blue-600" />
             <span>ACADEMIC RESEARCH & VIVA DEFENSE GUIDE</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
+          <h1 className="text-3xl font-bold tracking-tight text-[#16324F]">
             About NeuroVision AI
           </h1>
-          <p className="text-sm text-medical-muted leading-relaxed">
+          <p className="text-sm text-[#64748B] leading-relaxed">
             Adaptive Self-Distillation Framework for 3D Brain Tumor Segmentation on Multimodal MRI.
             AI For A Healthier Tomorrow.
           </p>
@@ -69,69 +69,69 @@ export default function AboutPage({ onNavigate }) {
 
       {/* 2. CORE SPECIFICATIONS MATRIX */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-medical-card border border-medical-border space-y-1.5">
-          <div className="flex items-center gap-2 text-medical-teal text-xs font-mono uppercase tracking-wider font-semibold">
+        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+          <div className="flex items-center gap-2 text-blue-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <Cpu className="w-4 h-4" />
             <span>Research Model</span>
           </div>
-          <div className="text-sm font-semibold text-white">
+          <div className="text-sm font-semibold text-[#16324F]">
             Adaptive Self-Distillation
           </div>
-          <p className="text-[11px] text-medical-muted leading-relaxed">
+          <p className="text-[11px] text-[#64748B] leading-relaxed">
             Multi-objective self-distillation with dynamic EMA loss-ratio balancing across dual auxiliary heads.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-medical-card border border-medical-border space-y-1.5">
-          <div className="flex items-center gap-2 text-medical-cyan text-xs font-mono uppercase tracking-wider font-semibold">
+        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+          <div className="flex items-center gap-2 text-cyan-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <Layers className="w-4 h-4" />
             <span>Base Architecture</span>
           </div>
-          <div className="text-sm font-semibold text-white">
+          <div className="text-sm font-semibold text-[#16324F]">
             MONAI UNETR (ViT-B/16)
           </div>
-          <p className="text-[11px] text-medical-muted leading-relaxed">
+          <p className="text-[11px] text-[#64748B] leading-relaxed">
             Vision Transformer encoder with 16³ patch embeddings (768 hidden dim, 12 layers) and CNN decoder.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-medical-card border border-medical-border space-y-1.5">
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono uppercase tracking-wider font-semibold">
+        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+          <div className="flex items-center gap-2 text-emerald-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <FileCode className="w-4 h-4" />
             <span>Compute Platform</span>
           </div>
-          <div className="text-sm font-semibold text-white">
+          <div className="text-sm font-semibold text-[#16324F]">
             PyTorch 2.11 + CUDA
           </div>
-          <p className="text-[11px] text-medical-muted leading-relaxed">
+          <p className="text-[11px] text-[#64748B] leading-relaxed">
             FP16 mixed precision acceleration, 96³ sliding-window inference with Gaussian blending.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-medical-card border border-medical-border space-y-1.5">
-          <div className="flex items-center gap-2 text-amber-400 text-xs font-mono uppercase tracking-wider font-semibold">
+        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+          <div className="flex items-center gap-2 text-amber-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <Database className="w-4 h-4" />
             <span>Cohort Benchmark</span>
           </div>
-          <div className="text-sm font-semibold text-white">
+          <div className="text-sm font-semibold text-[#16324F]">
             BraTS 2021 Dataset
           </div>
-          <p className="text-[11px] text-medical-muted leading-relaxed">
+          <p className="text-[11px] text-[#64748B] leading-relaxed">
             50-Subject verified cohort (40 train / 10 val), evaluated across WT, TC, and ET compartments.
           </p>
         </div>
       </div>
 
       {/* 3. VIVA & ACADEMIC EVALUATION DEFENSE GUIDE */}
-      <section className="p-6 rounded-xl bg-medical-base border border-medical-border space-y-4">
-        <div className="flex items-center justify-between border-b border-medical-border pb-3">
+      <section className="p-6 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-4">
+        <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3">
           <div className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-medical-teal" />
-            <h2 className="text-sm font-semibold text-white font-mono uppercase tracking-wider">
+            <Award className="w-5 h-5 text-blue-600" />
+            <h2 className="text-sm font-semibold text-[#16324F] font-mono uppercase tracking-wider">
               Academic Viva Defense & Examiner Key Questions
             </h2>
           </div>
-          <span className="text-[10px] font-mono text-medical-muted">
+          <span className="text-[10px] font-mono text-[#64748B]">
             5 Core Assessment Pillars
           </span>
         </div>
@@ -142,22 +142,22 @@ export default function AboutPage({ onNavigate }) {
             return (
               <div 
                 key={idx}
-                className="rounded-xl bg-medical-card border border-medical-border overflow-hidden transition-all"
+                className="rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] overflow-hidden transition-all shadow-medical-sm"
               >
                 <button
                   onClick={() => setActiveFaq(isOpen ? -1 : idx)}
-                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs font-semibold text-white hover:text-medical-tealLight transition-colors"
+                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs font-semibold text-[#16324F] hover:text-blue-600 transition-colors"
                 >
                   <span className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-medical-teal/15 text-medical-teal text-[10px] font-mono flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-mono flex items-center justify-center shrink-0 font-bold">
                       {idx + 1}
                     </span>
                     <span>{item.q}</span>
                   </span>
-                  <ArrowRight className={`w-4 h-4 text-medical-muted shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-[#64748B] shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
                 {isOpen && (
-                  <div className="px-4 pb-4 pt-1 border-t border-medical-border/60 text-xs text-medical-muted leading-relaxed font-sans">
+                  <div className="px-4 pb-4 pt-1 border-t border-[#E2E8F0] text-xs text-[#475569] leading-relaxed font-sans bg-white">
                     {item.a}
                   </div>
                 )}
@@ -168,23 +168,23 @@ export default function AboutPage({ onNavigate }) {
       </section>
 
       {/* 4. WORKSTATION NAVIGATOR */}
-      <div className="p-6 rounded-xl bg-medical-base border border-medical-border flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-6 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h3 className="text-sm font-bold text-white">Ready to inspect experimental benchmarks?</h3>
-          <p className="text-xs text-medical-muted mt-0.5">
+          <h3 className="text-sm font-bold text-[#16324F]">Ready to inspect experimental benchmarks?</h3>
+          <p className="text-xs text-[#64748B] mt-0.5">
             View the live model comparison matrix or explore training loss curves.
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => onNavigate && onNavigate('models')}
-            className="px-3.5 py-2 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-border text-white text-xs font-mono transition-colors"
+            className="px-3.5 py-2 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-xs font-mono font-medium transition-colors shadow-medical-sm"
           >
             Model Lab
           </button>
           <button
             onClick={() => onNavigate && onNavigate('viewer')}
-            className="px-3.5 py-2 rounded-lg bg-medical-teal hover:bg-medical-tealLight text-medical-darkest text-xs font-semibold shadow-sm transition-all"
+            className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
           >
             Open 3D Viewer
           </button>
@@ -192,15 +192,15 @@ export default function AboutPage({ onNavigate }) {
       </div>
 
       {/* 5. MANDATORY REGULATORY RESEARCH DISCLAIMER */}
-      <div className="p-6 rounded-xl bg-amber-950/20 border border-amber-500/50 space-y-3">
-        <div className="flex items-center gap-2.5 text-amber-300 font-bold text-sm">
-          <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
+      <div className="p-6 rounded-xl bg-amber-50/80 border border-amber-200 space-y-3 shadow-medical-sm">
+        <div className="flex items-center gap-2.5 text-amber-900 font-bold text-sm">
+          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
           <span>Mandatory Research & Educational Disclaimer</span>
         </div>
-        <p className="text-xs text-amber-200/90 font-medium leading-relaxed">
+        <p className="text-xs text-amber-800 font-medium leading-relaxed">
           "For research and educational purposes only. This system is not a medical diagnostic tool."
         </p>
-        <p className="text-[11px] text-medical-muted leading-relaxed font-mono">
+        <p className="text-[11px] text-[#64748B] leading-relaxed font-mono">
           This software has not been evaluated, cleared, or approved by the FDA, EMA, or any regulatory medical device authority. All predictions, segmentations, and volumetric estimates are intended purely for academic and algorithmic investigation.
         </p>
       </div>

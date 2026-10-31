@@ -748,28 +748,28 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       case 'Included in Training Dataset':
         return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
       default:
-        return 'bg-medical-surface text-medical-muted border-medical-border';
+        return 'bg-mri-bg text-mri-muted border-mri-border';
     }
   };
 
   return (
     <div className="h-full flex flex-col p-3 lg:p-4 space-y-2.5 overflow-hidden">
       {/* 1. TOP TOOLBAR: THREE LOGICAL GROUPS + PERSISTENT COMPACT LEGEND */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-medical-base border border-medical-border px-3.5 py-2 rounded-xl shadow-md shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-mri-surface border border-mri-border px-3.5 py-2 rounded-xl shadow-md shrink-0">
         {/* Left: Group 1 (Case) & Group 2 (Mask Source) */}
         <div className="flex flex-wrap items-center gap-3">
           {/* GROUP 1: CASE */}
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-medical-teal animate-pulse" />
-              <span className="text-xs text-medical-muted uppercase font-mono font-semibold">Case:</span>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-xs text-mri-muted uppercase font-mono font-semibold">Case:</span>
             </div>
 
             {/* Patient Selector Dropdown */}
             <select
               value={selectedPatientId}
               onChange={(e) => setSelectedPatientId(e.target.value)}
-              className="bg-medical-card border border-medical-teal/40 hover:border-medical-teal text-white text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-medical-teal cursor-pointer"
+              className="bg-mri-bg border border-mri-border hover:border-cyan-400/60 text-mri-text text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer"
             >
               {currentResult && (
                 <option value={currentResult.session_id}>
@@ -788,7 +788,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             </select>
 
             {/* Dataset split badge */}
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-medical-card border border-medical-border text-medical-muted hidden sm:inline">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-mri-bg border border-mri-border text-mri-muted hidden sm:inline">
               BraTS 2021
             </span>
 
@@ -800,11 +800,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             )}
           </div>
 
-          <div className="h-4 w-px bg-medical-border/80 hidden sm:block" />
+          <div className="h-4 w-px bg-mri-border/80 hidden sm:block" />
 
           {/* GROUP 2: MASK SOURCE */}
-          <div className="flex items-center gap-1 bg-medical-card border border-medical-border p-0.5 rounded-lg text-xs font-mono">
-            <span className="text-[10px] text-medical-muted px-1.5">Mask:</span>
+          <div className="flex items-center gap-1 bg-mri-bg border border-mri-border p-0.5 rounded-lg text-xs font-mono">
+            <span className="text-[10px] text-mri-muted px-1.5">Mask:</span>
             {[
               { id: 'prediction', label: 'AI Prediction' },
               { id: 'corrected', label: 'Human Corrected' },
@@ -815,8 +815,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 onClick={() => setSegSource(id)}
                 className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
                   segSource === id
-                    ? 'bg-medical-teal text-medical-darkest shadow-sm'
-                    : 'text-medical-muted hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-mri-muted hover:text-white'
                 }`}
               >
                 {label}
@@ -828,8 +828,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         {/* Right: Persistent Compact Legend & Group 3 (Image & Editing) */}
         <div className="flex flex-wrap items-center gap-3">
           {/* PERSISTENT COMPACT SEGMENTATION LEGEND */}
-          <div className="hidden lg:flex items-center gap-2.5 px-2.5 py-1 rounded-lg bg-medical-card/80 border border-medical-border text-[11px] font-mono shadow-sm">
-            <span className="text-medical-muted uppercase text-[9px] font-bold tracking-wider">Legend:</span>
+          <div className="hidden lg:flex items-center gap-2.5 px-2.5 py-1 rounded-lg bg-mri-bg/80 border border-mri-border text-[11px] font-mono shadow-sm">
+            <span className="text-mri-muted uppercase text-[9px] font-bold tracking-wider">Legend:</span>
             <div className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-sm bg-slate-400" />
               <span className="text-slate-300">MRI</span>
@@ -848,20 +848,20 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             </div>
           </div>
 
-          <div className="h-4 w-px bg-medical-border/80 hidden lg:block" />
+          <div className="h-4 w-px bg-mri-border/80 hidden lg:block" />
 
           {/* GROUP 3: IMAGE & EDITING */}
           <div className="flex items-center gap-2">
             {/* Modality Selector Buttons */}
-            <div className="flex items-center gap-1 bg-medical-card border border-medical-border p-0.5 rounded-lg text-xs font-mono">
+            <div className="flex items-center gap-1 bg-mri-bg border border-mri-border p-0.5 rounded-lg text-xs font-mono">
               {['flair', 't1', 't1ce', 't2'].map((mod) => (
                 <button
                   key={mod}
                   onClick={() => setActiveMriModality(mod)}
                   className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold transition-all ${
                     activeMriModality === mod
-                      ? 'bg-medical-teal text-medical-darkest'
-                      : 'text-medical-muted hover:text-white'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-mri-muted hover:text-white'
                   }`}
                 >
                   {mod}
@@ -874,8 +874,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               onClick={() => setIsEditing(prev => !prev)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-colors shadow-sm ${
                 isEditing
-                  ? 'bg-amber-400 text-medical-darkest border-amber-300'
-                  : 'bg-medical-card text-amber-300 border-amber-400/50 hover:bg-amber-400/10'
+                  ? 'bg-amber-400 text-slate-900 border-amber-300'
+                  : 'bg-mri-bg text-amber-300 border-amber-400/50 hover:bg-amber-400/10'
               }`}
             >
               <Paintbrush className="w-3.5 h-3.5" />
@@ -887,7 +887,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* 2. INTERACTIVE CORRECTION TOOLBAR RIBBON (VISIBLE WHEN isEditing IS TRUE) */}
       {isEditing && (
-        <div className="bg-medical-base border border-amber-400/40 rounded-xl px-4 py-2 flex flex-wrap items-center justify-between gap-3 shadow-lg animate-fadeIn">
+        <div className="bg-mri-surface border border-amber-400/40 rounded-xl px-4 py-2 flex flex-wrap items-center justify-between gap-3 shadow-lg animate-fadeIn">
           {/* Left: Mode (Paint vs Erase) & Label Selection */}
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -896,13 +896,13 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             </span>
 
             {/* Brush vs Eraser Toggle */}
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-medical-card border border-medical-border">
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-mri-bg border border-mri-border">
               <button
                 onClick={() => setBrushMode('paint')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-all ${
                   brushMode === 'paint'
-                    ? 'bg-medical-teal text-medical-darkest shadow-sm'
-                    : 'text-medical-muted hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-mri-muted hover:text-white'
                 }`}
               >
                 <Paintbrush className="w-3 h-3" />
@@ -913,7 +913,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-all ${
                   brushMode === 'erase'
                     ? 'bg-red-500 text-white shadow-sm'
-                    : 'text-medical-muted hover:text-white'
+                    : 'text-mri-muted hover:text-white'
                 }`}
               >
                 <Eraser className="w-3 h-3" />
@@ -924,7 +924,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {/* Subregion Label Selection (only active when paint mode is on) */}
             {brushMode === 'paint' && (
               <div className="flex items-center gap-1.5 text-xs font-mono">
-                <span className="text-[11px] text-medical-muted">Label:</span>
+                <span className="text-[11px] text-mri-muted">Label:</span>
                 {[
                   { id: 1, name: 'TC (Core)', color: '#F43F5E', desc: 'Tumor Core / Necrotic' },
                   { id: 2, name: 'WT (Edema)', color: '#EAB308', desc: 'Peritumoral Edema' },
@@ -936,7 +936,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded border transition-all ${
                       activeLabel === id
                         ? 'border-white text-white font-bold shadow-md'
-                        : 'border-transparent text-medical-muted hover:text-white bg-medical-card'
+                        : 'border-transparent text-mri-muted hover:text-white bg-mri-bg'
                     }`}
                     style={{
                       backgroundColor: activeLabel === id ? color : undefined,
@@ -955,22 +955,22 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             )}
 
             {/* Brush Radius Slider & Presets */}
-            <div className="flex items-center gap-2 pl-2 border-l border-medical-border text-xs font-mono">
-              <span className="text-medical-muted text-[11px]">Radius: {brushRadius}px</span>
+            <div className="flex items-center gap-2 pl-2 border-l border-mri-border text-xs font-mono">
+              <span className="text-mri-muted text-[11px]">Radius: {brushRadius}px</span>
               <input
                 type="range"
                 min="1"
                 max="25"
                 value={brushRadius}
                 onChange={(e) => setBrushRadius(Number(e.target.value))}
-                className="w-20 accent-medical-teal cursor-pointer"
+                className="w-20 accent-blue-500 cursor-pointer"
               />
               <div className="flex items-center gap-0.5">
                 {[2, 4, 8, 16].map((r) => (
                   <button
                     key={r}
                     onClick={() => setBrushRadius(r)}
-                    className={`px-1.5 py-0.5 rounded text-[10px] ${brushRadius === r ? 'bg-medical-teal text-medical-darkest font-bold' : 'text-medical-muted hover:text-white bg-medical-card'}`}
+                    className={`px-1.5 py-0.5 rounded text-[10px] ${brushRadius === r ? 'bg-blue-600 text-white font-bold' : 'text-mri-muted hover:text-white bg-mri-bg'}`}
                   >
                     {r}
                   </button>
@@ -985,7 +985,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <button
               onClick={handleUndo}
               disabled={!annotationRecord?.edit_history?.length}
-              className="p-1.5 rounded bg-medical-card hover:bg-medical-surface border border-medical-border text-white disabled:opacity-40 transition-colors"
+              className="p-1.5 rounded bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text disabled:opacity-40 transition-colors"
               title="Undo Last Stroke (Ctrl+Z)"
             >
               <Undo2 className="w-3.5 h-3.5" />
@@ -994,7 +994,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {/* Redo */}
             <button
               onClick={handleRedo}
-              className="p-1.5 rounded bg-medical-card hover:bg-medical-surface border border-medical-border text-white transition-colors"
+              className="p-1.5 rounded bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text transition-colors"
               title="Redo Stroke (Ctrl+Y)"
             >
               <Redo2 className="w-3.5 h-3.5" />
@@ -1013,10 +1013,10 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {/* Compare Masks */}
             <button
               onClick={handleOpenCompare}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-medical-card hover:bg-medical-surface border border-medical-teal/40 text-medical-tealLight text-[11px] transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1 rounded bg-mri-bg hover:bg-mri-surface border border-cyan-400/40 text-cyan-300 text-[11px] transition-colors"
               title="Compare Original AI vs Corrected Mask"
             >
-              <GitCompare className="w-3 h-3 text-medical-teal" />
+              <GitCompare className="w-3 h-3 text-cyan-400" />
               <span>Compare</span>
             </button>
 
@@ -1032,7 +1032,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {/* Confirm & Submit for Review */}
             <button
               onClick={() => setShowSubmitModal(true)}
-              className="flex items-center gap-1 px-3 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-medical-darkest font-bold text-[11px] shadow-sm transition-all"
+              className="flex items-center gap-1 px-3 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] shadow-sm transition-all"
             >
               <Send className="w-3 h-3" />
               <span>Submit for Review</span>
@@ -1045,14 +1045,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
         
         {/* LEFT RAIL: Navigation, Projection Modes & Slice Coordinates */}
-        <div className="w-full lg:w-[210px] xl:w-[220px] shrink-0 bg-medical-base border border-medical-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto">
+        <div className="w-full lg:w-[210px] xl:w-[220px] shrink-0 bg-mri-surface border border-mri-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto">
           <div className="space-y-3">
             {/* Projection / Layout Mode Selector */}
             <div className="space-y-1.5">
-              <label className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold block">
+              <label className="text-xs font-mono uppercase tracking-wider text-mri-muted font-semibold block">
                 Projection Mode
               </label>
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-medical-card border border-medical-border">
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-mri-bg border border-mri-border">
                 {[
                   { id: 'quad', label: 'Quad MPR (4-up)', icon: Grid },
                   { id: '3d', label: '3D Volume', icon: Box },
@@ -1067,8 +1067,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                       id === 'quad' ? 'col-span-2' : ''
                     } ${
                       viewLayout === id
-                        ? 'bg-medical-teal text-medical-darkest font-semibold shadow-sm'
-                        : 'text-medical-muted hover:text-white hover:bg-medical-surface'
+                        ? 'bg-blue-600 text-white font-semibold shadow-sm'
+                        : 'text-mri-muted hover:text-white hover:bg-mri-surface'
                     }`}
                   >
                     {Icon && <Icon className="w-3 h-3" />}
@@ -1091,23 +1091,23 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           </div>
 
           {/* Quick Actions */}
-          <div className="pt-2 border-t border-medical-border/70 space-y-2">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-medical-muted block">
+          <div className="pt-2 border-t border-mri-border/70 space-y-2">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-mri-muted block">
               Quick Actions
             </span>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 onClick={handleReset}
-                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-medical-surface hover:bg-medical-card border border-medical-border text-white transition-all shadow-sm"
+                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text transition-all shadow-sm"
               >
-                <RotateCcw className="w-3 h-3 text-medical-muted" />
+                <RotateCcw className="w-3 h-3 text-mri-muted" />
                 <span>Reset View</span>
               </button>
               <button
                 onClick={() => setViewLayout('quad')}
-                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-medical-surface hover:bg-medical-card border border-medical-border text-white transition-all shadow-sm"
+                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text transition-all shadow-sm"
               >
-                <Grid className="w-3 h-3 text-medical-teal" />
+                <Grid className="w-3 h-3 text-cyan-400" />
                 <span>Quad MPR</span>
               </button>
             </div>
@@ -1365,16 +1365,16 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         </div>
 
         {/* RIGHT INSPECTOR: Volumetrics & Layers (Predictable readable width, no text clipping) */}
-        <div className="w-full lg:w-[290px] xl:w-[315px] 2xl:w-[330px] shrink-0 bg-medical-base border border-medical-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto overflow-x-hidden">
+        <div className="w-full lg:w-[290px] xl:w-[315px] 2xl:w-[330px] shrink-0 bg-mri-surface border border-mri-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto overflow-x-hidden">
           <div className="space-y-3">
             {/* Header Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-medical-card rounded-lg border border-medical-border text-xs">
+            <div className="flex items-center gap-1 p-1 bg-mri-bg rounded-lg border border-mri-border text-xs">
               <button
                 onClick={() => setActiveRightTab('burden')}
                 className={`flex-1 py-1 rounded text-center font-medium transition-all ${
                   activeRightTab === 'burden'
-                    ? 'bg-medical-teal text-medical-darkest font-semibold'
-                    : 'text-medical-muted hover:text-white'
+                    ? 'bg-blue-600 text-white font-semibold'
+                    : 'text-mri-muted hover:text-white'
                 }`}
               >
                 Volumetrics
@@ -1383,8 +1383,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 onClick={() => setActiveRightTab('layers')}
                 className={`flex-1 py-1 rounded text-center font-medium transition-all ${
                   activeRightTab === 'layers'
-                    ? 'bg-medical-teal text-medical-darkest font-semibold'
-                    : 'text-medical-muted hover:text-white'
+                    ? 'bg-blue-600 text-white font-semibold'
+                    : 'text-mri-muted hover:text-white'
                 }`}
               >
                 Layers
@@ -1403,7 +1403,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               <div className="space-y-3.5">
                 {/* Segmentation Overlays */}
                 <div className="space-y-1.5">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-medical-muted font-semibold block">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-mri-muted font-semibold block">
                     Segmentation Layers
                   </span>
                   {[
@@ -1411,19 +1411,19 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                     { key: 'tc', label: 'Tumor Core (TC)', color: '#F43F5E', desc: 'Labels {1, 3}' },
                     { key: 'et', label: 'Enhancing Tumor (ET)', color: '#06B6D4', desc: 'Label {3}' },
                   ].map(({ key, label, color, desc }) => (
-                    <label key={key} className="flex items-center justify-between p-2 rounded-lg bg-medical-card border border-medical-border text-xs cursor-pointer hover:bg-medical-surface transition-colors">
+                    <label key={key} className="flex items-center justify-between p-2 rounded-lg bg-mri-bg border border-mri-border text-xs cursor-pointer hover:bg-mri-surface transition-colors">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="w-2.5 h-2.5 rounded shrink-0 shadow-sm" style={{ backgroundColor: color }} />
                         <div className="min-w-0">
-                          <span className="text-white font-medium block truncate">{label}</span>
-                          <span className="text-[10px] text-medical-muted font-mono">{desc}</span>
+                          <span className="text-mri-text font-medium block truncate">{label}</span>
+                          <span className="text-[10px] text-mri-muted font-mono">{desc}</span>
                         </div>
                       </div>
                       <input
                         type="checkbox"
                         checked={subregions[key]}
                         onChange={() => toggleSubregion(key)}
-                        className="accent-medical-teal rounded cursor-pointer shrink-0"
+                        className="accent-blue-500 rounded cursor-pointer shrink-0"
                       />
                     </label>
                   ))}
@@ -1431,31 +1431,31 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
                 {/* MRI Background Toggle */}
                 <div className="space-y-1.5">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-medical-muted font-semibold block">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-mri-muted font-semibold block">
                     Anatomy Background
                   </span>
-                  <label className="flex items-center justify-between p-2 rounded-lg bg-medical-card border border-medical-border text-xs cursor-pointer hover:bg-medical-surface transition-colors">
+                  <label className="flex items-center justify-between p-2 rounded-lg bg-mri-bg border border-mri-border text-xs cursor-pointer hover:bg-mri-surface transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded bg-slate-400 shrink-0" />
                       <div>
-                        <span className="text-white font-medium block">MRI Anatomy</span>
-                        <span className="text-[10px] text-medical-muted font-mono">Atlas & Scan Background</span>
+                        <span className="text-mri-text font-medium block">MRI Anatomy</span>
+                        <span className="text-[10px] text-mri-muted font-mono">Atlas & Scan Background</span>
                       </div>
                     </div>
                     <input
                       type="checkbox"
                       checked={layers.mri}
                       onChange={() => setLayers(prev => ({ ...prev, mri: !prev.mri }))}
-                      className="accent-medical-teal rounded cursor-pointer shrink-0"
+                      className="accent-blue-500 rounded cursor-pointer shrink-0"
                     />
                   </label>
                 </div>
 
                 {/* Opacity Slider */}
-                <div className="space-y-1.5 p-2.5 rounded-lg bg-medical-card border border-medical-border text-xs">
-                  <div className="flex items-center justify-between text-medical-muted font-mono">
+                <div className="space-y-1.5 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-xs">
+                  <div className="flex items-center justify-between text-mri-muted font-mono">
                     <span>Segmentation Opacity</span>
-                    <span className="text-white font-bold">{Math.round(opacity * 100)}%</span>
+                    <span className="text-mri-text font-bold">{Math.round(opacity * 100)}%</span>
                   </div>
                   <input
                     type="range"
@@ -1464,17 +1464,17 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                     step="0.05"
                     value={opacity}
                     onChange={(e) => setOpacity(parseFloat(e.target.value))}
-                    className="w-full accent-medical-teal cursor-pointer"
+                    className="w-full accent-blue-500 cursor-pointer"
                   />
                 </div>
 
                 {/* Brain Appearance Selector */}
-                <div className="space-y-1.5 p-2.5 rounded-lg bg-medical-card border border-medical-border text-xs">
-                  <span className="text-[11px] text-medical-muted font-mono block">3D Brain Appearance:</span>
+                <div className="space-y-1.5 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-xs">
+                  <span className="text-[11px] text-mri-muted font-mono block">3D Brain Appearance:</span>
                   <select
                     value={brainAppearance}
                     onChange={(e) => setBrainAppearance(e.target.value)}
-                    className="w-full bg-medical-base border border-medical-border text-white text-xs font-mono rounded px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-medical-teal"
+                    className="w-full bg-mri-surface border border-mri-border text-mri-text text-xs font-mono rounded px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     {BRAIN_APPEARANCE_OPTIONS.map((opt) => (
                       <option key={opt.id} value={opt.id}>
@@ -1488,11 +1488,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           </div>
 
           {/* Bottom Run Prediction / Pipeline Trigger */}
-          <div className="pt-2 border-t border-medical-border/70">
+          <div className="pt-2 border-t border-mri-border/70">
             <button
               onClick={handleRunPrediction}
               disabled={predicting}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-medical-teal hover:bg-medical-tealLight text-medical-darkest font-semibold text-xs transition-all shadow-md disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md disabled:opacity-50"
             >
               {predicting ? (
                 <>
@@ -1513,10 +1513,10 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       {/* FULLSCREEN MAXIMIZED MODAL OVERLAY */}
       {maximizedViewer && (
         <div className="fixed inset-0 z-50 bg-[#070b13] flex flex-col p-2.5 sm:p-3 overflow-hidden select-none animate-fadeIn">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-medical-base/95 border border-medical-border/80 px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md mb-2 shrink-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-mri-surface/95 border border-mri-border/80 px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md mb-2 shrink-0">
             <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-medical-teal animate-pulse" />
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-mri-text">
                 {maximizedViewer.toUpperCase()} VIEW • CASE: {selectedPatientId}
               </span>
             </div>
@@ -1524,15 +1524,15 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setMaximizedViewer(null)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-border text-white text-xs font-mono font-semibold"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text text-xs font-mono font-semibold"
               >
-                <Minimize2 className="w-3.5 h-3.5 text-medical-teal" />
+                <Minimize2 className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Exit Fullscreen (Esc)</span>
               </button>
             </div>
           </div>
 
-          <div className="flex-1 w-full h-full min-h-0 relative rounded-xl overflow-hidden border border-medical-border shadow-2xl bg-medical-darkest">
+          <div className="flex-1 w-full h-full min-h-0 relative rounded-xl overflow-hidden border border-mri-border shadow-2xl bg-mri-bg">
             {maximizedViewer === '3d' && (
               <MedicalViewer
                 viewMode="3d"
@@ -1655,43 +1655,43 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       {/* MODAL 1: MASK COMPARISON MODAL (AI Prediction vs Corrected) */}
       {showCompareModal && compareData && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-medical-base border border-medical-teal/50 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-medical-border pb-3">
+          <div className="bg-mri-surface border border-cyan-400/50 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-mri-border pb-3">
               <div className="flex items-center gap-2">
-                <GitCompare className="w-5 h-5 text-medical-teal" />
-                <h3 className="font-bold text-white text-base">Mask Comparison Analysis</h3>
+                <GitCompare className="w-5 h-5 text-cyan-400" />
+                <h3 className="font-bold text-mri-text text-base">Mask Comparison Analysis</h3>
               </div>
               <button 
                 onClick={() => setShowCompareModal(false)}
-                className="text-medical-muted hover:text-white"
+                className="text-mri-muted hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-medical-muted">
+              <p className="text-mri-muted">
                 Quantifying agreement between original UNETR model prediction and human clinical correction:
               </p>
 
               <div className="grid grid-cols-2 gap-3 font-mono">
-                <div className="p-3 rounded-lg bg-medical-card border border-medical-border">
-                  <span className="text-medical-muted block text-[10px]">Overall Dice Agreement</span>
-                  <span className="text-lg font-bold text-medical-teal">
+                <div className="p-3 rounded-lg bg-mri-bg border border-mri-border">
+                  <span className="text-mri-muted block text-[10px]">Overall Dice Agreement</span>
+                  <span className="text-lg font-bold text-cyan-400">
                     {compareData.dice_agreement !== undefined ? (compareData.dice_agreement * 100).toFixed(1) + '%' : 'N/A'}
                   </span>
                 </div>
-                <div className="p-3 rounded-lg bg-medical-card border border-medical-border">
-                  <span className="text-medical-muted block text-[10px]">Modified Voxels</span>
-                  <span className="text-lg font-bold text-white">
+                <div className="p-3 rounded-lg bg-mri-bg border border-mri-border">
+                  <span className="text-mri-muted block text-[10px]">Modified Voxels</span>
+                  <span className="text-lg font-bold text-mri-text">
                     {compareData.voxels_changed || 0}
                   </span>
                 </div>
               </div>
 
               {compareData.volume_comparison && (
-                <div className="p-3 rounded-lg bg-medical-card border border-medical-border space-y-2">
-                  <span className="font-semibold text-white block">Volume Deltas:</span>
+                <div className="p-3 rounded-lg bg-mri-bg border border-mri-border space-y-2">
+                  <span className="font-semibold text-mri-text block">Volume Deltas:</span>
                   <div className="grid grid-cols-3 gap-2 font-mono text-[11px]">
                     <div>
                       <span className="text-emerald-400 block font-bold">WT (Whole Tumor)</span>
@@ -1716,7 +1716,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setShowCompareModal(false)}
-                className="px-4 py-2 rounded-lg bg-medical-teal text-medical-darkest font-semibold text-xs shadow-md"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md"
               >
                 Close Comparison
               </button>
@@ -1728,28 +1728,28 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       {/* MODAL 2: SAVE DRAFT MODAL */}
       {showDraftModal && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-medical-base border border-purple-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-medical-border pb-3">
+          <div className="bg-mri-surface border border-purple-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-mri-border pb-3">
               <div className="flex items-center gap-2">
                 <Save className="w-5 h-5 text-purple-400" />
-                <h3 className="font-bold text-white text-base">Save Annotation Draft</h3>
+                <h3 className="font-bold text-mri-text text-base">Save Annotation Draft</h3>
               </div>
-              <button onClick={() => setShowDraftModal(false)} className="text-medical-muted hover:text-white">
+              <button onClick={() => setShowDraftModal(false)} className="text-mri-muted hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-medical-muted">
+              <p className="text-mri-muted">
                 Save your in-progress voxel corrections without submitting to the training queue. You can resume editing later.
               </p>
               <div>
-                <label className="text-white font-semibold block mb-1">Clinical Notes (Optional):</label>
+                <label className="text-mri-text font-semibold block mb-1">Clinical Notes (Optional):</label>
                 <textarea
                   value={draftNotes}
                   onChange={(e) => setDraftNotes(e.target.value)}
                   placeholder="e.g., Extended enhancing tumor margin on axial slices 72-80..."
-                  className="w-full h-24 p-2.5 rounded-lg bg-medical-card border border-medical-border text-white text-xs font-mono focus:outline-none focus:border-purple-400"
+                  className="w-full h-24 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-mri-text text-xs font-mono focus:outline-none focus:border-purple-400"
                 />
               </div>
             </div>
@@ -1757,7 +1757,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowDraftModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-medical-border text-medical-muted text-xs hover:text-white"
+                className="px-3 py-1.5 rounded-lg border border-mri-border text-mri-muted text-xs hover:text-white"
               >
                 Cancel
               </button>
@@ -1776,13 +1776,13 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       {/* MODAL 3: SUBMIT FOR REVIEW MODAL */}
       {showSubmitModal && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-medical-base border border-emerald-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-medical-border pb-3">
+          <div className="bg-mri-surface border border-emerald-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-mri-border pb-3">
               <div className="flex items-center gap-2">
                 <Send className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-bold text-white text-base">Submit for Clinical Review</h3>
+                <h3 className="font-bold text-mri-text text-base">Submit for Clinical Review</h3>
               </div>
-              <button onClick={() => setShowSubmitModal(false)} className="text-medical-muted hover:text-white">
+              <button onClick={() => setShowSubmitModal(false)} className="text-mri-muted hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1796,12 +1796,12 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               </div>
 
               <div>
-                <label className="text-white font-semibold block mb-1">Radiologist Review Notes:</label>
+                <label className="text-mri-text font-semibold block mb-1">Radiologist Review Notes:</label>
                 <textarea
                   value={submitNotes}
                   onChange={(e) => setSubmitNotes(e.target.value)}
                   placeholder="e.g., Confirmed enhancing tumor boundary on T1ce; reduced necrotic over-segmentation on coronal views."
-                  className="w-full h-24 p-2.5 rounded-lg bg-medical-card border border-medical-border text-white text-xs font-mono focus:outline-none focus:border-emerald-400"
+                  className="w-full h-24 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-mri-text text-xs font-mono focus:outline-none focus:border-emerald-400"
                 />
               </div>
             </div>
@@ -1809,14 +1809,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowSubmitModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-medical-border text-medical-muted text-xs hover:text-white"
+                className="px-3 py-1.5 rounded-lg border border-mri-border text-mri-muted text-xs hover:text-white"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExecuteSubmitReview}
                 disabled={submitting}
-                className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-medical-darkest font-bold text-xs shadow-md"
+                className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md"
               >
                 {submitting ? 'Submitting...' : 'Confirm Submission'}
               </button>

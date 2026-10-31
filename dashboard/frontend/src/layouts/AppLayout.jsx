@@ -28,7 +28,7 @@ import GestureControlWidget from '../components/GestureControlWidget';
 import { useVoiceContext } from '../context/VoiceControlContext';
 
 const NAV_ITEMS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'overview', label: 'Home / Overview', icon: LayoutDashboard },
   { id: 'viewer', label: '3D Workspace', icon: Box },
   { id: 'upload', label: 'AI Segmentation', icon: UploadCloud },
   { id: 'models', label: 'Model Lab', icon: Cpu },
@@ -42,9 +42,9 @@ const NAV_ITEMS = [
 
 const ROUTE_METADATA = {
   overview: {
-    section: 'WORKSPACE',
-    title: 'Platform Overview & Experimental Setup',
-    subtitle: 'Adaptive Self-Distillation • UNETR 3D • EfficientNet-B0 2D',
+    section: 'PLATFORM',
+    title: 'Platform Overview & Clinical Setup',
+    subtitle: 'Adaptive Self-Distillation • UNETR 3D • Multi-Modal MRI Benchmark',
   },
   upload: {
     section: 'INGESTION',
@@ -147,31 +147,31 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
     setMobileDrawerOpen(false);
   };
 
+  const isViewerTab = activeTab === 'viewer';
+
   return (
-    <div className="flex h-screen bg-medical-darkest text-medical-text overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#F7FAFC] text-[#16324F] overflow-hidden font-sans">
       {/* MOBILE DRAWER BACKDROP */}
       {mobileDrawerOpen && (
         <div 
-          className="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-[#16324F]/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
           onClick={() => setMobileDrawerOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* CHATGPT-STYLE COLLAPSIBLE SIDEBAR */}
+      {/* REFINED MEDICAL SAAS SIDEBAR */}
       <aside
-        className={`fixed lg:static top-0 bottom-0 left-0 z-50 bg-medical-base border-r border-medical-border/80 flex flex-col justify-between transition-[width,transform] duration-300 ease-in-out select-none ${
-          /* Mobile Drawer Positioning */
+        className={`fixed lg:static top-0 bottom-0 left-0 z-50 bg-white border-r border-[#DCE6F0] shadow-sm flex flex-col justify-between transition-[width,transform] duration-250 ease-in-out select-none ${
           mobileDrawerOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         } ${
-          /* Desktop Width Toggle */
           isCollapsed ? 'lg:w-[72px]' : 'lg:w-64'
         }`}
       >
-        {/* TOP SECTION: BRANDING & SIDEBAR TOGGLE */}
+        {/* TOP SECTION: BRANDING & NAVIGATION */}
         <div className="flex flex-col min-h-0">
           {/* Header Bar */}
-          <div className={`h-16 border-b border-medical-border/70 flex items-center shrink-0 px-3.5 ${
+          <div className={`h-16 border-b border-[#DCE6F0] flex items-center shrink-0 px-3.5 bg-white ${
             isCollapsed ? 'lg:justify-center' : 'justify-between'
           }`}>
             {/* Expanded Header: Logo + Product Name */}
@@ -179,52 +179,50 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
               <img 
                 src="/logo-circle.png" 
                 alt="NeuroVision AI Logo" 
-                className="w-9 h-9 rounded-full object-cover shrink-0 shadow-md ring-1 ring-medical-teal/40 hover:scale-105 transition-transform" 
+                className="w-9 h-9 rounded-full object-cover shrink-0 shadow-sm ring-1 ring-[#2563EB]/30 hover:scale-105 transition-transform" 
               />
               <div className="min-w-0 truncate">
-                <div className="font-bold text-base tracking-tight text-white flex items-center gap-1 leading-tight truncate">
+                <div className="font-bold text-base tracking-tight text-[#16324F] flex items-center gap-1 leading-tight truncate">
                   <span>NeuroVision</span>
-                  <span className="text-medical-teal">AI</span>
+                  <span className="text-[#2563EB]">AI</span>
                 </div>
-                <span className="text-[10px] uppercase tracking-wider text-medical-muted font-mono block -mt-0.5 truncate">
-                  AI For A Healthier Tomorrow
+                <span className="text-[10px] uppercase tracking-wider text-[#64748B] font-mono block -mt-0.5 truncate font-medium">
+                  Clinical AI Platform
                 </span>
               </div>
             </div>
 
-            {/* Collapsed Header: Centered Logo with Expand Tooltip/Action */}
+            {/* Collapsed Header: Centered Logo with Expand Tooltip */}
             {isCollapsed && (
               <div className="hidden lg:flex items-center justify-center">
                 <button
                   onClick={toggleSidebar}
-                  className="p-1 rounded-full text-medical-muted hover:ring-2 hover:ring-medical-teal/60 transition-all group"
+                  className="p-1 rounded-full text-[#64748B] hover:ring-2 hover:ring-[#2563EB]/40 transition-all group"
                   title="Expand sidebar • NeuroVision AI"
                   aria-label="Expand sidebar"
                 >
                   <img 
                     src="/logo-circle.png" 
                     alt="NeuroVision AI Logo" 
-                    className="w-9 h-9 rounded-full object-cover shrink-0 shadow-md group-hover:scale-105 transition-transform" 
+                    className="w-9 h-9 rounded-full object-cover shrink-0 shadow-sm group-hover:scale-105 transition-transform" 
                   />
                 </button>
               </div>
             )}
 
-            {/* Expanded Header Controls: Desktop Collapse Button & Mobile Close Button */}
+            {/* Expanded Header Controls */}
             <div className={`flex items-center gap-1 ${isCollapsed ? 'lg:hidden' : 'flex'}`}>
-              {/* Desktop Collapse Button */}
               <button
                 onClick={toggleSidebar}
-                className="hidden lg:flex p-1.5 rounded-lg text-medical-muted hover:text-white hover:bg-medical-surface border border-transparent hover:border-medical-border/70 transition-colors"
+                className="hidden lg:flex p-1.5 rounded-lg text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8] transition-colors"
                 title="Collapse sidebar"
                 aria-label="Collapse sidebar"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </button>
 
-              {/* Mobile Close Button */}
               <button 
-                className="lg:hidden p-1.5 rounded-lg text-medical-muted hover:text-white hover:bg-medical-surface"
+                className="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8]"
                 onClick={() => setMobileDrawerOpen(false)}
                 aria-label="Close menu"
               >
@@ -233,39 +231,38 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
             </div>
           </div>
 
-          {/* QUICK-ACTION SECTION (Inspired by ChatGPT's "+ New Chat") */}
+          {/* QUICK-ACTION SECTION */}
           <div className={`p-3 shrink-0 ${isCollapsed ? 'lg:px-2.5' : ''}`}>
             {!isCollapsed ? (
               <button
                 onClick={() => handleNavClick('upload')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-medical-teal/15 hover:bg-medical-teal/25 border border-medical-teal/40 text-medical-tealLight text-xs font-semibold transition-all shadow-sm group text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-all shadow-sm group text-left"
                 title="Start a new MRI scan analysis"
               >
-                <Plus className="w-4 h-4 text-medical-teal group-hover:rotate-90 transition-transform shrink-0" />
+                <Plus className="w-4 h-4 text-white group-hover:rotate-90 transition-transform shrink-0" />
                 <span className="truncate">New Scan Analysis</span>
               </button>
             ) : (
               <div className="relative group flex justify-center">
                 <button
                   onClick={() => handleNavClick('upload')}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-medical-teal/15 hover:bg-medical-teal/25 border border-medical-teal/40 text-medical-tealLight transition-all shadow-sm group"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white transition-all shadow-sm group"
                   aria-label="New Scan Analysis"
                 >
-                  <Plus className="w-4 h-4 text-medical-teal group-hover:rotate-90 transition-transform" />
+                  <Plus className="w-4 h-4 text-white group-hover:rotate-90 transition-transform" />
                 </button>
-                {/* Floating Tooltip */}
-                <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-md bg-medical-card border border-medical-border text-xs text-white shadow-xl z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2">
-                  <span className="font-semibold text-medical-tealLight">New Scan Analysis</span>
+                <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-[#16324F] text-xs text-white shadow-xl z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2">
+                  <span className="font-semibold">New Scan Analysis</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* MAIN NAVIGATION LIST */}
-          <nav className={`space-y-1 px-3 overflow-y-auto ${isCollapsed ? 'lg:px-2.5' : ''}`}>
+          <nav className={`space-y-0.5 px-3 overflow-y-auto ${isCollapsed ? 'lg:px-2.5' : ''}`}>
             {!isCollapsed && (
-              <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-medical-muted/60 font-mono">
-                Navigation
+              <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] font-mono">
+                Workspace
               </div>
             )}
 
@@ -274,50 +271,46 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
               const isActive = activeTab === item.id;
 
               if (isCollapsed) {
-                /* COLLAPSED ICON RAIL ITEM (Centered with floating tooltip) */
                 return (
-                  <div key={item.id} className="relative group flex justify-center">
+                  <div key={item.id} className="relative group flex justify-center my-0.5">
                     <button
                       onClick={() => handleNavClick(item.id)}
-                      className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all ${
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
                         isActive
-                          ? 'bg-medical-teal/20 text-medical-tealLight border border-medical-teal/50 shadow-sm shadow-medical-teal/10'
-                          : 'text-medical-muted hover:text-white hover:bg-medical-surface'
+                          ? 'bg-[#E3EEFF] text-[#2563EB] shadow-sm font-semibold'
+                          : 'text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8]'
                       }`}
                       aria-label={item.label}
                     >
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-medical-teal' : 'text-medical-muted group-hover:text-white'}`} />
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-[#2563EB]' : 'text-[#64748B] group-hover:text-[#16324F]'}`} />
                       {isActive && (
-                        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-medical-teal" />
+                        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-[#2563EB]" />
                       )}
                     </button>
 
-                    {/* Floating Tooltip */}
-                    <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-md bg-medical-card border border-medical-border text-xs text-white shadow-xl z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                    <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-[#16324F] text-xs text-white shadow-xl z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                       <span>{item.label}</span>
-                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-medical-teal" />}
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />}
                     </div>
                   </div>
                 );
               }
 
-              /* EXPANDED FULL ITEM (Clean, minimal, no bulky borders) */
               return (
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all relative group text-left ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all relative group text-left ${
                     isActive
-                      ? 'bg-medical-teal/15 text-medical-tealLight font-semibold shadow-sm'
-                      : 'text-medical-muted hover:text-white hover:bg-medical-surface/80'
+                      ? 'bg-[#E3EEFF] text-[#2563EB] font-semibold shadow-xs'
+                      : 'text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8]'
                   }`}
                 >
-                  {/* Crisp active left indicator bar */}
                   {isActive && (
-                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-medical-teal" />
+                    <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-[#2563EB]" />
                   )}
                   <Icon className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? 'text-medical-teal' : 'text-medical-muted group-hover:text-white'
+                    isActive ? 'text-[#2563EB]' : 'text-[#64748B] group-hover:text-[#16324F]'
                   }`} />
                   <span className="truncate">{item.label}</span>
                 </button>
@@ -326,71 +319,68 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
           </nav>
         </div>
 
-        {/* BOTTOM SECTION: RESTRAINED STATUS & ARCHITECTURE AREA */}
-        <div className={`border-t border-medical-border/70 shrink-0 bg-medical-darkest/40 ${
+        {/* BOTTOM SECTION: SYSTEM TELEMETRY */}
+        <div className={`border-t border-[#DCE6F0] shrink-0 bg-[#F7FAFC] ${
           isCollapsed ? 'p-2.5 flex justify-center' : 'p-3'
         }`}>
           {!isCollapsed ? (
-            /* EXPANDED BOTTOM STATUS PROFILE */
-            <div className="p-2.5 rounded-lg bg-medical-card/80 border border-medical-border/60 hover:border-medical-border text-xs space-y-1.5 transition-colors group">
+            <div className="p-3 rounded-xl bg-white border border-[#DCE6F0] shadow-2xs text-xs space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-medical-muted/80">Architecture</span>
-                <Cpu className="w-3.5 h-3.5 text-medical-cyan shrink-0" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] font-semibold">Engine</span>
+                <Cpu className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
               </div>
-              <div className="font-semibold text-white text-xs truncate">
+              <div className="font-semibold text-[#16324F] text-xs truncate">
                 Adaptive Self-Distillation
               </div>
-              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-medical-border/50">
-                <span className="text-[10px] text-medical-muted font-mono truncate">UNETR + MONAI</span>
+              <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-[#EEF4F8]">
+                <span className="text-[10px] text-[#64748B] font-mono">UNETR + MONAI</span>
                 <span className="inline-flex items-center gap-1.5 shrink-0 font-medium text-[10px]">
                   {serverStatus === 'ready' ? (
                     <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-emerald-400 font-semibold">Engine Ready</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#16866A]" />
+                      <span className="text-[#16866A] font-semibold">Ready</span>
                     </>
                   ) : serverStatus === 'checking' ? (
                     <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      <span className="text-amber-400">Connecting...</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B7791F] animate-pulse" />
+                      <span className="text-[#B7791F]">Connecting...</span>
                     </>
                   ) : (
                     <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                      <span className="text-amber-400">UI Demo</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B7791F]" />
+                      <span className="text-[#B7791F]">UI Demo</span>
                     </>
                   )}
                 </span>
               </div>
             </div>
           ) : (
-            /* COLLAPSED BOTTOM STATUS BUTTON (With hovering details card) */
             <div className="relative group flex justify-center">
               <button
-                className="w-10 h-10 flex items-center justify-center rounded-lg bg-medical-surface/80 border border-medical-border/80 hover:border-medical-teal/40 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#DCE6F0] hover:border-[#2563EB]/40 transition-colors shadow-2xs"
                 aria-label="Engine Status"
               >
-                <Cpu className="w-4 h-4 text-medical-cyan" />
+                <Cpu className="w-4 h-4 text-[#2563EB]" />
                 <span 
-                  className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-medical-base ${
-                    serverStatus === 'ready' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                  className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-white ${
+                    serverStatus === 'ready' ? 'bg-[#16866A]' : 'bg-[#B7791F]'
                   }`}
                 />
               </button>
 
-              {/* Floating Architecture & Status Card */}
-              <div className="absolute left-full bottom-0 ml-3 w-56 p-3 rounded-lg bg-medical-card border border-medical-border text-xs text-white shadow-2xl z-50 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 space-y-2">
-                <div className="flex items-center justify-between border-b border-medical-border/60 pb-1.5">
+              <div className="absolute left-full bottom-0 ml-3 w-56 p-3 rounded-xl bg-[#16324F] text-xs text-white shadow-2xl z-50 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 space-y-2">
+                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
                   <span className="font-semibold text-white">Adaptive UNETR</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-medical-surface text-medical-tealLight">
-                    GPU
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-[#7DD3FC]">
+                    GPU FP16
                   </span>
                 </div>
-                <div className="text-[11px] text-medical-muted font-mono space-y-0.5">
+                <div className="text-[11px] text-[#A7B5C8] font-mono space-y-0.5">
                   <div>Framework: MONAI 1.6</div>
                   <div>Backend: PyTorch 2.11 + CUDA</div>
                 </div>
-                <div className="pt-1.5 border-t border-medical-border/60 flex items-center justify-between text-[11px]">
-                  <span className="text-medical-muted">Engine:</span>
+                <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-[11px]">
+                  <span className="text-[#A7B5C8]">Engine:</span>
                   <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     {serverStatus === 'ready' ? 'Ready (Active)' : 'Offline / Demo'}
@@ -404,13 +394,13 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Clinical Header */}
-        <header className="h-16 bg-medical-base border-b border-medical-border px-4 lg:px-6 flex items-center justify-between shrink-0">
+        {/* Top Header */}
+        <header className="h-16 bg-white border-b border-[#DCE6F0] px-4 lg:px-6 flex items-center justify-between shrink-0 shadow-2xs">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Mobile Menu Hamburger */}
+            {/* Mobile Hamburger */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-medical-muted hover:text-white hover:bg-medical-surface"
+              className="lg:hidden p-2 rounded-lg text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8]"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
@@ -418,21 +408,21 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
 
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-medical-teal px-1.5 py-0.2 rounded bg-medical-teal/10 border border-medical-teal/20">
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#2563EB] px-2 py-0.5 rounded-md bg-[#E3EEFF] border border-[#BFDBFE]">
                   {currentMeta.section}
                 </span>
-                <h1 className="text-sm lg:text-base font-semibold text-white tracking-tight truncate">
+                <h1 className="text-sm lg:text-base font-bold text-[#16324F] tracking-tight truncate">
                   {currentMeta.title}
                 </h1>
               </div>
-              <p className="text-xs text-medical-muted mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#64748B] mt-0.5 truncate hidden sm:block">
                 {currentMeta.subtitle}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Voice Control Clinical HUD Widget */}
+            {/* Voice Control Widget */}
             <VoiceControlWidget voiceControl={voiceControl} activeTab={activeTab} />
 
             {/* Contactless Hand Gesture Widget */}
@@ -443,43 +433,47 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
               <button
                 onClick={onPlayIntro}
                 type="button"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-border hover:border-medical-teal/40 text-medical-muted hover:text-white text-[11px] font-mono transition-all shadow-sm"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#64748B] hover:text-[#16324F] text-[11px] font-mono transition-all shadow-2xs"
                 title="Play 4K Cinematic Intro Video"
               >
-                <Film className="w-3.5 h-3.5 text-medical-teal" />
+                <Film className="w-3.5 h-3.5 text-[#2563EB]" />
                 <span className="hidden sm:inline font-medium">Intro</span>
               </button>
             )}
 
             {/* Study Cohort Tag */}
-            <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-medical-card border border-medical-border text-[11px] font-mono text-medical-muted">
-              <span className="text-white font-medium">BraTS2021</span>
-              <span className="text-medical-border">•</span>
-              <span className="text-medical-cyan">1.0mm³ Iso</span>
+            <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#EEF4F8] border border-[#DCE6F0] text-[11px] font-mono text-[#64748B]">
+              <span className="text-[#16324F] font-semibold">BraTS2021</span>
+              <span className="text-[#CBD5E1]">•</span>
+              <span className="text-[#06B6D4] font-medium">1.0mm³ Iso</span>
             </div>
 
-            {/* Server & Engine Status indicator badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-medical-card border border-medical-border text-xs shadow-sm">
+            {/* Engine Status Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#DCE6F0] text-xs shadow-2xs">
               <span className={`w-2 h-2 rounded-full ${
-                serverStatus === 'ready' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                serverStatus === 'ready' ? 'bg-[#16866A]' : 'bg-[#B7791F]'
               }`} />
-              <span className={`font-medium text-[11px] ${
-                serverStatus === 'ready' ? 'text-emerald-300' : 'text-amber-300'
+              <span className={`font-semibold text-[11px] ${
+                serverStatus === 'ready' ? 'text-[#16866A]' : 'text-[#B7791F]'
               }`}>
                 {serverStatus === 'ready' ? 'Engine Ready' : 'Connecting...'}
               </span>
               {serverStatus === 'offline' && (
-                <span className="text-[10px] text-amber-400/90 font-mono border-l border-medical-border pl-2">
-                  (Demo Mode)
+                <span className="text-[10px] text-[#B7791F] font-mono border-l border-[#DCE6F0] pl-2">
+                  (Demo)
                 </span>
               )}
             </div>
           </div>
         </header>
 
-        {/* Dynamic Page Content */}
-        <main className="flex-1 overflow-y-auto bg-medical-darkest">
-          {children}
+        {/* Dynamic Page Content (Light SaaS background or Dark MRI Viewing Environment) */}
+        <main className={`flex-1 overflow-y-auto ${
+          isViewerTab ? 'bg-[#101B2D] text-[#F1F5F9] mri-viewport' : 'bg-[#F7FAFC] text-[#16324F]'
+        }`}>
+          <div className="animate-page-in h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -4,63 +4,109 @@
 
 @layer base {
   :root {
+    /* Global Application Surface & Color Tokens (Light Clinical Palette) */
+    --color-app-bg: #F7FAFC;
+    --color-card-bg: #FFFFFF;
+    --color-surface-secondary: #EEF4F8;
+    --color-text-primary: #16324F;
+    --color-text-secondary: #64748B;
+    --color-border: #DCE6F0;
+    --color-accent-primary: #2563EB;
+    --color-accent-secondary: #06B6D4;
+    --color-success: #16866A;
+    --color-warning: #B7791F;
+    --color-error: #C24141;
+    --color-hover-surface: #EAF2FF;
+    --color-active-nav: #E3EEFF;
+
+    /* Dedicated Dark MRI Workstation Tokens (Image Contrast & Radiologic Viewing) */
+    --color-mri-bg: #101B2D;
+    --color-mri-surface: #18263B;
+    --color-mri-border: #30445E;
+    --color-mri-text: #F1F5F9;
+    --color-mri-secondary: #A7B5C8;
+    --color-mri-accent: #7DD3FC;
+
+    /* Transition Speeds */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
   body {
-    @apply bg-medical-darkest text-medical-text;
+    background-color: var(--color-app-bg);
+    color: var(--color-text-primary);
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+
   code, kbd, samp, pre, .font-mono {
     font-family: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-feature-settings: 'tnum';
   }
 }
 
-/* Tabular figures utility for precise coordinate & volumetric numbers */
+/* Accessible Smooth Scrolling (with Reduced-Motion Guard) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tabular figures utility for precise numeric coordinate & volumetric alignment */
 .font-tabular {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
 }
 
-/* PACS workstation card & panel style */
-.workstation-panel {
-  background-color: #0b0f17;
-  border: 1px solid #1f2e45;
-}
-
-.workstation-card {
-  background-color: #111827;
-  border: 1px solid #1f2e45;
-}
-
-/* Custom dark scrollbar for medical imaging look */
+/* Polished Light Medical Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0F17;
+  background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1F2E45;
+  background: #CBD5E1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2D3F5A;
+  background: #94A3B8;
 }
 
-/* Range input accent styling */
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 14px;
-  width: 14px;
-  border-radius: 50%;
-  background: #14B8A6;
-  cursor: pointer;
-  border: 2px solid #030712;
+/* Dark Workstation Scrollbar (for MRI viewport) */
+.mri-viewport ::-webkit-scrollbar-track {
+  background: #101B2D;
+}
+
+.mri-viewport ::-webkit-scrollbar-thumb {
+  background: #30445E;
+}
+
+.mri-viewport ::-webkit-scrollbar-thumb:hover {
+  background: #3F5877;
+}
+
+/* Medical Workstation Custom Range Input Accent */
+input[type="range"] {
+  accent-color: #2563EB;
+}
+
+.mri-range input[type="range"] {
+  accent-color: #7DD3FC;
 }

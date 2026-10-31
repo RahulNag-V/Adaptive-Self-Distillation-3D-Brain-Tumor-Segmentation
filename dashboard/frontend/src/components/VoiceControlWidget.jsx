@@ -105,27 +105,27 @@ export default function VoiceControlWidget({
           type="button"
           aria-label={isListening ? 'Stop Voice Control (V)' : 'Start Voice Control (V)'}
           title={isListening ? 'Stop Voice Recognition (Press V)' : 'Start Voice Control (Press V)'}
-          className={`relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all shadow-sm ${
+          className={`relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all shadow-2xs ${
             isListening
-              ? 'bg-rose-500/20 border-rose-500 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.35)]'
+              ? 'bg-rose-50 border-rose-400 text-rose-700 shadow-sm'
               : status === 'success'
-              ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300'
-              : 'bg-medical-card hover:bg-medical-surface border-medical-border hover:border-medical-teal/50 text-white'
+              ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+              : 'bg-white hover:bg-[#EEF4F8] border-[#DCE6F0] hover:border-[#2563EB]/40 text-[#16324F]'
           }`}
         >
           {isListening ? (
             <>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600" />
               </span>
-              <Mic className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-              <span className="font-semibold text-rose-200 hidden sm:inline">Listening...</span>
+              <Mic className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
+              <span className="font-semibold text-rose-800 hidden sm:inline">Listening...</span>
             </>
           ) : (
             <>
-              <Mic className="w-3.5 h-3.5 text-medical-teal" />
-              <span className="hidden sm:inline font-medium">Voice Control</span>
+              <Mic className="w-3.5 h-3.5 text-[#2563EB]" />
+              <span className="hidden sm:inline font-medium">Voice</span>
             </>
           )}
         </button>
@@ -136,9 +136,9 @@ export default function VoiceControlWidget({
           type="button"
           aria-label="Voice Commands Guide"
           title="Voice Commands Guide"
-          className="p-1.5 rounded-lg bg-medical-card hover:bg-medical-surface border border-medical-border text-medical-muted hover:text-white transition-all shadow-sm"
+          className="p-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#64748B] hover:text-[#16324F] transition-all shadow-2xs"
         >
-          <HelpCircle className="w-3.5 h-3.5 text-medical-teal" />
+          <HelpCircle className="w-3.5 h-3.5 text-[#2563EB]" />
         </button>
 
         {/* Audio Speech Synthesis Feedback Toggle */}
@@ -147,16 +147,16 @@ export default function VoiceControlWidget({
           type="button"
           aria-label={audioFeedbackEnabled ? 'Mute Voice Audio Feedback' : 'Enable Voice Audio Feedback'}
           title={audioFeedbackEnabled ? 'Voice confirmations enabled' : 'Voice confirmations muted'}
-          className={`p-1.5 rounded-lg border transition-all ${
+          className={`p-1.5 rounded-lg border transition-all shadow-2xs ${
             audioFeedbackEnabled
-              ? 'bg-medical-teal/15 border-medical-teal/40 text-medical-tealLight'
-              : 'bg-medical-card border-medical-border text-medical-muted hover:text-white'
+              ? 'bg-[#E3EEFF] border-[#2563EB]/40 text-[#2563EB]'
+              : 'bg-white border-[#DCE6F0] text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8]'
           }`}
         >
           {audioFeedbackEnabled ? (
-            <Volume2 className="w-3.5 h-3.5 text-medical-teal" />
+            <Volume2 className="w-3.5 h-3.5 text-[#2563EB]" />
           ) : (
-            <VolumeX className="w-3.5 h-3.5 text-medical-muted" />
+            <VolumeX className="w-3.5 h-3.5 text-[#64748B]" />
           )}
         </button>
       </div>
@@ -164,7 +164,7 @@ export default function VoiceControlWidget({
       {/* 2. FLOATING HUD FEEDBACK BAR (When Listening, Processing, or Command Executed) */}
       {(isListening || status !== 'idle' || errorMessage) && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4 animate-slideUp">
-          <div className="bg-medical-darkest/95 border border-medical-border/90 backdrop-blur-md rounded-2xl shadow-2xl p-3 text-xs font-mono text-white flex flex-col gap-2 ring-1 ring-medical-teal/20">
+          <div className="bg-white/95 border border-[#DCE6F0] backdrop-blur-md rounded-2xl shadow-xl p-3.5 text-xs font-mono text-[#16324F] flex flex-col gap-2 ring-1 ring-[#2563EB]/15">
             {/* Top Row: State Indicator, Transcript, and Dismiss */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
