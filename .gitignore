@@ -26,6 +26,7 @@ dashboard/frontend/.env.local
 data/raw/
 *.nii
 *.nii.gz
+NeuroVisionAI/
 
 # Runtime temporary sessions & caches
 dashboard/backend/runtime/
