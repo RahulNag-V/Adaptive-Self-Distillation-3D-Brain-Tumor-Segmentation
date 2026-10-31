@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Mic, 
   MicOff, 
@@ -19,10 +19,73 @@ import {
   ZoomIn,
   Navigation,
   Compass,
-  FolderOpen
+  FolderOpen,
+  Check,
+  Crosshair,
+  Box,
+  Eye
 } from 'lucide-react';
 import { VOICE_COMMANDS_HELP } from '../services/voiceCommandParser';
 import { useVoiceContext } from '../context/VoiceControlContext';
+
+const CATEGORY_META = {
+  'All': { 
+    icon: Sparkles, 
+    color: 'text-blue-600', 
+    bg: 'bg-blue-50', 
+    border: 'border-blue-200',
+    description: 'All available voice commands across the platform' 
+  },
+  'Website Navigation': { 
+    icon: Compass, 
+    color: 'text-sky-600', 
+    bg: 'bg-sky-50', 
+    border: 'border-sky-200',
+    description: 'Jump between dashboard, viewer, lab, and reports' 
+  },
+  'X, Y, Z Coordinates': { 
+    icon: Crosshair, 
+    color: 'text-teal-600', 
+    bg: 'bg-teal-50', 
+    border: 'border-teal-200',
+    description: 'Exact anatomical coordinate slice navigation' 
+  },
+  'Case & Dataset Selection': { 
+    icon: FolderOpen, 
+    color: 'text-purple-600', 
+    bg: 'bg-purple-50', 
+    border: 'border-purple-200',
+    description: 'Load BraTS patients, cohorts, and demo scans' 
+  },
+  'Rotation & Camera Movement': { 
+    icon: RotateCw, 
+    color: 'text-amber-600', 
+    bg: 'bg-amber-50', 
+    border: 'border-amber-200',
+    description: '3D Orbiting, continuous spinning, and camera reset' 
+  },
+  '3D Mesh & Rendering Modes': { 
+    icon: Box, 
+    color: 'text-emerald-600', 
+    bg: 'bg-emerald-50', 
+    border: 'border-emerald-200',
+    description: 'Surface meshes, volume MIP, bounding box overlays' 
+  },
+  'Menu, Sidebar & Panels': { 
+    icon: Sliders, 
+    color: 'text-indigo-600', 
+    bg: 'bg-indigo-50', 
+    border: 'border-indigo-200',
+    description: 'Sidebar toggle, fullscreen view, and panel layouts' 
+  },
+  'Segmentation & Overlays': { 
+    icon: Eye, 
+    color: 'text-rose-600', 
+    bg: 'bg-rose-50', 
+    border: 'border-rose-200',
+    description: 'WT, TC, ET tumor masks, opacity, and ground truth' 
+  },
+};
 
 export default function VoiceControlWidget({
   voiceControl,
@@ -51,7 +114,24 @@ export default function VoiceControlWidget({
 
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [activeHelpCategory, setActiveHelpCategory] = useState('All');
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+  const dropdownRef = useRef(null);
+
+  // Close custom dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsCategoryDropdownOpen(false);
+      }
+    };
+    if (isCategoryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCategoryDropdownOpen]);
 
   // Listen for voice layout commands targeting the help panel
   useEffect(() => {
@@ -321,38 +401,157 @@ export default function VoiceControlWidget({
               </button>
             </div>
 
-            {/* Category Filter Drop-down Menu */}
+            {/* Category Filter Custom Drop-down Menu */}
             <div className="px-4 sm:px-6 py-3.5 bg-[#F8FAFC] border-b border-[#DCE6F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#16324F] shrink-0">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64748B] shrink-0">
                   <Sliders className="w-4 h-4 text-blue-600" />
                   <span>Category:</span>
                 </div>
-                <div className="relative flex-1 max-w-sm">
-                  <select
-                    value={activeHelpCategory}
-                    onChange={(e) => setActiveHelpCategory(e.target.value)}
-                    className="w-full appearance-none pl-3.5 pr-9 py-2 bg-white border border-[#DCE6F0] rounded-xl text-xs font-semibold text-[#16324F] shadow-xs hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all cursor-pointer"
+
+                {/* Custom Interactive Dropdown Component */}
+                <div className="relative flex-1 max-w-sm sm:max-w-md" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                    className="w-full flex items-center justify-between gap-2.5 pl-3 pr-3.5 py-2 bg-white border border-[#DCE6F0] hover:border-blue-400 rounded-xl text-xs font-semibold text-[#16324F] shadow-xs transition-all text-left focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 cursor-pointer"
+                    aria-haspopup="listbox"
+                    aria-expanded={isCategoryDropdownOpen}
                   >
-                    <option value="All">
-                      All Categories ({VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)} commands)
-                    </option>
-                    {VOICE_COMMANDS_HELP.map((c) => (
-                      <option key={c.category} value={c.category}>
-                        {c.category} ({c.commands.length} commands)
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-[#64748B] pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                    <div className="flex items-center gap-2 min-w-0">
+                      {(() => {
+                        const meta = CATEGORY_META[activeHelpCategory] || CATEGORY_META['All'];
+                        const IconComponent = meta.icon;
+                        return (
+                          <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${meta.bg} ${meta.color} border ${meta.border}`}>
+                            <IconComponent className="w-3.5 h-3.5" />
+                          </div>
+                        );
+                      })()}
+                      <span className="truncate font-bold text-[#16324F]">
+                        {activeHelpCategory === 'All' ? 'All Categories' : activeHelpCategory}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        {activeHelpCategory === 'All'
+                          ? `${VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)} cmds`
+                          : `${VOICE_COMMANDS_HELP.find((c) => c.category === activeHelpCategory)?.commands.length || 0} cmds`}
+                      </span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-[#64748B] transition-transform duration-200 ${
+                          isCategoryDropdownOpen ? 'rotate-180 text-blue-600' : ''
+                        }`}
+                      />
+                    </div>
+                  </button>
+
+                  {/* Dropdown Popover */}
+                  {isCategoryDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-2 z-50 w-full sm:w-[380px] bg-white border border-[#DCE6F0] rounded-2xl shadow-xl p-2 animate-fadeIn max-h-[340px] overflow-y-auto ring-1 ring-blue-500/10">
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between border-b border-[#F1F5F9] mb-1">
+                        <span>Select Category</span>
+                        <span className="text-blue-600 font-semibold">{VOICE_COMMANDS_HELP.length + 1} options</span>
+                      </div>
+
+                      {/* "All Categories" option */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveHelpCategory('All');
+                          setIsCategoryDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between gap-3 group cursor-pointer ${
+                          activeHelpCategory === 'All'
+                            ? 'bg-blue-50/90 border border-blue-200 shadow-2xs'
+                            : 'hover:bg-[#F8FAFC] border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
+                            <Sparkles className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-[#16324F] flex items-center gap-1.5">
+                              <span>All Categories</span>
+                            </div>
+                            <span className="text-[10px] text-[#64748B] block truncate max-w-[210px]">
+                              Complete vocabulary across all features
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            activeHelpCategory === 'All' ? 'bg-blue-600 text-white' : 'bg-[#F1F5F9] text-[#64748B] group-hover:bg-[#E2E8F0]'
+                          }`}>
+                            {VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)}
+                          </span>
+                          {activeHelpCategory === 'All' && (
+                            <Check className="w-4 h-4 text-blue-600" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Individual Category options */}
+                      {VOICE_COMMANDS_HELP.map((c) => {
+                        const meta = CATEGORY_META[c.category] || CATEGORY_META['All'];
+                        const IconComp = meta.icon;
+                        const isSelected = activeHelpCategory === c.category;
+
+                        return (
+                          <button
+                            key={c.category}
+                            type="button"
+                            onClick={() => {
+                              setActiveHelpCategory(c.category);
+                              setIsCategoryDropdownOpen(false);
+                            }}
+                            className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between gap-3 group cursor-pointer ${
+                              isSelected
+                                ? 'bg-blue-50/90 border border-blue-200 shadow-2xs'
+                                : 'hover:bg-[#F8FAFC] border border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${meta.bg} ${meta.color} border ${meta.border}`}>
+                                <IconComp className="w-3.5 h-3.5" />
+                              </div>
+                              <div>
+                                <div className={`text-xs font-bold ${isSelected ? 'text-blue-900' : 'text-[#16324F]'}`}>
+                                  {c.category}
+                                </div>
+                                <span className="text-[10px] text-[#64748B] block truncate max-w-[210px]">
+                                  {meta.description}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                isSelected ? 'bg-blue-600 text-white' : 'bg-[#F1F5F9] text-[#64748B] group-hover:bg-[#E2E8F0]'
+                              }`}>
+                                {c.commands.length}
+                              </span>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-blue-600" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {activeHelpCategory !== 'All' && (
                   <button
                     onClick={() => setActiveHelpCategory('All')}
-                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-xs font-medium text-[#64748B] hover:text-[#16324F] transition-colors shrink-0 shadow-xs"
+                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-xs font-medium text-[#64748B] hover:text-[#16324F] transition-colors shrink-0 shadow-xs cursor-pointer"
                     title="Reset to All Categories"
                   >
-                    Show All
+                    Reset
                   </button>
                 )}
               </div>
