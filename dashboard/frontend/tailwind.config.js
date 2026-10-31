@@ -64,7 +64,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        sans: ['"Times New Roman"', 'Times', 'Georgia', 'serif', 'Inter', 'sans-serif'],
+        serif: ['"Times New Roman"', 'Times', 'Georgia', 'serif'],
         mono: ['"JetBrains Mono"', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       boxShadow: {

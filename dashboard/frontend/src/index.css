@@ -39,7 +39,7 @@
   body {
     background-color: var(--color-app-bg);
     color: var(--color-text-primary);
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Times New Roman', Times, Georgia, serif;
   }
 
   code, kbd, samp, pre, .font-mono {
@@ -68,6 +68,15 @@
 .font-tabular {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Polished Light Medical Scrollbar */
