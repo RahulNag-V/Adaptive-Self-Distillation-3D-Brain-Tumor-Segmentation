@@ -98,11 +98,11 @@ export default function ReportPage({ currentResult, onNavigate }) {
               aria-label="Select Cohort Patient"
             >
               {patients.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} className="text-[#16324F] bg-white py-1">
                   {p.id} {p.split === 'val' ? '(Validation)' : ''}
                 </option>
               ))}
-              {patients.length === 0 && <option value="BraTS2021_01017">BraTS2021_01017</option>}
+              {patients.length === 0 && <option value="BraTS2021_01017" className="text-[#16324F] bg-white py-1">BraTS2021_01017</option>}
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-[#64748B] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>

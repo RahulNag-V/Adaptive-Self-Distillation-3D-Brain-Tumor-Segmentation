@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   RotateCcw, 
   Layers, 
@@ -33,7 +33,9 @@ import {
   ShieldAlert,
   Cpu,
   X,
-  Tag
+  Tag,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import MedicalViewer, { BRAIN_APPEARANCE_OPTIONS, ANATOMICAL_REGIONS_LEGEND } from '../viewer/MedicalViewer';
 import OrthogonalSliceViewer from '../viewer/OrthogonalSliceViewer';
@@ -123,6 +125,30 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   // Brain Surface & Segmentation Opacity (0.0 to 1.0)
   const [opacity, setOpacity] = useState(0.85);
   const [brainAppearance, setBrainAppearance] = useState('regions');
+
+  // Interactive Animated Dropdown States & Refs
+  const [isCaseDropdownOpen, setIsCaseDropdownOpen] = useState(false);
+  const [isAppearanceDropdownOpen, setIsAppearanceDropdownOpen] = useState(false);
+  const caseDropdownRef = useRef(null);
+  const appearanceDropdownRef = useRef(null);
+
+  // Click-outside listener for dropdown menus
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (caseDropdownRef.current && !caseDropdownRef.current.contains(e.target)) {
+        setIsCaseDropdownOpen(false);
+      }
+      if (appearanceDropdownRef.current && !appearanceDropdownRef.current.contains(e.target)) {
+        setIsAppearanceDropdownOpen(false);
+      }
+    };
+    if (isCaseDropdownOpen || isAppearanceDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCaseDropdownOpen, isAppearanceDropdownOpen]);
 
   // Sub-region filters
   const [subregions, setSubregions] = useState({
@@ -765,27 +791,108 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               <span className="text-xs text-mri-muted uppercase font-mono font-semibold">Case:</span>
             </div>
 
-            {/* Patient Selector Dropdown */}
-            <select
-              value={selectedPatientId}
-              onChange={(e) => setSelectedPatientId(e.target.value)}
-              className="bg-mri-bg border border-mri-border hover:border-cyan-400/60 text-mri-text text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer"
-            >
-              {currentResult && (
-                <option value={currentResult.session_id}>
-                  Live Session: {currentResult.session_id.substring(0, 16)}...
-                </option>
+            {/* Custom Animated Patient Selector Dropdown */}
+            <div className="relative" ref={caseDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsCaseDropdownOpen(!isCaseDropdownOpen)}
+                className="flex items-center gap-2 bg-mri-bg hover:bg-mri-surface border border-mri-border hover:border-cyan-400/60 text-mri-text text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer shadow-xs transition-all"
+                aria-haspopup="listbox"
+                aria-expanded={isCaseDropdownOpen}
+              >
+                <span className="truncate max-w-[140px] sm:max-w-[180px]">
+                  {currentResult && selectedPatientId === currentResult.session_id
+                    ? `Live: ${currentResult.session_id.substring(0, 12)}...`
+                    : selectedPatientId}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-950/40 text-cyan-300 border border-cyan-500/30">
+                  {patients.find(p => p.id === selectedPatientId)?.is_validation ? 'Val' : 'Train'}
+                </span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-mri-muted transition-transform duration-200 ${
+                    isCaseDropdownOpen ? 'rotate-180 text-cyan-400' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Animated Popover */}
+              {isCaseDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1.5 z-50 w-64 max-h-72 overflow-y-auto bg-mri-surface border border-mri-border rounded-xl shadow-2xl p-1.5 ring-1 ring-cyan-500/20 animate-fadeIn text-xs font-mono space-y-1">
+                  <div className="px-2.5 py-1 text-[10px] uppercase font-bold text-mri-muted border-b border-mri-border/60 flex items-center justify-between">
+                    <span>Select BraTS Case</span>
+                    <span className="text-cyan-400">{patients.length || 1} available</span>
+                  </div>
+
+                  {currentResult && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPatientId(currentResult.session_id);
+                        setIsCaseDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                        selectedPatientId === currentResult.session_id
+                          ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                          : 'text-mri-text hover:bg-mri-bg hover:text-cyan-200'
+                      }`}
+                    >
+                      <div className="truncate min-w-0">
+                        <span className="block truncate font-semibold">Live: {currentResult.session_id.substring(0, 14)}...</span>
+                        <span className="text-[10px] text-mri-muted">Prospective Upload</span>
+                      </div>
+                      {selectedPatientId === currentResult.session_id && (
+                        <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0 ml-1.5" />
+                      )}
+                    </button>
+                  )}
+
+                  {patients.length > 0 ? (
+                    patients.map((p) => {
+                      const isSelected = selectedPatientId === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPatientId(p.id);
+                            setIsCaseDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                            isSelected
+                              ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                              : 'text-mri-text hover:bg-mri-bg hover:text-cyan-200'
+                          }`}
+                        >
+                          <span className="truncate">{p.id}</span>
+                          <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded border ${
+                              p.is_validation
+                                ? 'bg-purple-950/40 text-purple-300 border-purple-500/30'
+                                : 'bg-blue-950/40 text-blue-300 border-blue-500/30'
+                            }`}>
+                              {p.is_validation ? 'Val' : 'Train'}
+                            </span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                          </div>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPatientId('BraTS2021_01017');
+                        setIsCaseDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40"
+                    >
+                      <span>BraTS2021_01017</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950/40 text-blue-300 border border-blue-500/30">Train</span>
+                    </button>
+                  )}
+                </div>
               )}
-              {patients.length > 0 ? (
-                patients.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.id} {p.is_validation ? '(Val)' : '(Train)'}
-                  </option>
-                ))
-              ) : (
-                <option value="BraTS2021_01017">BraTS2021_01017 (Train)</option>
-              )}
-            </select>
+            </div>
 
             {/* Dataset split badge */}
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-mri-bg border border-mri-border text-mri-muted hidden sm:inline">
@@ -1469,19 +1576,71 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 </div>
 
                 {/* Brain Appearance Selector */}
-                <div className="space-y-1.5 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-xs">
+                <div className="space-y-1.5 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-xs relative" ref={appearanceDropdownRef}>
                   <span className="text-[11px] text-mri-muted font-mono block">3D Brain Appearance:</span>
-                  <select
-                    value={brainAppearance}
-                    onChange={(e) => setBrainAppearance(e.target.value)}
-                    className="w-full bg-mri-surface border border-mri-border text-mri-text text-xs font-mono rounded px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  
+                  {/* Custom Animated Appearance Dropdown Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setIsAppearanceDropdownOpen(!isAppearanceDropdownOpen)}
+                    className="w-full flex items-center justify-between gap-2 bg-mri-surface border border-mri-border hover:border-blue-400 text-mri-text text-xs font-mono rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-xs"
+                    aria-haspopup="listbox"
+                    aria-expanded={isAppearanceDropdownOpen}
                   >
-                    {BRAIN_APPEARANCE_OPTIONS.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.name} ({opt.badge})
-                      </option>
-                    ))}
-                  </select>
+                    {(() => {
+                      const curOpt = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === brainAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
+                      return (
+                        <div className="flex items-center gap-1.5 truncate min-w-0">
+                          <span className="font-semibold truncate">{curOpt.name}</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950/50 text-blue-300 border border-blue-500/30 shrink-0">
+                            {curOpt.badge}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-mri-muted transition-transform duration-200 shrink-0 ${
+                        isAppearanceDropdownOpen ? 'rotate-180 text-blue-400' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Animated Popover Dropdown (Opens upward so it doesn't clip below) */}
+                  {isAppearanceDropdownOpen && (
+                    <div className="absolute bottom-full left-0 mb-1.5 z-50 w-full bg-mri-surface border border-mri-border rounded-xl shadow-2xl p-1.5 ring-1 ring-blue-500/20 animate-fadeIn text-xs font-mono space-y-1">
+                      <div className="px-2 py-1 text-[10px] uppercase font-bold text-mri-muted border-b border-mri-border/60 flex items-center justify-between">
+                        <span>3D Shading Mode</span>
+                        <span className="text-blue-400">{BRAIN_APPEARANCE_OPTIONS.length} modes</span>
+                      </div>
+
+                      {BRAIN_APPEARANCE_OPTIONS.map((opt) => {
+                        const isSelected = brainAppearance === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setBrainAppearance(opt.id);
+                              setIsAppearanceDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
+                              isSelected
+                                ? 'bg-blue-500/20 text-blue-300 font-bold border border-blue-500/40'
+                                : 'text-mri-text hover:bg-mri-bg hover:text-blue-200'
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <span className="block font-semibold truncate">{opt.name}</span>
+                              <span className="text-[10px] text-mri-muted block">{opt.badge}</span>
+                            </div>
+                            {isSelected && (
+                              <Check className="w-4 h-4 text-blue-400 shrink-0 ml-1.5" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
