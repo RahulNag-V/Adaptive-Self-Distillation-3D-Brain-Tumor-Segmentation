@@ -321,21 +321,50 @@ export default function VoiceControlWidget({
               </button>
             </div>
 
-            {/* Category Filter Pills */}
-            <div className="px-4 py-3 bg-[#F8FAFC] border-b border-[#DCE6F0] flex items-center gap-2 overflow-x-auto no-scrollbar text-xs shrink-0">
-              {['All', ...VOICE_COMMANDS_HELP.map((c) => c.category)].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveHelpCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-xs font-semibold ${
-                    activeHelpCategory === cat
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-white text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8] border border-[#DCE6F0]'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Category Filter Drop-down Menu */}
+            <div className="px-4 sm:px-6 py-3.5 bg-[#F8FAFC] border-b border-[#DCE6F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#16324F] shrink-0">
+                  <Sliders className="w-4 h-4 text-blue-600" />
+                  <span>Category:</span>
+                </div>
+                <div className="relative flex-1 max-w-sm">
+                  <select
+                    value={activeHelpCategory}
+                    onChange={(e) => setActiveHelpCategory(e.target.value)}
+                    className="w-full appearance-none pl-3.5 pr-9 py-2 bg-white border border-[#DCE6F0] rounded-xl text-xs font-semibold text-[#16324F] shadow-xs hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all cursor-pointer"
+                  >
+                    <option value="All">
+                      All Categories ({VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)} commands)
+                    </option>
+                    {VOICE_COMMANDS_HELP.map((c) => (
+                      <option key={c.category} value={c.category}>
+                        {c.category} ({c.commands.length} commands)
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-[#64748B] pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                </div>
+
+                {activeHelpCategory !== 'All' && (
+                  <button
+                    onClick={() => setActiveHelpCategory('All')}
+                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-xs font-medium text-[#64748B] hover:text-[#16324F] transition-colors shrink-0 shadow-xs"
+                    title="Reset to All Categories"
+                  >
+                    Show All
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-[#64748B] shrink-0 font-medium">
+                <span>Displaying:</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-bold text-[11px]">
+                  {activeHelpCategory === 'All'
+                    ? `${VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)} commands`
+                    : `${VOICE_COMMANDS_HELP.find((c) => c.category === activeHelpCategory)?.commands.length || 0} commands`}
+                </span>
+              </div>
             </div>
 
             {/* Commands List Body */}
