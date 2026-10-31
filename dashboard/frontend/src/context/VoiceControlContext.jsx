@@ -61,7 +61,12 @@ export function VoiceControlProvider({ children, activeTab, onNavigate, onPlayIn
 export function useVoiceContext() {
   const ctx = useContext(VoiceControlContext);
   if (!ctx) {
-    throw new Error('useVoiceContext must be used within a VoiceControlProvider');
+    return {
+      voiceControl: null,
+      registerViewerHandler: () => () => {},
+      activeTab: 'viewer',
+    };
   }
   return ctx;
 }
+

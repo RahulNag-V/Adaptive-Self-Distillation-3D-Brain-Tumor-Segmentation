@@ -62,6 +62,9 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   const [patientMeta, setPatientMeta] = useState(null);
   const [metaLoading, setMetaLoading] = useState(false);
 
+  // Dimensions derived from real metadata or fallback
+  const dimensions = patientMeta?.dimensions || { axial: 155, coronal: 240, sagittal: 240 };
+
   // View Layout Mode: 'quad' (4-view MPR standard) | '3d' | 'axial' | 'coronal' | 'sagittal'
   const [viewLayout, setViewLayout] = useState('quad');
 
@@ -138,7 +141,245 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   const [slicePan, setSlicePan] = useState({ x: 0, y: 0 });
   const [threeCommand, setThreeCommand] = useState(null);
 
-  // Subscribe to Voice Control Context
+  // Keyboard shortcut support: Esc to exit fullscreen, 1-4 to switch between views
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && maximizedViewer !== null) {
+        setMaximizedViewer(null);
+      }
+      if (maximizedViewer !== null) {
+        if (e.key === '1') setMaximizedViewer('3d');
+        if (e.key === '2') setMaximizedViewer('axial');
+        if (e.key === '3') setMaximizedViewer('coronal');
+        if (e.key === '4') setMaximizedViewer('sagittal');
+      }
+      // Undo / Redo shortcuts when editing
+      if (isEditing && (e.ctrlKey || e.metaKey)) {
+        if (e.key === 'z' || e.key === 'Z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            handleRedo();
+          } else {
+            handleUndo();
+          }
+        } else if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault();
+          handleRedo();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [maximizedViewer, isEditing, selectedPatientId]);
+
+  // Fetch available patients on mount
+  useEffect(() => {
+    async function loadPatients() {
+      try {
+        const res = await getPatients();
+        if (res && res.patients && res.patients.length > 0) {
+          setPatients(res.patients);
+          if (!currentResult && !res.patients.some(p => p.id === selectedPatientId)) {
+            setSelectedPatientId(res.patients[0].id);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch patients list, using fallback:', err);
+      }
+    }
+    loadPatients();
+  }, [currentResult]);
+
+  // Load patient metadata whenever selected patient changes
+  useEffect(() => {
+    let isMounted = true;
+    async function loadMeta() {
+      if (!selectedPatientId) return;
+      setMetaLoading(true);
+      try {
+        const meta = await getPatientMetadata(selectedPatientId);
+        if (isMounted && meta) {
+          setPatientMeta(meta);
+          if (meta.dimensions) {
+            setAxialSlice(Math.floor(meta.dimensions.axial / 2));
+            setCoronalSlice(Math.floor(meta.dimensions.coronal / 2));
+            setSagittalSlice(Math.floor(meta.dimensions.sagittal / 2));
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load patient metadata:', err);
+      } finally {
+        if (isMounted) setMetaLoading(false);
+      }
+    }
+    loadMeta();
+    return () => { isMounted = false; };
+  }, [selectedPatientId]);
+
+  // Load versioned annotation record on patient / segSource change
+  useEffect(() => {
+    let isMounted = true;
+    async function loadAnnotation() {
+      if (!selectedPatientId) return;
+      setAnnotationLoading(true);
+      try {
+        const rec = await getAnnotation(selectedPatientId, segSource);
+        if (isMounted && rec) {
+          setAnnotationRecord(rec);
+          if (rec.has_corrected_mask && segSource === 'prediction') {
+            setSegSource('corrected');
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load annotation record:', err);
+      } finally {
+        if (isMounted) setAnnotationLoading(false);
+      }
+    }
+    loadAnnotation();
+    return () => { isMounted = false; };
+  }, [selectedPatientId]);
+
+  const toggleLayer = (layerKey) => {
+    setLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }));
+  };
+
+  const toggleSubregion = (key) => {
+    setSubregions(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleReset = () => {
+    setAxialSlice(Math.floor(dimensions.axial / 2));
+    setCoronalSlice(Math.floor(dimensions.coronal / 2));
+    setSagittalSlice(Math.floor(dimensions.sagittal / 2));
+    setOpacity(0.75);
+  };
+
+  const handleCoordinateClick = useCallback((newCoords) => {
+    if (newCoords.x !== undefined) setSagittalSlice(newCoords.x);
+    if (newCoords.y !== undefined) setCoronalSlice(newCoords.y);
+    if (newCoords.z !== undefined) setAxialSlice(newCoords.z);
+  }, []);
+
+  // --- STROKE DRAWING HANDLER ---
+  const handleStrokeComplete = async (stroke) => {
+    try {
+      const res = await editAnnotation(
+        selectedPatientId,
+        [stroke],
+        stroke.label === 0 ? 'erase' : 'paint',
+        segSource
+      );
+      setSegSource('corrected');
+      setSegTimestamp(Date.now());
+      // Refresh annotation record
+      const rec = await getAnnotation(selectedPatientId, 'corrected');
+      if (rec) setAnnotationRecord(rec);
+    } catch (err) {
+      console.error('Failed to apply stroke:', err);
+      alert('Error applying edit stroke: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const handleUndo = async () => {
+    try {
+      const res = await undoEdit(selectedPatientId);
+      setSegTimestamp(Date.now());
+      const rec = await getAnnotation(selectedPatientId, 'corrected');
+      if (rec) setAnnotationRecord(rec);
+    } catch (err) {
+      console.error('Failed to undo edit:', err);
+    }
+  };
+
+  const handleRedo = async () => {
+    try {
+      const res = await redoEdit(selectedPatientId);
+      setSegTimestamp(Date.now());
+      const rec = await getAnnotation(selectedPatientId, 'corrected');
+      if (rec) setAnnotationRecord(rec);
+    } catch (err) {
+      console.error('Failed to redo edit:', err);
+    }
+  };
+
+  const handleClearEdits = async () => {
+    if (!window.confirm('Revert all human corrections and reset to original AI prediction mask?')) return;
+    try {
+      await clearEdits(selectedPatientId);
+      setSegTimestamp(Date.now());
+      setSegSource('prediction');
+      const rec = await getAnnotation(selectedPatientId, 'prediction');
+      if (rec) setAnnotationRecord(rec);
+    } catch (err) {
+      console.error('Failed to clear edits:', err);
+    }
+  };
+
+  const handleOpenCompare = async () => {
+    setCompareLoading(true);
+    try {
+      const data = await compareMasks(selectedPatientId);
+      setCompareData(data);
+      setShowCompareModal(true);
+    } catch (err) {
+      alert('Compare failed: ' + (err.message || 'Prediction mask not available'));
+    } finally {
+      setCompareLoading(false);
+    }
+  };
+
+  const handleExecuteSaveDraft = async () => {
+    setDraftSaving(true);
+    try {
+      const res = await saveDraft(selectedPatientId, 'radiologist_user', draftNotes);
+      if (res.record) setAnnotationRecord(res.record);
+      setShowDraftModal(false);
+      setDraftNotes('');
+      alert(`Annotation draft saved successfully as Version ${res.record?.version || 1}.`);
+    } catch (err) {
+      alert('Failed to save draft: ' + err.message);
+    } finally {
+      setDraftSaving(false);
+    }
+  };
+
+  const handleExecuteSubmitReview = async () => {
+    setSubmitting(true);
+    try {
+      const res = await submitForReview(selectedPatientId, 'radiologist_user', submitNotes);
+      if (res.record) setAnnotationRecord(res.record);
+      setShowSubmitModal(false);
+      setSubmitNotes('');
+      alert('Correction submitted to supervisory clinical review queue for dataset ingestion!');
+    } catch (err) {
+      alert('Failed to submit for review: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Run on-demand prediction using trained Adaptive UNETR model
+  const handleRunPrediction = async () => {
+    if (!selectedPatientId) return;
+    setPredicting(true);
+    setPredictError(null);
+    try {
+      await runPatientPrediction(selectedPatientId);
+      const updatedMeta = await getPatientMetadata(selectedPatientId);
+      if (updatedMeta) setPatientMeta(updatedMeta);
+      setSegSource('prediction');
+      setSegTimestamp(Date.now());
+      const rec = await getAnnotation(selectedPatientId, 'prediction');
+      if (rec) setAnnotationRecord(rec);
+    } catch (err) {
+      setPredictError(err.message || 'Model prediction failed.');
+    } finally {
+      setPredicting(false);
+    }
+  };
+
+  // Voice Control Integration
   const { registerViewerHandler } = useVoiceContext();
 
   useEffect(() => {
@@ -327,247 +568,6 @@ export default function ViewerPage({ currentResult, onNavigate }) {
     toggleSubregion,
     handleOpenCompare,
   ]);
-
-  // Keyboard shortcut support: Esc to exit fullscreen, 1-4 to switch between views
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && maximizedViewer !== null) {
-        setMaximizedViewer(null);
-      }
-      if (maximizedViewer !== null) {
-        if (e.key === '1') setMaximizedViewer('3d');
-        if (e.key === '2') setMaximizedViewer('axial');
-        if (e.key === '3') setMaximizedViewer('coronal');
-        if (e.key === '4') setMaximizedViewer('sagittal');
-      }
-      // Undo / Redo shortcuts when editing
-      if (isEditing && (e.ctrlKey || e.metaKey)) {
-        if (e.key === 'z' || e.key === 'Z') {
-          e.preventDefault();
-          if (e.shiftKey) {
-            handleRedo();
-          } else {
-            handleUndo();
-          }
-        } else if (e.key === 'y' || e.key === 'Y') {
-          e.preventDefault();
-          handleRedo();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [maximizedViewer, isEditing, selectedPatientId]);
-
-  // Fetch available patients on mount
-  useEffect(() => {
-    async function loadPatients() {
-      try {
-        const res = await getPatients();
-        if (res && res.patients && res.patients.length > 0) {
-          setPatients(res.patients);
-          if (!currentResult && !res.patients.some(p => p.id === selectedPatientId)) {
-            setSelectedPatientId(res.patients[0].id);
-          }
-        }
-      } catch (err) {
-        console.warn('Could not fetch patients list, using fallback:', err);
-      }
-    }
-    loadPatients();
-  }, [currentResult]);
-
-  // Load patient metadata whenever selected patient changes
-  useEffect(() => {
-    let isMounted = true;
-    async function loadMeta() {
-      if (!selectedPatientId) return;
-      setMetaLoading(true);
-      try {
-        const meta = await getPatientMetadata(selectedPatientId);
-        if (isMounted && meta) {
-          setPatientMeta(meta);
-          if (meta.dimensions) {
-            setAxialSlice(Math.floor(meta.dimensions.axial / 2));
-            setCoronalSlice(Math.floor(meta.dimensions.coronal / 2));
-            setSagittalSlice(Math.floor(meta.dimensions.sagittal / 2));
-          }
-        }
-      } catch (err) {
-        console.warn('Could not load patient metadata:', err);
-      } finally {
-        if (isMounted) setMetaLoading(false);
-      }
-    }
-    loadMeta();
-    return () => { isMounted = false; };
-  }, [selectedPatientId]);
-
-  // Load versioned annotation record on patient / segSource change
-  useEffect(() => {
-    let isMounted = true;
-    async function loadAnnotation() {
-      if (!selectedPatientId) return;
-      setAnnotationLoading(true);
-      try {
-        const rec = await getAnnotation(selectedPatientId, segSource);
-        if (isMounted && rec) {
-          setAnnotationRecord(rec);
-          if (rec.has_corrected_mask && segSource === 'prediction') {
-            setSegSource('corrected');
-          }
-        }
-      } catch (err) {
-        console.warn('Could not load annotation record:', err);
-      } finally {
-        if (isMounted) setAnnotationLoading(false);
-      }
-    }
-    loadAnnotation();
-    return () => { isMounted = false; };
-  }, [selectedPatientId]);
-
-  // Dimensions derived from real metadata or fallback
-  const dimensions = patientMeta?.dimensions || { axial: 155, coronal: 240, sagittal: 240 };
-
-  const toggleLayer = (layerKey) => {
-    setLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }));
-  };
-
-  const toggleSubregion = (key) => {
-    setSubregions(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const handleReset = () => {
-    setAxialSlice(Math.floor(dimensions.axial / 2));
-    setCoronalSlice(Math.floor(dimensions.coronal / 2));
-    setSagittalSlice(Math.floor(dimensions.sagittal / 2));
-    setOpacity(0.75);
-  };
-
-  const handleCoordinateClick = useCallback((newCoords) => {
-    if (newCoords.x !== undefined) setSagittalSlice(newCoords.x);
-    if (newCoords.y !== undefined) setCoronalSlice(newCoords.y);
-    if (newCoords.z !== undefined) setAxialSlice(newCoords.z);
-  }, []);
-
-  // --- STROKE DRAWING HANDLER ---
-  const handleStrokeComplete = async (stroke) => {
-    try {
-      const res = await editAnnotation(
-        selectedPatientId,
-        [stroke],
-        stroke.label === 0 ? 'erase' : 'paint',
-        segSource
-      );
-      setSegSource('corrected');
-      setSegTimestamp(Date.now());
-      // Refresh annotation record
-      const rec = await getAnnotation(selectedPatientId, 'corrected');
-      if (rec) setAnnotationRecord(rec);
-    } catch (err) {
-      console.error('Failed to apply stroke:', err);
-      alert('Error applying edit stroke: ' + (err.message || 'Unknown error'));
-    }
-  };
-
-  const handleUndo = async () => {
-    try {
-      const res = await undoEdit(selectedPatientId);
-      setSegTimestamp(Date.now());
-      const rec = await getAnnotation(selectedPatientId, 'corrected');
-      if (rec) setAnnotationRecord(rec);
-    } catch (err) {
-      console.error('Failed to undo edit:', err);
-    }
-  };
-
-  const handleRedo = async () => {
-    try {
-      const res = await redoEdit(selectedPatientId);
-      setSegTimestamp(Date.now());
-      const rec = await getAnnotation(selectedPatientId, 'corrected');
-      if (rec) setAnnotationRecord(rec);
-    } catch (err) {
-      console.error('Failed to redo edit:', err);
-    }
-  };
-
-  const handleClearEdits = async () => {
-    if (!window.confirm('Revert all human corrections and reset to original AI prediction mask?')) return;
-    try {
-      await clearEdits(selectedPatientId);
-      setSegTimestamp(Date.now());
-      setSegSource('prediction');
-      const rec = await getAnnotation(selectedPatientId, 'prediction');
-      if (rec) setAnnotationRecord(rec);
-    } catch (err) {
-      console.error('Failed to clear edits:', err);
-    }
-  };
-
-  const handleOpenCompare = async () => {
-    setCompareLoading(true);
-    try {
-      const data = await compareMasks(selectedPatientId);
-      setCompareData(data);
-      setShowCompareModal(true);
-    } catch (err) {
-      alert('Compare failed: ' + (err.message || 'Prediction mask not available'));
-    } finally {
-      setCompareLoading(false);
-    }
-  };
-
-  const handleExecuteSaveDraft = async () => {
-    setDraftSaving(true);
-    try {
-      const res = await saveDraft(selectedPatientId, 'radiologist_user', draftNotes);
-      if (res.record) setAnnotationRecord(res.record);
-      setShowDraftModal(false);
-      setDraftNotes('');
-      alert(`Annotation draft saved successfully as Version ${res.record?.version || 1}.`);
-    } catch (err) {
-      alert('Failed to save draft: ' + err.message);
-    } finally {
-      setDraftSaving(false);
-    }
-  };
-
-  const handleExecuteSubmitReview = async () => {
-    setSubmitting(true);
-    try {
-      const res = await submitForReview(selectedPatientId, 'radiologist_user', submitNotes);
-      if (res.record) setAnnotationRecord(res.record);
-      setShowSubmitModal(false);
-      setSubmitNotes('');
-      alert('Correction submitted to supervisory clinical review queue for dataset ingestion!');
-    } catch (err) {
-      alert('Failed to submit for review: ' + err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Run on-demand prediction using trained Adaptive UNETR model
-  const handleRunPrediction = async () => {
-    if (!selectedPatientId) return;
-    setPredicting(true);
-    setPredictError(null);
-    try {
-      await runPatientPrediction(selectedPatientId);
-      const updatedMeta = await getPatientMetadata(selectedPatientId);
-      if (updatedMeta) setPatientMeta(updatedMeta);
-      setSegSource('prediction');
-      setSegTimestamp(Date.now());
-      const rec = await getAnnotation(selectedPatientId, 'prediction');
-      if (rec) setAnnotationRecord(rec);
-    } catch (err) {
-      setPredictError(err.message || 'Model prediction failed.');
-    } finally {
-      setPredicting(false);
-    }
-  };
 
   const dimensionsStr = `${dimensions.sagittal} × ${dimensions.coronal} × ${dimensions.axial} voxels`;
 
