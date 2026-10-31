@@ -78,15 +78,19 @@ export function VoiceControlProvider({ children, activeTab, onNavigate, onPlayIn
       return;
     }
 
-    // 5. Layout & UI Controls (Sidebar, Menu, Settings, Help modal)
+    // 5. Layout & UI Controls (Sidebar, Menu, Settings, Help modal, Gesture toggle)
     if (
       action.type === 'TOGGLE_SIDEBAR' ||
       action.type === 'TOGGLE_MENU' ||
       action.type === 'OPEN_HELP_MODAL' ||
       action.type === 'CLOSE_HELP_MODAL' ||
       action.type === 'OPEN_SETTINGS' ||
-      action.type === 'CLOSE_SETTINGS'
+      action.type === 'CLOSE_SETTINGS' ||
+      action.type === 'TOGGLE_GESTURE'
     ) {
+      if (action.type === 'OPEN_SETTINGS' && onNavigate) {
+        onNavigate('settings');
+      }
       layoutHandlersRef.current.forEach((handler) => {
         try {
           handler(action, cmdRecord);

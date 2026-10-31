@@ -74,7 +74,7 @@ export default function OverviewPage({ onNavigate }) {
           <h2 className="text-xs font-mono uppercase tracking-wider text-medical-muted font-semibold">
             Operational Workstation Modules
           </h2>
-          <span className="text-[11px] font-mono text-medical-muted">3 Integrated Pipelines</span>
+          <span className="text-[11px] font-mono text-medical-muted">Integrated Clinical Workflows</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -124,94 +124,94 @@ export default function OverviewPage({ onNavigate }) {
             </button>
           </div>
 
-          {/* Module 2: Continual Distillation & Review */}
+          {/* Module 2: Model Lab & Comparative Benchmarks */}
           <div className="p-5 rounded-xl bg-medical-card border border-medical-border hover:border-medical-teal/60 transition-colors flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <Activity className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-medical-teal/15 border border-medical-teal/30 flex items-center justify-center text-medical-teal">
+                  <Cpu className="w-4 h-4" />
                 </div>
-                <span className="px-2 py-0.5 rounded bg-medical-surface border border-medical-border text-[10px] font-mono text-amber-400 font-semibold">
-                  HITL Engine
+                <span className="px-2 py-0.5 rounded bg-medical-surface border border-medical-border text-[10px] font-mono text-emerald-400 font-semibold">
+                  +12.7% ET Dice
                 </span>
               </div>
 
               <div>
                 <h3 className="text-sm font-semibold text-white tracking-tight">
-                  Human-in-the-Loop & Continual Learning
+                  Model Lab & Benchmark
                 </h3>
                 <p className="text-xs text-medical-muted mt-1 leading-relaxed">
-                  Radiologist boundary refinement with versioned annotation records, supervisory review, and EMA distillation fine-tuning.
+                  Real comparative evaluation: Baseline UNETR vs Online Tokenizer, Dense Predictor, and Adaptive MOD.
                 </p>
               </div>
 
               <div className="p-2.5 rounded-lg bg-medical-base border border-medical-border/70 space-y-1.5 text-[11px] font-mono">
                 <div className="flex items-center justify-between text-medical-muted">
-                  <span>Correction:</span>
-                  <span className="text-white">Orthogonal Brush & Eraser</span>
+                  <span>Cohort:</span>
+                  <span className="text-white">BraTS 2021 Benchmark</span>
                 </div>
                 <div className="flex items-center justify-between text-medical-muted">
-                  <span>Lifecycle:</span>
-                  <span className="text-amber-300">Draft → Review → Ingest</span>
+                  <span>ET Dice:</span>
+                  <span className="text-emerald-400">0.7454 (Tokenizer)</span>
                 </div>
                 <div className="flex items-center justify-between text-medical-muted">
-                  <span>Candidates:</span>
-                  <span className="text-medical-teal">Evaluation & Promotion Gate</span>
+                  <span>HD95 Error:</span>
+                  <span className="text-medical-cyan">77.48 mm (-5.73mm)</span>
                 </div>
               </div>
             </div>
 
             <button
-              onClick={() => onNavigate('adaptive')}
+              onClick={() => onNavigate('models')}
               className="w-full py-2 px-3 rounded-lg bg-medical-surface hover:bg-medical-teal hover:text-medical-darkest text-white border border-medical-border font-medium text-xs transition-colors flex items-center justify-center gap-1.5"
             >
-              <span>Review Queue</span>
+              <span>Explore Model Lab</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Module 3: 2D Pathology MRI Classifier */}
+          {/* Module 3: Quantitative Reports & Volumetrics */}
           <div className="p-5 rounded-xl bg-medical-card border border-medical-border hover:border-medical-cyan/60 transition-colors flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="w-8 h-8 rounded-lg bg-medical-cyan/15 border border-medical-cyan/30 flex items-center justify-center text-medical-cyan">
-                  <ImageIcon className="w-4 h-4" />
+                  <FileCheck className="w-4 h-4" />
                 </div>
                 <span className="px-2 py-0.5 rounded bg-medical-surface border border-medical-border text-[10px] font-mono text-medical-cyan font-semibold">
-                  EfficientNet-B0
+                  PDF Export
                 </span>
               </div>
 
               <div>
                 <h3 className="text-sm font-semibold text-white tracking-tight">
-                  2D MRI Slice Classification
+                  Clinical Volumetric Reports
                 </h3>
                 <p className="text-xs text-medical-muted mt-1 leading-relaxed">
-                  Single-slice histopathological classification with confidence scoring across 4 diagnostic classes.
+                  Comprehensive printable reports with calculated lesion volumes (cm³), orthogonal snapshots, and metrics.
                 </p>
               </div>
 
               <div className="p-2.5 rounded-lg bg-medical-base border border-medical-border/70 space-y-1.5 text-[11px] font-mono">
                 <div className="flex items-center justify-between text-medical-muted">
-                  <span>Input:</span>
-                  <span className="text-white">PNG / JPEG MRI Slice</span>
+                  <span>Quantitation:</span>
+                  <span className="text-white">WT • TC • ET (cm³)</span>
                 </div>
                 <div className="flex items-center justify-between text-medical-muted">
-                  <span>Classes:</span>
-                  <span className="text-medical-cyan">Glioma, Meningioma, Pituitary, Normal</span>
+                  <span>Snapshots:</span>
+                  <span className="text-medical-cyan">Axial, Coronal, Sagittal</span>
                 </div>
                 <div className="flex items-center justify-between text-medical-muted">
-                  <span>Latency:</span>
-                  <span className="text-emerald-400">~28ms / slice (GPU)</span>
+                  <span>Format:</span>
+                  <span className="text-emerald-400">Print to PDF Ready</span>
                 </div>
               </div>
             </div>
 
             <button
-              onClick={() => onNavigate('classify')}
+              onClick={() => onNavigate('reports')}
               className="w-full py-2 px-3 rounded-lg bg-medical-surface hover:bg-medical-cyan hover:text-medical-darkest text-white border border-medical-border font-medium text-xs transition-colors flex items-center justify-center gap-1.5"
             >
-              <span>Open 2D Classifier</span>
+              <span>Generate Report</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

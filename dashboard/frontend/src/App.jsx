@@ -7,8 +7,13 @@ import ResultsPage from './pages/ResultsPage';
 import AboutPage from './pages/AboutPage';
 import ClassificationPage from './pages/ClassificationPage';
 import AdaptiveDashboardPage from './pages/AdaptiveDashboardPage';
+import ModelLabPage from './pages/ModelLabPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import ReportPage from './pages/ReportPage';
+import SettingsPage from './pages/SettingsPage';
 import CinematicIntro from './components/CinematicIntro';
 import { VoiceControlProvider } from './context/VoiceControlContext';
+import { GestureControlProvider } from './context/GestureControlContext';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -88,6 +93,19 @@ export default function App() {
             }}
           />
         );
+      case 'models':
+        return <ModelLabPage onNavigate={setActiveTab} />;
+      case 'analytics':
+        return <AnalyticsPage onNavigate={setActiveTab} />;
+      case 'reports':
+        return (
+          <ReportPage 
+            currentResult={liveResult} 
+            onNavigate={setActiveTab} 
+          />
+        );
+      case 'settings':
+        return <SettingsPage onNavigate={setActiveTab} />;
       case 'results':
         return (
           <ResultsPage 
@@ -97,7 +115,7 @@ export default function App() {
           />
         );
       case 'about':
-        return <AboutPage />;
+        return <AboutPage onNavigate={setActiveTab} />;
       default:
         return <OverviewPage onNavigate={setActiveTab} />;
     }
@@ -108,21 +126,23 @@ export default function App() {
       {showIntro && (
         <CinematicIntro onComplete={() => setShowIntro(false)} />
       )}
-      <VoiceControlProvider
-        activeTab={activeTab}
-        onNavigate={setActiveTab}
-        onPlayIntro={() => setShowIntro(true)}
-      >
-        <AppLayout 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
+      <GestureControlProvider>
+        <VoiceControlProvider
+          activeTab={activeTab}
+          onNavigate={setActiveTab}
           onPlayIntro={() => setShowIntro(true)}
         >
-          <ErrorBoundary>
-            {renderActivePage()}
-          </ErrorBoundary>
-        </AppLayout>
-      </VoiceControlProvider>
+          <AppLayout 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab}
+            onPlayIntro={() => setShowIntro(true)}
+          >
+            <ErrorBoundary>
+              {renderActivePage()}
+            </ErrorBoundary>
+          </AppLayout>
+        </VoiceControlProvider>
+      </GestureControlProvider>
     </ErrorBoundary>
   );
 }

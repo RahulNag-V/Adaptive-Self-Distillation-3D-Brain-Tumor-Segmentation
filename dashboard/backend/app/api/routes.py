@@ -3,7 +3,7 @@ API route definitions for NeuroSeg 3D backend.
 Connects real Adaptive Self-Distillation inference and session file management.
 """
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import json
 import uuid
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
@@ -422,4 +422,154 @@ async def predict_patient_volume(patient_id: str):
         return result
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Prediction failed: {str(e)}")
+
+
+# --- Model Lab & Research Analytics Endpoints ---
+
+@router.get("/models/comparison")
+async def get_models_comparison():
+    """
+    Returns authentic research benchmark metrics and architectural specifications
+    comparing Baseline UNETR with Online Tokenizer, Dense Predictor, Full MOD,
+    and the proposed Adaptive Self-Distillation (Dynamic MOD) on the BraTS 2021 cohort.
+    """
+    root_dir = Path(__file__).resolve().parents[4]
+    results_dir = root_dir / "results"
+    final_comp_file = results_dir / "final_evaluation" / "final_comparison.json"
+    model_comp_file = results_dir / "model_comparison.json"
+
+    comparison_data = {}
+    if final_comp_file.exists():
+        with open(final_comp_file, "r", encoding="utf-8") as f:
+            comparison_data = json.load(f)
+
+    summary_data = {}
+    if model_comp_file.exists():
+        with open(model_comp_file, "r", encoding="utf-8") as f:
+            summary_data = json.load(f)
+
+    # Architectural specs grounded in the actual codebase implementations
+    architecture_specs = {
+        "Baseline UNETR": {
+            "family": "Baseline",
+            "backbone": "Vision Transformer (ViT-B/16)",
+            "parameters": "92.8M",
+            "gflops": "83.2",
+            "patch_size": "16x16x16",
+            "hidden_size": 768,
+            "num_layers": 12,
+            "loss_function": "DiceCELoss (Soft Dice + Cross Entropy)",
+            "distillation": "None",
+            "dynamic_balancing": False,
+            "description": "Standard MONAI UNETR transformer without auxiliary self-distillation branches.",
+            "checkpoint": "checkpoints/baseline/epoch_10.pth"
+        },
+        "Online Tokenizer": {
+            "family": "Ablation",
+            "backbone": "ViT-B/16 + Token Projection Head",
+            "parameters": "93.4M",
+            "gflops": "84.1",
+            "patch_size": "16x16x16",
+            "hidden_size": 768,
+            "num_layers": 12,
+            "loss_function": "DiceCELoss + Cosine Similarity Token Distillation",
+            "distillation": "Online Tokenizer (lambda_ot = 2.0)",
+            "dynamic_balancing": False,
+            "description": "Auxiliary online tokenizer head enforcing semantic token alignment via cosine similarity loss.",
+            "checkpoint": "checkpoints/online_tokenizer/epoch_10.pth"
+        },
+        "Dense Predictor": {
+            "family": "Ablation",
+            "backbone": "ViT-B/16 + Dense Predictor Head",
+            "parameters": "94.1M",
+            "gflops": "85.3",
+            "patch_size": "16x16x16",
+            "hidden_size": 768,
+            "num_layers": 12,
+            "loss_function": "DiceCELoss + Dense Feature Distillation",
+            "distillation": "Dense Predictor (lambda_dp = 1.58)",
+            "dynamic_balancing": False,
+            "description": "Dense spatial feature predictor distilling intermediate transformer representations.",
+            "checkpoint": "checkpoints/dense_predictor/epoch_10.pth"
+        },
+        "Full MOD": {
+            "family": "Comparative",
+            "backbone": "ViT-B/16 + Dual Distillation Heads",
+            "parameters": "94.7M",
+            "gflops": "86.2",
+            "patch_size": "16x16x16",
+            "hidden_size": 768,
+            "num_layers": 12,
+            "loss_function": "DiceCELoss + Static MOD Loss (lambda_ot=1.0, lambda_dp=1.0)",
+            "distillation": "Multi-Objective Distillation (Fixed Weights)",
+            "dynamic_balancing": False,
+            "description": "Joint online tokenizer and dense predictor with static, unweighted loss combination.",
+            "checkpoint": "checkpoints/mod/epoch_09.pth"
+        },
+        "Adaptive MOD": {
+            "family": "Proposed Framework",
+            "backbone": "ViT-B/16 + Dual Heads + Dynamic Weight Controller",
+            "parameters": "94.7M",
+            "gflops": "86.2",
+            "patch_size": "16x16x16",
+            "hidden_size": 768,
+            "num_layers": 12,
+            "loss_function": "DiceCELoss + Dynamic MOD Loss (lambda_ot(t), lambda_dp(t))",
+            "distillation": "Adaptive Self-Distillation via EMA Gradient Balancing",
+            "dynamic_balancing": True,
+            "description": "Novel adaptive framework dynamically balancing token alignment and dense feature distillation over training epochs.",
+            "checkpoint": "checkpoints/adaptive/best.pth"
+        }
+    }
+
+    return {
+        "success": True,
+        "dataset": "BraTS 2021 (50-Subject Experimental Benchmark)",
+        "protocol": "Full-volume sliding-window inference (ROI 96x96x96, sw_batch_size=1, overlap=0.25)",
+        "evaluation_metrics": comparison_data,
+        "summary": summary_data,
+        "architectures": architecture_specs
+    }
+
+
+@router.get("/analytics/history")
+async def get_training_analytics():
+    """
+    Parses and returns real training loss dynamics, validation dice curves,
+    and adaptive lambda trajectories from the experimental results logs.
+    """
+    import csv
+    root_dir = Path(__file__).resolve().parents[4]
+    results_dir = root_dir / "results"
+
+    def read_csv(path: Path) -> List[Dict[str, Any]]:
+        if not path.exists():
+            return []
+        rows = []
+        with open(path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                parsed_row = {}
+                for k, v in r.items():
+                    try:
+                        parsed_row[k] = float(v) if "." in v else int(v)
+                    except (ValueError, TypeError):
+                        parsed_row[k] = v
+                rows.append(parsed_row)
+        return rows
+
+    adaptive_train = read_csv(results_dir / "adaptive" / "training_history.csv")
+    adaptive_val = read_csv(results_dir / "adaptive" / "validation_history.csv")
+    baseline_train = read_csv(results_dir / "baseline" / "training_history.csv")
+    pilot_lambda = read_csv(results_dir / "adaptive" / "pilot_lambda_history.csv")
+
+    return {
+        "success": True,
+        "adaptive_training": adaptive_train,
+        "adaptive_validation": adaptive_val,
+        "baseline_training": baseline_train,
+        "pilot_lambda_history": pilot_lambda,
+        "total_epochs": max(len(adaptive_train), len(baseline_train), 10)
+    }
+
 

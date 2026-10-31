@@ -52,6 +52,7 @@ import {
 } from '../api/adaptive';
 import { REGION_LEGEND, DEMO_CASE_METADATA } from '../utils/mockData';
 import { useVoiceContext } from '../context/VoiceControlContext';
+import { useGestureContext } from '../context/GestureControlContext';
 
 export default function ViewerPage({ currentResult, onNavigate }) {
   // Patient and Dataset State
@@ -381,6 +382,31 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
   // Voice Control Integration
   const { registerViewerHandler, updateViewerStatus } = useVoiceContext();
+  
+  // Touchless Hand Gesture Integration
+  const { registerHandler: registerGestureHandler } = useGestureContext();
+
+  useEffect(() => {
+    if (!registerGestureHandler) return;
+    const unregister = registerGestureHandler(({ type, gesture }) => {
+      if (type === 'GESTURE_ACTION') {
+        if (gesture === 'SWIPE_LEFT') {
+          setAxialSlice((prev) => Math.max(0, prev - 5));
+        } else if (gesture === 'SWIPE_RIGHT') {
+          setAxialSlice((prev) => Math.min(dimensions.axial - 1, prev + 5));
+        } else if (gesture === 'SWIPE_UP') {
+          setAxialSlice((prev) => Math.min(dimensions.axial - 1, prev + 10));
+        } else if (gesture === 'SWIPE_DOWN') {
+          setAxialSlice((prev) => Math.max(0, prev - 10));
+        } else if (gesture === 'FIST') {
+          setAxialSlice(Math.floor(dimensions.axial / 2));
+          setCoronalSlice(Math.floor(dimensions.coronal / 2));
+          setSagittalSlice(Math.floor(dimensions.sagittal / 2));
+        }
+      }
+    });
+    return unregister;
+  }, [registerGestureHandler, dimensions]);
 
   // Keep shared voice viewer status synchronized
   useEffect(() => {

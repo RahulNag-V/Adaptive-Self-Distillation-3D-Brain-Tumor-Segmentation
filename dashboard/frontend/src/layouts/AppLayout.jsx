@@ -17,20 +17,27 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
-  Film
+  Film,
+  FileText,
+  Settings,
+  Sparkles
 } from 'lucide-react';
 import { useServerStatus } from '../hooks/useServerStatus';
 import VoiceControlWidget from '../components/VoiceControlWidget';
+import GestureControlWidget from '../components/GestureControlWidget';
 import { useVoiceContext } from '../context/VoiceControlContext';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'upload', label: 'Upload Scan', icon: UploadCloud },
-  { id: 'viewer', label: '3D Viewer', icon: Box },
+  { id: 'viewer', label: '3D Workspace', icon: Box },
+  { id: 'upload', label: 'AI Segmentation', icon: UploadCloud },
+  { id: 'models', label: 'Model Lab', icon: Cpu },
+  { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'adaptive', label: 'Adaptive Learning', icon: RefreshCw },
-  { id: 'classify', label: '2D Classification', icon: ImageIcon },
-  { id: 'results', label: 'Results', icon: BarChart3 },
-  { id: 'about', label: 'About', icon: Info },
+  { id: 'classify', label: '2D Pathology', icon: ImageIcon },
+  { id: 'reports', label: 'Reports', icon: FileText },
+  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'about', label: 'About & Viva', icon: Info },
 ];
 
 const ROUTE_METADATA = {
@@ -49,6 +56,16 @@ const ROUTE_METADATA = {
     title: 'Multiplanar MPR & 3D Volumetric Segmentation',
     subtitle: 'Synchronized Axial, Coronal, Sagittal & Surface Mesh',
   },
+  models: {
+    section: 'BENCHMARK LAB',
+    title: 'Baseline vs. Proposed Self-Distillation',
+    subtitle: 'BraTS 2021 cohort evaluation • UNETR ViT-B/16 vs Online Tokenizer & Dense Predictor',
+  },
+  analytics: {
+    section: 'TRAINING DYNAMICS',
+    title: 'Multi-Objective Loss Dynamics & Convergence',
+    subtitle: '10 Epochs • AdamW • Auxiliary Tokenizer & Dense Predictor loss progression',
+  },
   adaptive: {
     section: 'SUPERVISORY QUEUE',
     title: 'Continual Distillation & Human-in-the-Loop',
@@ -59,6 +76,16 @@ const ROUTE_METADATA = {
     title: '2D Brain MRI Slice Classification',
     subtitle: 'EfficientNet-B0 histopathological inference & class probabilities',
   },
+  reports: {
+    section: 'CLINICAL & RESEARCH REPORT',
+    title: 'Quantitative Tumor Burden & Validation Report',
+    subtitle: 'Sub-compartment volumetrics (cm³), orthogonal snapshots & print-ready export',
+  },
+  settings: {
+    section: 'WORKSTATION CONFIG',
+    title: 'Display Preferences & Touchless Interaction',
+    subtitle: 'MPR crosshairs, natural language voice control & sterile hand gesture system',
+  },
   results: {
     section: 'QUANTITATIVE REPORT',
     title: 'Volumetric Burden & Validation Metrics',
@@ -66,7 +93,7 @@ const ROUTE_METADATA = {
   },
   about: {
     section: 'SPECIFICATIONS',
-    title: 'Research Methodology & Model Architecture',
+    title: 'Research Methodology & Viva Presentation',
     subtitle: 'MONAI UNETR ViT, EMA loss balancing & BraTS 2021 cohort',
   },
 };
@@ -407,6 +434,9 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
           <div className="flex items-center gap-2.5 shrink-0">
             {/* Voice Control Clinical HUD Widget */}
             <VoiceControlWidget voiceControl={voiceControl} activeTab={activeTab} />
+
+            {/* Contactless Hand Gesture Widget */}
+            <GestureControlWidget onNavigateSettings={handleNavClick} />
 
             {/* Play Intro Button */}
             {onPlayIntro && (

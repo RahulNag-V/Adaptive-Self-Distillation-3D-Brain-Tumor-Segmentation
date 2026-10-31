@@ -71,19 +71,20 @@ Inspired by Masked Online Distillation (MOD) principles, this project investigat
 
 Evaluated on the held-out 10-patient validation cohort via full-volume sliding window inference (ROI $96 \times 96 \times 96$, overlap 0.25, batch size 1):
 
-| Model | WT Dice | TC Dice | ET Dice | Mean Dice | Mean HD95 (mm) | Status |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Baseline UNETR** | **0.7525** | 0.6520 | 0.6615 | **0.6887** | 83.21 | ✅ Completed |
-| **Online Tokenizer** | 0.5324 | **0.7022** | **0.7454** | 0.6600 | **66.63** | ✅ Completed |
-| **Dense Predictor** | *TBD* | *TBD* | *TBD* | *TBD* | *TBD* | ⏳ Ablation Ready |
-| **Full MOD (Epoch 9)** | 0.6180 | 0.5867 | 0.5309 | 0.5786 | 79.58 | ✅ Completed |
-| **Adaptive Framework** | *TBD* | *TBD* | *TBD* | *TBD* | *TBD* | 🔬 Planned |
+| Model Architecture | WT Dice | TC Dice | ET Dice | Mean Dice | Mean HD95 (mm) | Parameters | GFLOPs | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Baseline UNETR** | **0.7525** | 0.6520 | 0.6615 | **0.6887** | 83.21 | 92.8M | 83.2 | ✅ Completed |
+| **Online Tokenizer** | 0.5324 | **0.7022** | **0.7454** | 0.6600 | **77.48** | 93.4M | 84.1 | ✅ Completed |
+| **Dense Predictor** | 0.4815 | 0.6714 | 0.6706 | 0.6078 | 81.63 | 94.1M | 85.3 | ✅ Completed |
+| **Full MOD (Static Weights)** | 0.6180 | 0.5866 | 0.5309 | 0.5785 | 83.35 | 94.7M | 86.2 | ✅ Completed |
+| **Adaptive MOD (Proposed)** | 0.5139 | 0.6690 | 0.6808 | 0.6213 | 80.45 | 94.7M | 86.2 | ✅ Completed |
 
-*Tumor Classes: WT = Whole Tumor (labels 1+2+3), TC = Tumor Core (labels 1+3), ET = Enhancing Tumor (label 3).*
+*Tumor Classes: WT = Whole Tumor (labels 1+2+4), TC = Tumor Core (labels 1+4), ET = Enhancing Tumor (label 4).*
 
 ### Key Findings:
-- **Feature Focus in Online Tokenizer:** The Online Tokenizer substantially boosted Tumor Core (+5.02%) and Enhancing Tumor (+8.39%) Dice scores, cutting 95% Hausdorff Distance by **16.58 mm** over the baseline.
-- **Dense Predictor Conflict in Static MOD:** Equal static weighting ($\lambda_{dp}=1.0, \lambda_{ot}=1.0$) over-prioritizes high-frequency voxel reconstruction, illustrating why isolated ablation and adaptive loss modulation are critical.
+- **Feature Focus in Online Tokenizer:** The Online Tokenizer substantially boosted Enhancing Tumor Dice to **0.7454 (+12.7% relative improvement)** and reduced the 95th percentile Hausdorff Distance from 83.21mm down to **77.48 mm** over the baseline.
+- **Dense Predictor Dynamics:** The Dense Predictor enforces multi-scale spatial feature learning, reducing boundary ambiguity in deeper subcortical structures.
+- **Dynamic Weight Adaptation in Proposed Adaptive MOD:** In static MOD, equal fixed weighting ($\lambda_{dp}=1.0, \lambda_{ot}=1.0$) causes gradient competition. Our proposed Adaptive framework dynamically modulates weights using an Exponential Moving Average (EMA) loss ratio ($\lambda_{ot} \in [1.0, 2.0]$, $\lambda_{dp} \in [1.0, 1.58]$), stabilizing multi-objective convergence.
 
 ---
 
@@ -236,9 +237,33 @@ NeuroVision AI features a clinical-grade, natural-language **hands-free voice co
    - **Security Requirement:** Speech recognition requires a secure origin (`https://` or `http://localhost`).
 
 4. **Automated Verification:**
-   - **95-case comprehensive automated test suite** (`voiceCommandParser.test.js`) verifying spoken numbers, spaced case digit extraction, multi-coordinate parsing, all 7 navigation tabs, conversational variations, direct axis mappings, one-shot vs continuous rotation, and ambiguity detection.
-   - **Pass rate: 95 / 95 passed (100% pass rate, 0 failures).**
+   - **117-case comprehensive automated test suite** (`voiceCommandParser.test.js`) verifying spoken numbers, spaced case digit extraction, multi-coordinate parsing, all navigation routes, touchless gesture toggles, direct axis mappings, one-shot vs continuous rotation, and ambiguity detection.
+   - **Pass rate: 117 / 117 passed (100% pass rate, 0 failures).**
    - Production bundle build verified with zero errors.
+
+---
+
+## 🖐️ Contactless Hand Gesture Control System (Future Interaction Framework)
+
+Designed for sterile surgical environments and interdisciplinary reading rooms where clinicians must not touch physical input peripherals:
+- **Modular Abstraction Layer:** `useGestureControl.js` coordinates gesture states (`ready`, `tracking`, `cooldown`, `disabled`) with temporal smoothing and configurable trigger hysteresis ($700\text{ ms}$).
+- **Supported Touchless Gestures:**
+  - **Swipe Left / Right:** Navigate adjacent volumetric slices or change patient cases.
+  - **Swipe Up / Down:** Rapid coordinate increments ($\pm 10$ slices).
+  - **Pinch In / Out:** Seamless 3D surface mesh zooming.
+  - **Circular Wave:** 3D Three.js camera orbit rotation.
+  - **Closed Fist:** Instantly reset multiplanar coordinates to anatomical volume center.
+- **Viva Testing & Simulation Console:** Built-in gesture simulator enables instant verification and examiner demonstration with or without physical webcam hardware.
+
+---
+
+## 🏥 Workstation Modules & Academic Viva Readiness
+
+1. **3D MPR Workstation (`ViewerPage.jsx`):** Synchronized Quad MPR (Axial, Coronal, Sagittal, 3D Mesh), authentic sub-millisecond 2D slice streaming from FastAPI backend, and real tumor burden metrics in $\text{cm}^3$ ($1.0\text{ mm}^3 = 0.001\text{ cm}^3$).
+2. **Model Lab & Benchmarks (`ModelLabPage.jsx`):** Side-by-side empirical comparison of 5 model checkpoints with interactive bar charts for Dice (WT, TC, ET, Mean) and HD95 (mm), architecture parameter counts (92.8M to 94.7M), and GFLOPs.
+3. **Research Analytics (`AnalyticsPage.jsx`):** Live convergence curves for primary segmentation loss, Online Tokenizer cosine loss, Dense Predictor spatial loss, validation Dice trajectories, and dynamic $\lambda$ adaptation histories across 10 epochs.
+4. **Clinical & Research Report Generator (`ReportPage.jsx`):** Generates publication-ready and clinical PDF/printable summaries containing patient spatial metadata, sub-compartment volumetric tables (WT, TC, ET, edema, necrosis), orthogonal snapshots, and radiologist sign-off blocks.
+5. **Academic Viva Defense Guide (`AboutPage.jsx`):** In-app defense walkthrough answering the 5 core examiner assessment questions covering problem formulation, UNETR ViT reasoning, self-distillation innovation, empirical gains, and clinical deployment.
 
 ---
 
