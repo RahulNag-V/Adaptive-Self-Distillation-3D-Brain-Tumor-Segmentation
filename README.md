@@ -267,6 +267,48 @@ Designed for sterile surgical environments and interdisciplinary reading rooms w
 
 ---
 
+## 🚀 Deployment & Execution Guide
+
+### Local Development Environment
+The platform consists of a modern React 18 / Vite 6 medical frontend and a high-performance Python 3.10 / FastAPI / PyTorch / MONAI backend.
+
+1. **FastAPI Backend Service:**
+   ```bash
+   cd dashboard/backend
+   uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+   ```
+   - **Local Address:** `http://127.0.0.1:8000`
+   - **Interactive API Swagger Docs:** `http://127.0.0.1:8000/docs`
+   - **Health Endpoint:** `http://127.0.0.1:8000/api/health`
+
+2. **React + Vite Medical Frontend:**
+   ```bash
+   cd dashboard/frontend
+   npm install
+   npm run dev -- --host 127.0.0.1 --port 3000
+   ```
+   - **Local Address:** `http://localhost:3000`
+
+### Live Production Deployment
+- **Firebase Hosting Live URL:** [https://neurovision-ai-3d.web.app](https://neurovision-ai-3d.web.app)
+- **Alternate Domain:** [https://neurovision-ai-3d.firebaseapp.com](https://neurovision-ai-3d.firebaseapp.com)
+- **Firebase Project ID:** `neurovision-ai-3d`
+- **Deploy Command:**
+  ```bash
+  cd dashboard/frontend
+  npm run build
+  npx firebase-tools deploy --only hosting
+  ```
+
+### Backend Production Containerization (Cloud Run / Docker)
+A lightweight production Dockerfile is configured at `dashboard/backend/Dockerfile`:
+```bash
+docker build -t neurovision-backend -f dashboard/backend/Dockerfile .
+docker run -p 8000:8000 neurovision-backend
+```
+
+---
+
 ## ⚠️ Limitations & Future Work
 1. **Experimental Cohort Size:** Current benchmarks are established on 50 subjects (40 train / 10 val). Expanding to the full 1,251-subject BraTS cohort is planned once optimal loss dynamics are resolved.
 2. **Dynamic Weight Adaptation:** Implementing gradient-norm balanced and uncertainty-guided adaptive distillation schedules for $\lambda_{ot}(t)$ and $\lambda_{dp}(t)$.
