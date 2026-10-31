@@ -51,6 +51,7 @@ import {
   compareMasks 
 } from '../api/adaptive';
 import { REGION_LEGEND, DEMO_CASE_METADATA } from '../utils/mockData';
+import { useVoiceContext } from '../context/VoiceControlContext';
 
 export default function ViewerPage({ currentResult, onNavigate }) {
   // Patient and Dataset State
@@ -128,6 +129,204 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
   // Active right sidebar tab: 'burden' | 'layers'
   const [activeRightTab, setActiveRightTab] = useState('burden');
+
+  // Voice Controlled Display Layer Adjustments
+  const [sliceRotation, setSliceRotation] = useState(0); // 0, 90, 180, 270 deg
+  const [sliceBrightness, setSliceBrightness] = useState(100); // 40% - 220%
+  const [sliceContrast, setSliceContrast] = useState(100); // 40% - 220%
+  const [sliceZoom, setSliceZoom] = useState(1.0); // 0.4x - 5.0x
+  const [slicePan, setSlicePan] = useState({ x: 0, y: 0 });
+  const [threeCommand, setThreeCommand] = useState(null);
+
+  // Subscribe to Voice Control Context
+  const { registerViewerHandler } = useVoiceContext();
+
+  useEffect(() => {
+    const unregister = registerViewerHandler((action, cmdRecord) => {
+      const { type } = action;
+
+      // 1. Modality Switching
+      if (type === 'SET_MODALITY') {
+        setActiveMriModality(action.value);
+      }
+
+      // 2. Anatomical Plane / Layout
+      else if (type === 'SET_LAYOUT') {
+        setViewLayout(action.value);
+        if (maximizedViewer) setMaximizedViewer(null);
+      }
+
+      // 3. Slice Navigation
+      else if (type === 'STEP_SLICE') {
+        const step = action.step || 1;
+        const activePlane = maximizedViewer || (viewLayout !== 'quad' ? viewLayout : 'axial');
+        if (activePlane === 'coronal') {
+          setCoronalSlice((prev) => Math.max(0, Math.min(dimensions.coronal - 1, prev + step)));
+        } else if (activePlane === 'sagittal') {
+          setSagittalSlice((prev) => Math.max(0, Math.min(dimensions.sagittal - 1, prev + step)));
+        } else {
+          setAxialSlice((prev) => Math.max(0, Math.min(dimensions.axial - 1, prev + step)));
+        }
+      }
+
+      else if (type === 'GOTO_SLICE') {
+        const idx = action.index;
+        const activePlane = maximizedViewer || (viewLayout !== 'quad' ? viewLayout : 'axial');
+        if (activePlane === 'coronal') {
+          setCoronalSlice(Math.max(0, Math.min(dimensions.coronal - 1, idx)));
+        } else if (activePlane === 'sagittal') {
+          setSagittalSlice(Math.max(0, Math.min(dimensions.sagittal - 1, idx)));
+        } else {
+          setAxialSlice(Math.max(0, Math.min(dimensions.axial - 1, idx)));
+        }
+      }
+
+      else if (type === 'GOTO_CENTER_SLICE') {
+        setAxialSlice(Math.floor(dimensions.axial / 2));
+        setCoronalSlice(Math.floor(dimensions.coronal / 2));
+        setSagittalSlice(Math.floor(dimensions.sagittal / 2));
+      }
+
+      else if (type === 'RESET_SLICE') {
+        handleReset();
+      }
+
+      // 4. Rotation Controls
+      else if (type === 'ROTATE') {
+        // Apply 2D Slice rotation (90° increments or custom)
+        setSliceRotation((prev) => {
+          if (action.direction === '180') return (prev + 180) % 360;
+          if (action.direction === 'left') return (prev - (action.degrees || 90) + 360) % 360;
+          return (prev + (action.degrees || 90)) % 360;
+        });
+        // Dispatch to 3D Three.js camera
+        setThreeCommand({
+          type: 'ROTATE',
+          direction: action.direction,
+          degrees: action.degrees,
+          id: Date.now(),
+        });
+      }
+
+      else if (type === 'RESET_ROTATION') {
+        setSliceRotation(0);
+        setThreeCommand({ type: 'RESET_ROTATION', id: Date.now() });
+      }
+
+      else if (type === 'SET_CAMERA_ANGLE') {
+        setThreeCommand({ type: 'SET_CAMERA_ANGLE', angle: action.angle, id: Date.now() });
+      }
+
+      // 5. Zoom & Pan Controls
+      else if (type === 'ZOOM') {
+        setSliceZoom((prev) => Math.max(0.4, Math.min(5.0, Number((prev * action.factor).toFixed(2)))));
+        setThreeCommand({ type: 'ZOOM', factor: action.factor, id: Date.now() });
+      }
+
+      else if (type === 'SET_ZOOM') {
+        setSliceZoom(Math.max(0.4, Math.min(5.0, action.percent / 100)));
+      }
+
+      else if (type === 'PAN') {
+        setSlicePan((prev) => ({
+          x: Math.max(-250, Math.min(250, prev.x + action.dx)),
+          y: Math.max(-250, Math.min(250, prev.y + action.dy)),
+        }));
+      }
+
+      else if (type === 'CENTER_VIEW') {
+        setSlicePan({ x: 0, y: 0 });
+        setSliceZoom(1.0);
+        setThreeCommand({ type: 'CENTER_VIEW', id: Date.now() });
+      }
+
+      else if (type === 'RESET_VIEW') {
+        handleReset();
+        setSliceRotation(0);
+        setSliceBrightness(100);
+        setSliceContrast(100);
+        setSliceZoom(1.0);
+        setSlicePan({ x: 0, y: 0 });
+        setThreeCommand({ type: 'RESET_VIEW', id: Date.now() });
+      }
+
+      // Fullscreen Maximize / Minimize
+      else if (type === 'FULLSCREEN') {
+        if (action.enabled) {
+          const target = viewLayout === 'quad' ? 'axial' : viewLayout;
+          setMaximizedViewer(target);
+        } else {
+          setMaximizedViewer(null);
+        }
+      }
+
+      // 6. Segmentation & Overlays
+      else if (type === 'SET_SEGMENTATION') {
+        setLayers((prev) => ({ ...prev, tumor: action.enabled, overlay: action.enabled }));
+      }
+
+      else if (type === 'TOGGLE_SEGMENTATION') {
+        setLayers((prev) => ({ ...prev, tumor: !prev.tumor, overlay: !prev.overlay }));
+      }
+
+      else if (type === 'SET_OPACITY') {
+        setOpacity(Math.max(0.1, Math.min(1.0, action.value)));
+      }
+
+      else if (type === 'STEP_OPACITY') {
+        setOpacity((prev) => Math.max(0.1, Math.min(1.0, Number((prev + action.delta).toFixed(2)))));
+      }
+
+      else if (type === 'RESET_OVERLAY') {
+        setOpacity(0.85);
+        setLayers((prev) => ({ ...prev, tumor: true, overlay: true }));
+      }
+
+      else if (type === 'SET_SEG_SOURCE') {
+        setSegSource(action.value);
+      }
+
+      else if (type === 'COMPARE_MASKS') {
+        handleOpenCompare();
+      }
+
+      else if (type === 'TOGGLE_SUBREGION') {
+        toggleSubregion(action.key);
+      }
+
+      // 7. Image Display Adjustments
+      else if (type === 'STEP_BRIGHTNESS') {
+        setSliceBrightness((prev) => Math.max(40, Math.min(220, prev + action.delta)));
+        setThreeCommand({ type: 'STEP_BRIGHTNESS', delta: action.delta, id: Date.now() });
+      }
+
+      else if (type === 'STEP_CONTRAST') {
+        setSliceContrast((prev) => Math.max(40, Math.min(220, prev + action.delta)));
+      }
+
+      else if (type === 'RESET_ADJUSTMENTS') {
+        setSliceBrightness(100);
+        setSliceContrast(100);
+      }
+
+      else if (type === 'SHOW_COORDINATES') {
+        // Display toast or brief visual HUD feedback
+        console.log(`[VoiceControl] Coordinates: X=${sagittalSlice}, Y=${coronalSlice}, Z=${axialSlice}`);
+      }
+    });
+
+    return unregister;
+  }, [
+    registerViewerHandler,
+    dimensions,
+    viewLayout,
+    maximizedViewer,
+    sagittalSlice,
+    coronalSlice,
+    axialSlice,
+    toggleSubregion,
+    handleOpenCompare,
+  ]);
 
   // Keyboard shortcut support: Esc to exit fullscreen, 1-4 to switch between views
   useEffect(() => {
@@ -775,6 +974,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   onResetView={handleReset}
                   isMaximized={false}
                   onToggleMaximize={() => setMaximizedViewer('3d')}
+                  viewerCommand={threeCommand}
                 />
               </div>
 
@@ -805,6 +1005,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   brushRadius={brushRadius}
                   onStrokeComplete={handleStrokeComplete}
                   segTimestamp={segTimestamp}
+                  rotation={sliceRotation}
+                  brightness={sliceBrightness}
+                  contrast={sliceContrast}
+                  externalZoom={sliceZoom}
+                  externalPan={slicePan}
                 />
               </div>
 
@@ -835,6 +1040,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   brushRadius={brushRadius}
                   onStrokeComplete={handleStrokeComplete}
                   segTimestamp={segTimestamp}
+                  rotation={sliceRotation}
+                  brightness={sliceBrightness}
+                  contrast={sliceContrast}
+                  externalZoom={sliceZoom}
+                  externalPan={slicePan}
                 />
               </div>
 
@@ -865,6 +1075,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   brushRadius={brushRadius}
                   onStrokeComplete={handleStrokeComplete}
                   segTimestamp={segTimestamp}
+                  rotation={sliceRotation}
+                  brightness={sliceBrightness}
+                  contrast={sliceContrast}
+                  externalZoom={sliceZoom}
+                  externalPan={slicePan}
                 />
               </div>
             </div>
@@ -882,6 +1097,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 onResetView={handleReset}
                 isMaximized={false}
                 onToggleMaximize={() => setMaximizedViewer('3d')}
+                viewerCommand={threeCommand}
               />
             </div>
           ) : viewLayout === 'axial' ? (
@@ -911,6 +1127,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 brushRadius={brushRadius}
                 onStrokeComplete={handleStrokeComplete}
                 segTimestamp={segTimestamp}
+                rotation={sliceRotation}
+                brightness={sliceBrightness}
+                contrast={sliceContrast}
+                externalZoom={sliceZoom}
+                externalPan={slicePan}
               />
             </div>
           ) : viewLayout === 'coronal' ? (
@@ -940,6 +1161,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 brushRadius={brushRadius}
                 onStrokeComplete={handleStrokeComplete}
                 segTimestamp={segTimestamp}
+                rotation={sliceRotation}
+                brightness={sliceBrightness}
+                contrast={sliceContrast}
+                externalZoom={sliceZoom}
+                externalPan={slicePan}
               />
             </div>
           ) : (
@@ -969,6 +1195,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 brushRadius={brushRadius}
                 onStrokeComplete={handleStrokeComplete}
                 segTimestamp={segTimestamp}
+                rotation={sliceRotation}
+                brightness={sliceBrightness}
+                contrast={sliceContrast}
+                externalZoom={sliceZoom}
+                externalPan={slicePan}
               />
             </div>
           )}
@@ -1156,6 +1387,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 onResetView={handleReset}
                 isMaximized={true}
                 onToggleMaximize={() => setMaximizedViewer(null)}
+                viewerCommand={threeCommand}
               />
             )}
             {maximizedViewer === 'axial' && (
@@ -1184,6 +1416,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 brushRadius={brushRadius}
                 onStrokeComplete={handleStrokeComplete}
                 segTimestamp={segTimestamp}
+                rotation={sliceRotation}
+                brightness={sliceBrightness}
+                contrast={sliceContrast}
+                externalZoom={sliceZoom}
+                externalPan={slicePan}
               />
             )}
             {maximizedViewer === 'coronal' && (
@@ -1212,6 +1449,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 brushRadius={brushRadius}
                 onStrokeComplete={handleStrokeComplete}
                 segTimestamp={segTimestamp}
+                rotation={sliceRotation}
+                brightness={sliceBrightness}
+                contrast={sliceContrast}
+                externalZoom={sliceZoom}
+                externalPan={slicePan}
               />
             )}
             {maximizedViewer === 'sagittal' && (
@@ -1240,6 +1482,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 brushRadius={brushRadius}
                 onStrokeComplete={handleStrokeComplete}
                 segTimestamp={segTimestamp}
+                rotation={sliceRotation}
+                brightness={sliceBrightness}
+                contrast={sliceContrast}
+                externalZoom={sliceZoom}
+                externalPan={slicePan}
               />
             )}
           </div>

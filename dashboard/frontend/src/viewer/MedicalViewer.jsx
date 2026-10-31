@@ -208,6 +208,7 @@ export default function MedicalViewer({
   onResetView,
   isMaximized = false,
   onToggleMaximize,
+  viewerCommand = null,
 }) {
   const containerRef = useRef(null);
   const threeMountRef = useRef(null);
@@ -906,6 +907,28 @@ export default function MedicalViewer({
     if (onResetView) onResetView();
   }, [onResetView]);
 
+  const handleRotateCamera = useCallback((direction, degrees = 15) => {
+    const { camera, controls } = threeStateRef.current;
+    if (!camera || !controls) return;
+    const offset = camera.position.clone().sub(controls.target);
+    const rad = THREE.MathUtils.degToRad(degrees);
+
+    if (direction === 'left' || direction === 'right') {
+      const sign = direction === 'left' ? 1 : -1;
+      const axis = new THREE.Vector3(0, 1, 0);
+      offset.applyAxisAngle(axis, sign * rad);
+    } else if (direction === 'up' || direction === 'down') {
+      const sign = direction === 'up' ? -1 : 1;
+      const right = new THREE.Vector3().crossVectors(camera.up, offset).normalize();
+      offset.applyAxisAngle(right, sign * rad);
+    } else if (direction === '180') {
+      const axis = new THREE.Vector3(0, 1, 0);
+      offset.applyAxisAngle(axis, Math.PI);
+    }
+    camera.position.copy(controls.target).add(offset);
+    controls.update();
+  }, []);
+
   const handleViewAngle = useCallback((angle) => {
     const { camera, controls } = threeStateRef.current;
     if (!camera || !controls) return;
@@ -918,6 +941,12 @@ export default function MedicalViewer({
     } else if (angle === 'lateral') {
       // Lateral right aspect
       camera.position.set(3.6, 0.2, 0);
+    } else if (angle === 'anterior') {
+      // Anterior front aspect
+      camera.position.set(0, 0.4, 3.8);
+    } else if (angle === 'posterior') {
+      // Posterior back aspect
+      camera.position.set(0, 0.4, -3.8);
     } else {
       // Default isometric view
       camera.position.set(0, 0.6, 3.8);
@@ -926,6 +955,29 @@ export default function MedicalViewer({
     controls.update();
     setShowAngleMenu(false);
   }, []);
+
+  // React to voice commands targeting 3D Viewer
+  useEffect(() => {
+    if (!viewerCommand) return;
+    const { type } = viewerCommand;
+    if (type === 'ROTATE') {
+      handleRotateCamera(viewerCommand.direction, viewerCommand.degrees);
+    } else if (type === 'RESET_ROTATION') {
+      handleResetCamera();
+    } else if (type === 'SET_CAMERA_ANGLE') {
+      handleViewAngle(viewerCommand.angle);
+    } else if (type === 'ZOOM') {
+      handleZoom(1 / (viewerCommand.factor || 1.2));
+    } else if (type === 'CENTER_VIEW' || type === 'RESET_VIEW') {
+      handleResetCamera();
+    } else if (type === 'STEP_BRIGHTNESS') {
+      const { renderer } = threeStateRef.current;
+      if (renderer) {
+        const delta = (viewerCommand.delta || 15) / 100;
+        renderer.toneMappingExposure = Math.max(0.6, Math.min(2.5, renderer.toneMappingExposure + delta));
+      }
+    }
+  }, [viewerCommand, handleRotateCamera, handleResetCamera, handleViewAngle]);
 
   // 2D Orthogonal Slice Canvas Rendering (Axial, Coronal, Sagittal)
   useEffect(() => {

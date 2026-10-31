@@ -8,6 +8,7 @@ import AboutPage from './pages/AboutPage';
 import ClassificationPage from './pages/ClassificationPage';
 import AdaptiveDashboardPage from './pages/AdaptiveDashboardPage';
 import CinematicIntro from './components/CinematicIntro';
+import { VoiceControlProvider } from './context/VoiceControlContext';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -107,15 +108,21 @@ export default function App() {
       {showIntro && (
         <CinematicIntro onComplete={() => setShowIntro(false)} />
       )}
-      <AppLayout 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
+      <VoiceControlProvider
+        activeTab={activeTab}
+        onNavigate={setActiveTab}
         onPlayIntro={() => setShowIntro(true)}
       >
-        <ErrorBoundary>
-          {renderActivePage()}
-        </ErrorBoundary>
-      </AppLayout>
+        <AppLayout 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          onPlayIntro={() => setShowIntro(true)}
+        >
+          <ErrorBoundary>
+            {renderActivePage()}
+          </ErrorBoundary>
+        </AppLayout>
+      </VoiceControlProvider>
     </ErrorBoundary>
   );
 }

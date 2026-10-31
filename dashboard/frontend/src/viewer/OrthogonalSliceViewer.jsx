@@ -109,6 +109,11 @@ export default function OrthogonalSliceViewer({
   brushRadius = 4,
   onStrokeComplete,
   segTimestamp = null,
+  rotation = 0,
+  brightness = 100,
+  contrast = 100,
+  externalZoom = null,
+  externalPan = null,
 }) {
   const containerRef = useRef(null);
   const viewportRef = useRef(null);
@@ -129,6 +134,19 @@ export default function OrthogonalSliceViewer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const controlsRef = useRef(null);
+
+  // Sync external zoom and pan if passed from parent voice controls
+  useEffect(() => {
+    if (externalZoom !== null && externalZoom !== undefined) {
+      setZoom(externalZoom);
+    }
+  }, [externalZoom]);
+
+  useEffect(() => {
+    if (externalPan !== null && externalPan !== undefined) {
+      setPan(externalPan);
+    }
+  }, [externalPan]);
 
   // Click-outside listener to dismiss BraTS legend popover
   useEffect(() => {
@@ -545,11 +563,12 @@ export default function OrthogonalSliceViewer({
           {cfg.shortLabels.right}
         </div>
 
-        {/* Center Image Container with Smooth Pan and Zoom */}
+        {/* Center Image Container with Smooth Pan, Zoom, Rotation, and Brightness/Contrast Filters */}
         <div
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transition: isPanning ? 'none' : 'transform 0.08s ease-out',
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+            filter: `brightness(${brightness}%) contrast(${contrast}%)`,
+            transition: isPanning ? 'none' : 'transform 0.12s ease-out, filter 0.12s ease-out',
             width: `${baseWidth}px`,
             height: `${baseHeight}px`,
           }}
@@ -791,6 +810,22 @@ export default function OrthogonalSliceViewer({
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0 ml-1">
+          {rotation !== 0 && (
+            <>
+              <span className="text-cyan-400 font-semibold font-tabular">
+                {rotation}°
+              </span>
+              <span className="text-medical-border/80">•</span>
+            </>
+          )}
+          {(brightness !== 100 || contrast !== 100) && (
+            <>
+              <span className="text-amber-400 font-tabular" title={`Brightness: ${brightness}%, Contrast: ${contrast}%`}>
+                B:{brightness}% C:{contrast}%
+              </span>
+              <span className="text-medical-border/80">•</span>
+            </>
+          )}
           <span>
             ZOOM: <strong className="text-white font-tabular">{(zoom * 100).toFixed(0)}%</strong>
           </span>

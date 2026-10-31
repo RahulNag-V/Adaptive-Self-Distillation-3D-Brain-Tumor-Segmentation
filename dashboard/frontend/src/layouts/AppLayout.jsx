@@ -20,6 +20,8 @@ import {
   Film
 } from 'lucide-react';
 import { useServerStatus } from '../hooks/useServerStatus';
+import VoiceControlWidget from '../components/VoiceControlWidget';
+import { useVoiceContext } from '../context/VoiceControlContext';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -72,6 +74,7 @@ const ROUTE_METADATA = {
 export default function AppLayout({ activeTab, onTabChange, onPlayIntro, children }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const currentMeta = ROUTE_METADATA[activeTab] || ROUTE_METADATA.overview;
+  const { voiceControl } = useVoiceContext();
   
   // Collapsible sidebar state with localStorage persistence
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -383,6 +386,9 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
+            {/* Voice Control Clinical HUD Widget */}
+            <VoiceControlWidget voiceControl={voiceControl} activeTab={activeTab} />
+
             {/* Play Intro Button */}
             {onPlayIntro && (
               <button
