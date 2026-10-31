@@ -658,7 +658,10 @@ export default function OrthogonalSliceViewer({
           >
             {/* Segmentation Color Legend popover - opens upward aligned to right, NEVER overlapping controls! */}
             {showLegend && showOverlay && (
-              <div className="absolute right-0 bottom-full mb-2 w-60 max-w-[calc(100vw-3rem)] bg-mri-surface border border-mri-border backdrop-blur-md p-2 rounded-lg shadow-2xl z-40 text-[10px] font-mono animate-fadeIn">
+              <div 
+                style={{ backgroundColor: '#18263B' }}
+                className="absolute right-0 bottom-full mb-2 w-60 max-w-[calc(100vw-3rem)] bg-[#18263B] border border-[#30445E] backdrop-blur-md p-2 rounded-xl shadow-2xl z-40 text-[10px] font-mono animate-dropdown-up"
+              >
                 <div className="flex items-center justify-between pb-1.5 border-b border-mri-border/60 text-mri-muted font-bold text-[9px] uppercase tracking-wider mb-1.5">
                   <span className="flex items-center gap-1.5 text-mri-text">
                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />

@@ -449,7 +449,10 @@ export default function VoiceControlWidget({
 
                   {/* Dropdown Popover */}
                   {isCategoryDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 z-50 w-full sm:w-[380px] bg-white border border-[#DCE6F0] rounded-2xl shadow-xl p-2 animate-fadeIn max-h-[340px] overflow-y-auto ring-1 ring-blue-500/10">
+                    <div 
+                      style={{ backgroundColor: '#FFFFFF' }}
+                      className="absolute top-full left-0 mt-2 z-50 w-full sm:w-[380px] bg-white border border-[#DCE6F0] rounded-2xl shadow-2xl p-2 animate-dropdown-down max-h-[340px] overflow-y-auto ring-1 ring-blue-500/10"
+                    >
                       <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between border-b border-[#F1F5F9] mb-1">
                         <span>Select Category</span>
                         <span className="text-blue-600 font-semibold">{VOICE_COMMANDS_HELP.length + 1} options</span>

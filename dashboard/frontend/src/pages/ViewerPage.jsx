@@ -35,7 +35,8 @@ import {
   X,
   Tag,
   ChevronDown,
-  Check
+  Check,
+  Search
 } from 'lucide-react';
 import MedicalViewer, { BRAIN_APPEARANCE_OPTIONS, ANATOMICAL_REGIONS_LEGEND } from '../viewer/MedicalViewer';
 import OrthogonalSliceViewer from '../viewer/OrthogonalSliceViewer';
@@ -128,6 +129,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
   // Interactive Animated Dropdown States & Refs
   const [isCaseDropdownOpen, setIsCaseDropdownOpen] = useState(false);
+  const [caseSearch, setCaseSearch] = useState('');
   const [isAppearanceDropdownOpen, setIsAppearanceDropdownOpen] = useState(false);
   const caseDropdownRef = useRef(null);
   const appearanceDropdownRef = useRef(null);
@@ -795,8 +797,12 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="relative" ref={caseDropdownRef}>
               <button
                 type="button"
-                onClick={() => setIsCaseDropdownOpen(!isCaseDropdownOpen)}
-                className="flex items-center gap-2 bg-mri-bg hover:bg-mri-surface border border-mri-border hover:border-cyan-400/60 text-mri-text text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer shadow-xs transition-all"
+                onClick={() => {
+                  setIsCaseDropdownOpen(!isCaseDropdownOpen);
+                  setCaseSearch('');
+                }}
+                style={{ backgroundColor: '#101B2D' }}
+                className="flex items-center gap-2 bg-[#101B2D] hover:bg-[#18263B] border border-[#30445E] hover:border-cyan-400/60 text-slate-100 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer shadow-xs transition-all"
                 aria-haspopup="listbox"
                 aria-expanded={isCaseDropdownOpen}
               >
@@ -809,7 +815,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   {patients.find(p => p.id === selectedPatientId)?.is_validation ? 'Val' : 'Train'}
                 </span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-mri-muted transition-transform duration-200 ${
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
                     isCaseDropdownOpen ? 'rotate-180 text-cyan-400' : ''
                   }`}
                 />
@@ -817,79 +823,122 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
               {/* Animated Popover */}
               {isCaseDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1.5 z-50 w-64 max-h-72 overflow-y-auto bg-mri-surface border border-mri-border rounded-xl shadow-2xl p-1.5 ring-1 ring-cyan-500/20 animate-fadeIn text-xs font-mono space-y-1">
-                  <div className="px-2.5 py-1 text-[10px] uppercase font-bold text-mri-muted border-b border-mri-border/60 flex items-center justify-between">
-                    <span>Select BraTS Case</span>
-                    <span className="text-cyan-400">{patients.length || 1} available</span>
+                <div 
+                  style={{ backgroundColor: '#18263B' }}
+                  className="absolute top-full left-0 mt-2 z-[100] w-72 max-h-80 flex flex-col bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-cyan-500/30 animate-dropdown-down text-xs font-mono"
+                >
+                  {/* Popover Header */}
+                  <div 
+                    style={{ backgroundColor: '#101B2D' }}
+                    className="px-2.5 py-1.5 rounded-lg border border-[#30445E]/80 flex items-center justify-between text-[11px] font-bold text-slate-300 mb-1.5 shrink-0"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                      <span>Select BraTS Case</span>
+                    </div>
+                    <span className="text-cyan-400 text-[10px]">{patients.length || 1} available</span>
                   </div>
 
-                  {currentResult && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedPatientId(currentResult.session_id);
-                        setIsCaseDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
-                        selectedPatientId === currentResult.session_id
-                          ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
-                          : 'text-mri-text hover:bg-mri-bg hover:text-cyan-200'
-                      }`}
-                    >
-                      <div className="truncate min-w-0">
-                        <span className="block truncate font-semibold">Live: {currentResult.session_id.substring(0, 14)}...</span>
-                        <span className="text-[10px] text-mri-muted">Prospective Upload</span>
-                      </div>
-                      {selectedPatientId === currentResult.session_id && (
-                        <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0 ml-1.5" />
-                      )}
-                    </button>
-                  )}
+                  {/* Filter Search Input */}
+                  <div className="relative mb-2 shrink-0">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={caseSearch}
+                      onChange={(e) => setCaseSearch(e.target.value)}
+                      placeholder="Filter case ID..."
+                      style={{ backgroundColor: '#101B2D' }}
+                      className="w-full bg-[#101B2D] border border-[#30445E] focus:border-cyan-400 rounded-lg pl-7 pr-2.5 py-1 text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  </div>
 
-                  {patients.length > 0 ? (
-                    patients.map((p) => {
-                      const isSelected = selectedPatientId === p.id;
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedPatientId(p.id);
-                            setIsCaseDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
-                            isSelected
-                              ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
-                              : 'text-mri-text hover:bg-mri-bg hover:text-cyan-200'
-                          }`}
-                        >
-                          <span className="truncate">{p.id}</span>
-                          <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                            <span className={`text-[10px] px-1.5 py-0.2 rounded border ${
-                              p.is_validation
-                                ? 'bg-purple-950/40 text-purple-300 border-purple-500/30'
-                                : 'bg-blue-950/40 text-blue-300 border-blue-500/30'
-                            }`}>
-                              {p.is_validation ? 'Val' : 'Train'}
-                            </span>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                          </div>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedPatientId('BraTS2021_01017');
-                        setIsCaseDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40"
-                    >
-                      <span>BraTS2021_01017</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950/40 text-blue-300 border border-blue-500/30">Train</span>
-                    </button>
-                  )}
+                  {/* Scrollable Cases List */}
+                  <div className="overflow-y-auto space-y-1 max-h-56 pr-0.5">
+                    {currentResult && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPatientId(currentResult.session_id);
+                          setIsCaseDropdownOpen(false);
+                        }}
+                        style={{
+                          backgroundColor: selectedPatientId === currentResult.session_id ? 'rgba(6, 182, 212, 0.15)' : '#18263B'
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                          selectedPatientId === currentResult.session_id
+                            ? 'text-cyan-300 font-bold border border-cyan-500/40'
+                            : 'text-slate-200 hover:bg-[#22354D] hover:text-cyan-200 border border-transparent'
+                        }`}
+                      >
+                        <div className="truncate min-w-0">
+                          <span className="block truncate font-semibold">Live: {currentResult.session_id.substring(0, 14)}...</span>
+                          <span className="text-[10px] text-slate-400">Prospective Upload</span>
+                        </div>
+                        {selectedPatientId === currentResult.session_id && (
+                          <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0 ml-1.5" />
+                        )}
+                      </button>
+                    )}
+
+                    {patients.length > 0 ? (
+                      patients
+                        .filter((p) => p.id.toLowerCase().includes(caseSearch.toLowerCase()))
+                        .map((p) => {
+                          const isSelected = selectedPatientId === p.id;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedPatientId(p.id);
+                                setIsCaseDropdownOpen(false);
+                              }}
+                              style={{
+                                backgroundColor: isSelected ? 'rgba(6, 182, 212, 0.15)' : '#18263B'
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'text-cyan-300 font-bold border border-cyan-500/40'
+                                  : 'text-slate-200 hover:bg-[#22354D] hover:text-cyan-200 border border-transparent'
+                              }`}
+                            >
+                              <span className="truncate">{p.id}</span>
+                              <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                                <span className={`text-[10px] px-1.5 py-0.2 rounded border ${
+                                  p.is_validation
+                                    ? 'bg-purple-950/40 text-purple-300 border-purple-500/30'
+                                    : 'bg-blue-950/40 text-blue-300 border-blue-500/30'
+                                }`}>
+                                  {p.is_validation ? 'Val' : 'Train'}
+                                </span>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                              </div>
+                            </button>
+                          );
+                        })
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPatientId('BraTS2021_01017');
+                          setIsCaseDropdownOpen(false);
+                        }}
+                        style={{ backgroundColor: 'rgba(6, 182, 212, 0.15)' }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-cyan-300 font-bold border border-cyan-500/40"
+                      >
+                        <span>BraTS2021_01017</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950/40 text-blue-300 border border-blue-500/30">Train</span>
+                      </button>
+                    )}
+
+                    {patients.length > 0 && patients.filter((p) => p.id.toLowerCase().includes(caseSearch.toLowerCase())).length === 0 && (
+                      <div className="px-3 py-3 text-center text-slate-400 text-[11px]">
+                        No matching BraTS cases
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -1583,7 +1632,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   <button
                     type="button"
                     onClick={() => setIsAppearanceDropdownOpen(!isAppearanceDropdownOpen)}
-                    className="w-full flex items-center justify-between gap-2 bg-mri-surface border border-mri-border hover:border-blue-400 text-mri-text text-xs font-mono rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-xs"
+                    style={{ backgroundColor: '#101B2D' }}
+                    className="w-full flex items-center justify-between gap-2 bg-[#101B2D] hover:bg-[#18263B] border border-[#30445E] hover:border-blue-400 text-slate-100 text-xs font-mono rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-xs"
                     aria-haspopup="listbox"
                     aria-expanded={isAppearanceDropdownOpen}
                   >
@@ -1599,18 +1649,27 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                       );
                     })()}
                     <ChevronDown
-                      className={`w-3.5 h-3.5 text-mri-muted transition-transform duration-200 shrink-0 ${
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
                         isAppearanceDropdownOpen ? 'rotate-180 text-blue-400' : ''
                       }`}
                     />
                   </button>
 
-                  {/* Animated Popover Dropdown (Opens upward so it doesn't clip below) */}
+                  {/* Animated Popover Dropdown (Opens upward with 100% solid background so it never clips or bleeds) */}
                   {isAppearanceDropdownOpen && (
-                    <div className="absolute bottom-full left-0 mb-1.5 z-50 w-full bg-mri-surface border border-mri-border rounded-xl shadow-2xl p-1.5 ring-1 ring-blue-500/20 animate-fadeIn text-xs font-mono space-y-1">
-                      <div className="px-2 py-1 text-[10px] uppercase font-bold text-mri-muted border-b border-mri-border/60 flex items-center justify-between">
-                        <span>3D Shading Mode</span>
-                        <span className="text-blue-400">{BRAIN_APPEARANCE_OPTIONS.length} modes</span>
+                    <div 
+                      style={{ backgroundColor: '#18263B' }}
+                      className="absolute bottom-full left-0 mb-2 z-[100] w-full bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-blue-500/30 animate-dropdown-up text-xs font-mono space-y-1"
+                    >
+                      <div 
+                        style={{ backgroundColor: '#101B2D' }}
+                        className="px-2.5 py-1.5 rounded-lg border border-[#30445E]/80 flex items-center justify-between text-[11px] font-bold text-slate-300 mb-1"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                          <span>3D Shading Mode</span>
+                        </div>
+                        <span className="text-blue-400 text-[10px]">{BRAIN_APPEARANCE_OPTIONS.length} modes</span>
                       </div>
 
                       {BRAIN_APPEARANCE_OPTIONS.map((opt) => {
@@ -1623,15 +1682,18 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                               setBrainAppearance(opt.id);
                               setIsAppearanceDropdownOpen(false);
                             }}
+                            style={{
+                              backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.2)' : '#18263B'
+                            }}
                             className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
                               isSelected
-                                ? 'bg-blue-500/20 text-blue-300 font-bold border border-blue-500/40'
-                                : 'text-mri-text hover:bg-mri-bg hover:text-blue-200'
+                                ? 'text-blue-300 font-bold border border-blue-500/40'
+                                : 'text-slate-200 hover:bg-[#22354D] hover:text-white border border-transparent'
                             }`}
                           >
                             <div className="min-w-0">
-                              <span className="block font-semibold truncate">{opt.name}</span>
-                              <span className="text-[10px] text-mri-muted block">{opt.badge}</span>
+                              <span className="block font-semibold truncate text-xs">{opt.name}</span>
+                              <span className="text-[10px] text-slate-400 block">{opt.badge}</span>
                             </div>
                             {isSelected && (
                               <Check className="w-4 h-4 text-blue-400 shrink-0 ml-1.5" />
