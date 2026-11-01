@@ -13,7 +13,6 @@ import ReportPage from './pages/ReportPage';
 import SettingsPage from './pages/SettingsPage';
 import CinematicIntro from './components/CinematicIntro';
 import { VoiceControlProvider } from './context/VoiceControlContext';
-import { GestureControlProvider } from './context/GestureControlContext';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -126,23 +125,21 @@ export default function App() {
       {showIntro && (
         <CinematicIntro onComplete={() => setShowIntro(false)} />
       )}
-      <GestureControlProvider>
-        <VoiceControlProvider
-          activeTab={activeTab}
-          onNavigate={setActiveTab}
+      <VoiceControlProvider
+        activeTab={activeTab}
+        onNavigate={setActiveTab}
+        onPlayIntro={() => setShowIntro(true)}
+      >
+        <AppLayout 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
           onPlayIntro={() => setShowIntro(true)}
         >
-          <AppLayout 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab}
-            onPlayIntro={() => setShowIntro(true)}
-          >
-            <ErrorBoundary>
-              {renderActivePage()}
-            </ErrorBoundary>
-          </AppLayout>
-        </VoiceControlProvider>
-      </GestureControlProvider>
+          <ErrorBoundary>
+            {renderActivePage()}
+          </ErrorBoundary>
+        </AppLayout>
+      </VoiceControlProvider>
     </ErrorBoundary>
   );
 }

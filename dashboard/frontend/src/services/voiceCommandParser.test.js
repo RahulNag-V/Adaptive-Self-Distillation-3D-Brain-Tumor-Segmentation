@@ -196,7 +196,7 @@ assert(amb1.isAmbiguous && !amb1.success, 'Ambiguity detection for "move it"');
 const amb2 = parseVoiceCommand('change it');
 assert(amb2.isAmbiguous && !amb2.success, 'Ambiguity detection for "change it"');
 
-// 11. Extended Navigation & Gesture Controls
+// 11. Extended Navigation Controls
 const extNavTests = [
   ['Open model lab.', 'NAVIGATE', 'models'],
   ['Go to models.', 'NAVIGATE', 'models'],
@@ -207,17 +207,12 @@ const extNavTests = [
   ['Print report.', 'NAVIGATE', 'reports'],
   ['Go to settings.', 'NAVIGATE', 'settings'],
   ['Show workstation settings.', 'NAVIGATE', 'settings'],
-  ['Enable gesture control.', 'TOGGLE_GESTURE', undefined, true],
-  ['Disable gesture control.', 'TOGGLE_GESTURE', undefined, false],
 ];
-for (const [phrase, expectedType, expectedTab, expectedEnabled] of extNavTests) {
+for (const [phrase, expectedType, expectedTab] of extNavTests) {
   const res = parseVoiceCommand(phrase);
   assert(res.success && res.action.type === expectedType, `ExtNav: ${phrase} -> ${expectedType}`);
   if (expectedTab) {
     assert(res.action.tab === expectedTab, `ExtNav tab: ${expectedTab}`);
-  }
-  if (expectedEnabled !== undefined) {
-    assert(res.action.enabled === expectedEnabled, `Gesture enabled: ${expectedEnabled}`);
   }
 }
 

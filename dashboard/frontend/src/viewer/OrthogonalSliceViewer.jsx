@@ -372,7 +372,7 @@ export default function OrthogonalSliceViewer({
     const dx = e.clientX - track.startX;
     const dy = e.clientY - track.startY;
 
-    // If dragged more than 4px, treat as pan gesture
+    // If dragged more than 4px, treat as mouse drag pan
     if (Math.hypot(dx, dy) > 4) {
       track.hasMoved = true;
       setIsPanning(true);

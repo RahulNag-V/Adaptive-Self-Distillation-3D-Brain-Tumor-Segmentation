@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { useServerStatus } from '../hooks/useServerStatus';
 import VoiceControlWidget from '../components/VoiceControlWidget';
-import GestureControlWidget from '../components/GestureControlWidget';
 import { useVoiceContext } from '../context/VoiceControlContext';
 
 const NAV_ITEMS = [
@@ -83,8 +82,8 @@ const ROUTE_METADATA = {
   },
   settings: {
     section: 'WORKSTATION CONFIG',
-    title: 'Display Preferences & Touchless Interaction',
-    subtitle: 'MPR crosshairs, natural language voice control & sterile hand gesture system',
+    title: 'Display Preferences & Voice Control',
+    subtitle: 'MPR crosshairs, display settings & natural language voice control',
   },
   results: {
     section: 'QUANTITATIVE REPORT',
@@ -424,9 +423,6 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
           <div className="flex items-center gap-2.5 shrink-0">
             {/* Voice Control Widget */}
             <VoiceControlWidget voiceControl={voiceControl} activeTab={activeTab} />
-
-            {/* Contactless Hand Gesture Widget */}
-            <GestureControlWidget onNavigateSettings={handleNavClick} />
 
             {/* Play Intro Button */}
             {onPlayIntro && (

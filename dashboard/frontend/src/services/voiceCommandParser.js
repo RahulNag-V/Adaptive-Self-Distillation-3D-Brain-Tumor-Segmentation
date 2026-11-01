@@ -236,14 +236,8 @@ export function parseVoiceCommand(rawTranscript) {
   if (/\b(?:take me to|navigate to|open|go to|show|print|generate)?\s*(?:the\s+)?(?:report|clinical\s+report|research\s+report|patient\s+report|reports)\b/.test(text) && !/close/.test(text)) {
     return { success: true, action: { type: 'NAVIGATE', tab: 'reports', label: 'Navigate to Clinical & Academic Reports' } };
   }
-  if (/\b(?:take me to|navigate to|go to)\s+(?:the\s+)?(?:settings|preferences|configuration)\b/.test(text) || /\b(?:preferences|workstation\s+settings|gesture\s+settings)\b/.test(text)) {
+  if (/\b(?:take me to|navigate to|go to)\s+(?:the\s+)?(?:settings|preferences|configuration)\b/.test(text) || /\b(?:preferences|workstation\s+settings)\b/.test(text)) {
     return { success: true, action: { type: 'NAVIGATE', tab: 'settings', label: 'Navigate to Workstation Settings' } };
-  }
-  if (/\b(?:enable|activate|turn\s+on|start)\s+(?:the\s+)?(?:gesture|hand\s+gesture|gesture\s+control|gestures)\b/.test(text)) {
-    return { success: true, action: { type: 'TOGGLE_GESTURE', enabled: true, label: 'Enable Gesture Control' } };
-  }
-  if (/\b(?:disable|deactivate|turn\s+off|stop)\s+(?:the\s+)?(?:gesture|hand\s+gesture|gesture\s+control|gestures)\b/.test(text)) {
-    return { success: true, action: { type: 'TOGGLE_GESTURE', enabled: false, label: 'Disable Gesture Control' } };
   }
   if (/\b(?:take me to|navigate to|open|go to|show)?\s*(?:my\s+)?results\b/.test(text) || /\bquantitative\s+(?:results|report)\b/.test(text)) {
     return { success: true, action: { type: 'NAVIGATE', tab: 'results', label: 'Navigate to Results & Quantitative Report' } };

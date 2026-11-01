@@ -237,23 +237,9 @@ NeuroVision AI features a clinical-grade, natural-language **hands-free voice co
    - **Security Requirement:** Speech recognition requires a secure origin (`https://` or `http://localhost`).
 
 4. **Automated Verification:**
-   - **117-case comprehensive automated test suite** (`voiceCommandParser.test.js`) verifying spoken numbers, spaced case digit extraction, multi-coordinate parsing, all navigation routes, touchless gesture toggles, direct axis mappings, one-shot vs continuous rotation, and ambiguity detection.
-   - **Pass rate: 117 / 117 passed (100% pass rate, 0 failures).**
+   - **113-case comprehensive automated test suite** (`voiceCommandParser.test.js`) verifying spoken numbers, spaced case digit extraction, multi-coordinate parsing, all navigation routes, direct axis mappings, one-shot vs continuous rotation, and ambiguity detection.
+   - **Pass rate: 113 / 113 passed (100% pass rate, 0 failures).**
    - Production bundle build verified with zero errors.
-
----
-
-## 🖐️ Contactless Hand Gesture Control System (Future Interaction Framework)
-
-Designed for sterile surgical environments and interdisciplinary reading rooms where clinicians must not touch physical input peripherals:
-- **Modular Abstraction Layer:** `useGestureControl.js` coordinates gesture states (`ready`, `tracking`, `cooldown`, `disabled`) with temporal smoothing and configurable trigger hysteresis ($700\text{ ms}$).
-- **Supported Touchless Gestures:**
-  - **Swipe Left / Right:** Navigate adjacent volumetric slices or change patient cases.
-  - **Swipe Up / Down:** Rapid coordinate increments ($\pm 10$ slices).
-  - **Pinch In / Out:** Seamless 3D surface mesh zooming.
-  - **Circular Wave:** 3D Three.js camera orbit rotation.
-  - **Closed Fist:** Instantly reset multiplanar coordinates to anatomical volume center.
-- **Viva Testing & Simulation Console:** Built-in gesture simulator enables instant verification and examiner demonstration with or without physical webcam hardware.
 
 ---
 

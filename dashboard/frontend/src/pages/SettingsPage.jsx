@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Settings, 
-  Hand, 
   Mic, 
   Sliders, 
   Monitor, 
@@ -11,35 +10,16 @@ import {
   RotateCcw, 
   Sparkles,
   Volume2,
-  Video,
-  VideoOff,
   Eye,
   Layers,
   ChevronRight,
   ShieldCheck
 } from 'lucide-react';
-import { useGestureContext } from '../context/GestureControlContext';
 import { useVoiceContext } from '../context/VoiceControlContext';
 import { useServerStatus } from '../hooks/useServerStatus';
 import { parseVoiceCommand } from '../services/voiceCommandParser';
 
 export default function SettingsPage({ onNavigate }) {
-  const {
-    isEnabled: gestureEnabled,
-    toggleGesture,
-    status: gestureStatus,
-    sensitivity: gestureSensitivity,
-    setSensitivity: setGestureSensitivity,
-    cooldownMs,
-    setCooldownMs,
-    triggerSimulatedGesture,
-    cameraActive,
-    startCamera,
-    stopCamera,
-    availableGestures,
-    lastExecutedAction: lastGestureAction
-  } = useGestureContext();
-
   const {
     voiceControl,
   } = useVoiceContext();
@@ -75,7 +55,7 @@ export default function SettingsPage({ onNavigate }) {
                 Workstation Preferences & Interaction Controls
               </h1>
               <p className="text-xs text-[#64748B]">
-                Configure 3D MPR rendering, natural language voice control, and sterile touchless gesture interaction.
+                Configure 3D MPR rendering and natural language voice control.
               </p>
             </div>
           </div>
@@ -88,160 +68,9 @@ export default function SettingsPage({ onNavigate }) {
         </div>
       </section>
 
-      {/* 2. GRID SETTINGS: GESTURE, VOICE, RENDERING, BACKEND */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* PANEL A: CONTACTLESS HAND GESTURE FRAMEWORK */}
-        <div className="rounded-xl bg-white border border-[#DCE6F0] p-6 shadow-medical-card space-y-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3">
-              <div className="flex items-center gap-2">
-                <Hand className="w-4 h-4 text-blue-600" />
-                <h2 className="text-sm font-semibold text-[#16324F]">Touchless Hand Gesture System</h2>
-              </div>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold ${
-                gestureEnabled ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-[#EEF4F8] text-[#64748B]'
-              }`}>
-                {gestureEnabled ? 'Active' : 'Disabled'}
-              </span>
-            </div>
-
-            <p className="text-xs text-[#64748B] leading-relaxed">
-              Sterile operating-room and diagnostic console navigation. Uses hand pose estimation 
-              to translate intuitive contactless gestures into MPR slice stepping, 3D volume orbit, and zoom.
-            </p>
-
-            {/* Master Toggle */}
-            <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-[#16324F] block">Enable Hand Gesture Interaction</span>
-                <span className="text-[11px] text-[#64748B]">Camera pose estimation & virtual gesture dispatcher</span>
-              </div>
-              <button
-                onClick={() => toggleGesture()}
-                className={`px-3 py-1.5 rounded-full font-mono text-xs font-semibold transition-all ${
-                  gestureEnabled
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-[#EEF4F8] text-[#64748B] border border-[#CBD5E1]'
-                }`}
-              >
-                {gestureEnabled ? 'ENABLED' : 'DISABLED'}
-              </button>
-            </div>
-
-            {/* Gesture Sensitivity & Cooldown Controls */}
-            <div className="space-y-3 font-mono text-xs">
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[#64748B] text-[11px]">
-                  <span>Tracking Sensitivity Threshold:</span>
-                  <span className="text-[#16324F] font-bold">{Math.round(gestureSensitivity * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="0.95"
-                  step="0.05"
-                  value={gestureSensitivity}
-                  onChange={(e) => setGestureSensitivity(parseFloat(e.target.value))}
-                  disabled={!gestureEnabled}
-                  className="w-full accent-blue-600 cursor-pointer disabled:opacity-40"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[#64748B] text-[11px]">
-                  <span>Trigger Hysteresis Cooldown:</span>
-                  <span className="text-[#16324F] font-bold">{cooldownMs} ms</span>
-                </div>
-                <input
-                  type="range"
-                  min="400"
-                  max="1500"
-                  step="100"
-                  value={cooldownMs}
-                  onChange={(e) => setCooldownMs(parseInt(e.target.value, 10))}
-                  disabled={!gestureEnabled}
-                  className="w-full accent-blue-600 cursor-pointer disabled:opacity-40"
-                />
-              </div>
-            </div>
-
-            {/* Interactive Gesture Simulator (Viva Testing) */}
-            <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-mono">
-                <span className="text-[#64748B]">Gesture Action Testing Console</span>
-                <span className="text-blue-700 font-semibold">Viva Evaluator</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-xs font-mono">
-                <button
-                  onClick={() => triggerSimulatedGesture('SWIPE_LEFT')}
-                  disabled={!gestureEnabled}
-                  className="p-2 rounded bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-[10px] disabled:opacity-40 transition-colors shadow-medical-sm"
-                >
-                  Swipe Left (&larr;)
-                </button>
-                <button
-                  onClick={() => triggerSimulatedGesture('SWIPE_RIGHT')}
-                  disabled={!gestureEnabled}
-                  className="p-2 rounded bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-[10px] disabled:opacity-40 transition-colors shadow-medical-sm"
-                >
-                  Swipe Right (&rarr;)
-                </button>
-                <button
-                  onClick={() => triggerSimulatedGesture('ROTATE_ORBIT')}
-                  disabled={!gestureEnabled}
-                  className="p-2 rounded bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-[10px] disabled:opacity-40 transition-colors shadow-medical-sm"
-                >
-                  Orbit 3D
-                </button>
-                <button
-                  onClick={() => triggerSimulatedGesture('PINCH_IN')}
-                  disabled={!gestureEnabled}
-                  className="p-2 rounded bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-[10px] disabled:opacity-40 transition-colors shadow-medical-sm"
-                >
-                  Zoom In (+)
-                </button>
-                <button
-                  onClick={() => triggerSimulatedGesture('PINCH_OUT')}
-                  disabled={!gestureEnabled}
-                  className="p-2 rounded bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-[10px] disabled:opacity-40 transition-colors shadow-medical-sm"
-                >
-                  Zoom Out (-)
-                </button>
-                <button
-                  onClick={() => triggerSimulatedGesture('FIST')}
-                  disabled={!gestureEnabled}
-                  className="p-2 rounded bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-[10px] disabled:opacity-40 transition-colors shadow-medical-sm"
-                >
-                  Reset View
-                </button>
-              </div>
-
-              {lastGestureAction && (
-                <div className="text-[10px] font-mono text-emerald-700 pt-1 flex items-center justify-between font-medium">
-                  <span>Triggered: {lastGestureAction.action}</span>
-                  <span className="text-[#64748B]">{lastGestureAction.time}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-[#DCE6F0] flex items-center justify-between text-xs font-mono">
-            <span className="text-[#64748B]">Hardware Input:</span>
-            <button
-              onClick={() => {
-                if (cameraActive) stopCamera();
-                else startCamera();
-              }}
-              disabled={!gestureEnabled}
-              className="inline-flex items-center gap-1.5 text-blue-600 hover:underline disabled:opacity-40 font-semibold"
-            >
-              {cameraActive ? <Video className="w-3.5 h-3.5 text-emerald-600" /> : <VideoOff className="w-3.5 h-3.5" />}
-              <span>{cameraActive ? 'Camera Feed Active' : 'Enable Camera'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* PANEL B: NATURAL LANGUAGE VOICE CONTROL */}
+      {/* 2. GRID SETTINGS: VOICE, RENDERING, BACKEND */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* PANEL A: NATURAL LANGUAGE VOICE CONTROL */}
         <div className="rounded-xl bg-white border border-[#DCE6F0] p-6 shadow-medical-card space-y-5 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3">
@@ -257,7 +86,7 @@ export default function SettingsPage({ onNavigate }) {
             </div>
 
             <p className="text-xs text-[#64748B] leading-relaxed">
-              Hands-free natural language parser with 117 passing verification tests.
+              Hands-free natural language parser with 113 passing verification tests.
               Controls slice coordinates, MRI modalities, 3D orbits, and full application navigation.
             </p>
 
@@ -331,7 +160,7 @@ export default function SettingsPage({ onNavigate }) {
           </div>
         </div>
 
-        {/* PANEL C: WORKSTATION RENDERING PREFERENCES */}
+        {/* PANEL B: WORKSTATION RENDERING PREFERENCES */}
         <div className="rounded-xl bg-white border border-[#DCE6F0] p-6 shadow-medical-card space-y-5">
           <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3">
             <div className="flex items-center gap-2">
@@ -396,7 +225,7 @@ export default function SettingsPage({ onNavigate }) {
           </div>
         </div>
 
-        {/* PANEL D: HARDWARE & MODEL BACKEND SPECIFICATIONS */}
+        {/* PANEL C: HARDWARE & MODEL BACKEND SPECIFICATIONS */}
         <div className="rounded-xl bg-white border border-[#DCE6F0] p-6 shadow-medical-card space-y-5">
           <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3">
             <div className="flex items-center gap-2">
