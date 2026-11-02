@@ -1,20 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import AppLayout from './layouts/AppLayout';
 import OverviewPage from './pages/OverviewPage';
-import UploadPage from './pages/UploadPage';
-import ViewerPage from './pages/ViewerPage';
-import ResultsPage from './pages/ResultsPage';
-import AboutPage from './pages/AboutPage';
-import ClassificationPage from './pages/ClassificationPage';
-import AdaptiveDashboardPage from './pages/AdaptiveDashboardPage';
-import ModelLabPage from './pages/ModelLabPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import ReportPage from './pages/ReportPage';
-import SettingsPage from './pages/SettingsPage';
 import CinematicIntro from './components/CinematicIntro';
 import PageTransition from './components/PageTransition';
 import { smoothScrollToTop } from './utils/motion';
 import { VoiceProvider } from './voice/VoiceContext';
+
+// Route-level code splitting: heavy visualization and secondary pages are lazy-loaded
+const UploadPage = lazy(() => import('./pages/UploadPage'));
+const ViewerPage = lazy(() => import('./pages/ViewerPage'));
+const ResultsPage = lazy(() => import('./pages/ResultsPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ClassificationPage = lazy(() => import('./pages/ClassificationPage'));
+const AdaptiveDashboardPage = lazy(() => import('./pages/AdaptiveDashboardPage'));
+const ModelLabPage = lazy(() => import('./pages/ModelLabPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const ReportPage = lazy(() => import('./pages/ReportPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+
+function ClinicalLoadingFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-slate-400">
+      <div className="w-8 h-8 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
+      <span className="text-xs font-mono text-[#64748B]">Loading Clinical Module...</span>
+    </div>
+  );
+}
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -158,13 +169,14 @@ export default function App() {
           onPlayIntro={() => setShowIntro(true)}
         >
           <ErrorBoundary>
-            <PageTransition pageKey={activeTab}>
-              {renderActivePage()}
-            </PageTransition>
+            <Suspense fallback={<ClinicalLoadingFallback />}>
+              <PageTransition pageKey={activeTab}>
+                {renderActivePage()}
+              </PageTransition>
+            </Suspense>
           </ErrorBoundary>
         </AppLayout>
       </VoiceProvider>
     </ErrorBoundary>
   );
 }
-

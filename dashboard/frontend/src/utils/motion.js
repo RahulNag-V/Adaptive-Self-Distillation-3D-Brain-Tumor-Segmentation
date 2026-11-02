@@ -26,17 +26,23 @@ export function prefersReducedMotion() {
 export const MOTION = {
   durations: {
     micro: 0.12,     // Button press / active state
-    fast: 0.18,      // Tooltips, hover states, quick badges
+    fast: 0.18,      // Tooltips, hover states, quick badges, closing states
     normal: 0.25,    // Dropdowns, popovers, tabs, breadcrumbs
     medium: 0.35,    // Sidebar collapse/expansion, modals, drawers
     slow: 0.50,      // Page section reveal, cards stagger
   },
+  // Natively supported GSAP easing identifiers (no raw unsupported cubic-bezier strings)
   easings: {
     out: 'power2.out',
     inOut: 'power2.inOut',
     smooth: 'power3.out',
     smoothInOut: 'power3.inOut',
+    decelerate: 'power3.out',
+  },
+  // Dedicated CSS cubic-bezier strings for CSS transitions
+  cssEasings: {
     decelerate: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
   },
 };
 

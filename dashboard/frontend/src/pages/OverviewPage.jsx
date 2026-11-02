@@ -24,55 +24,89 @@ export default function OverviewPage({ onNavigate }) {
   useLayoutEffect(() => {
     if (prefersReducedMotion() || !containerRef.current) return;
 
-    const ctx = gsap.context(() => {
-      // 1. Hero highlights stagger entrance
-      gsap.from('.overview-hero-card', {
-        opacity: 0,
-        y: 12,
-        duration: MOTION.durations.slow,
-        ease: MOTION.easings.out,
-      });
+    let ctx;
+    try {
+      ctx = gsap.context(() => {
+        // 1. Hero highlights stagger entrance
+        gsap.fromTo(
+          '.overview-hero-card',
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: MOTION.durations.slow,
+            ease: MOTION.easings.out,
+            clearProps: 'all',
+          }
+        );
 
-      gsap.from('.overview-highlight-item', {
-        opacity: 0,
-        y: 8,
-        duration: MOTION.durations.normal,
-        stagger: 0.08,
-        delay: 0.15,
-        ease: MOTION.easings.out,
-      });
+        gsap.fromTo(
+          '.overview-highlight-item',
+          { opacity: 0, y: 8 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: MOTION.durations.normal,
+            stagger: 0.08,
+            delay: 0.1,
+            ease: MOTION.easings.out,
+            clearProps: 'all',
+          }
+        );
 
-      // 2. Operational pipeline cards reveal
-      gsap.from('.overview-module-card', {
-        scrollTrigger: {
-          trigger: '.overview-modules-grid',
-          scroller: '#neurovision-main-scroll',
-          start: 'top 85%',
-          toggleActions: 'play none none none',
-        },
-        opacity: 0,
-        y: 16,
-        duration: MOTION.durations.slow,
-        stagger: 0.12,
-        ease: MOTION.easings.out,
-      });
+        // 2. Operational pipeline cards reveal
+        gsap.fromTo(
+          '.overview-module-card',
+          { opacity: 0, y: 16 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: MOTION.durations.slow,
+            stagger: 0.1,
+            ease: MOTION.easings.out,
+            clearProps: 'all',
+            scrollTrigger: {
+              trigger: '.overview-modules-grid',
+              scroller: '#neurovision-main-scroll',
+              start: 'top 90%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
 
-      // 3. Technical specifications reveal
-      gsap.from('.overview-specs-panel', {
-        scrollTrigger: {
-          trigger: '.overview-specs-panel',
-          scroller: '#neurovision-main-scroll',
-          start: 'top 88%',
-          toggleActions: 'play none none none',
-        },
-        opacity: 0,
-        y: 14,
-        duration: MOTION.durations.slow,
-        ease: MOTION.easings.out,
-      });
-    }, containerRef);
+        // 3. Technical specifications reveal
+        gsap.fromTo(
+          '.overview-specs-panel',
+          { opacity: 0, y: 14 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: MOTION.durations.slow,
+            ease: MOTION.easings.out,
+            clearProps: 'all',
+            scrollTrigger: {
+              trigger: '.overview-specs-panel',
+              scroller: '#neurovision-main-scroll',
+              start: 'top 92%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      }, containerRef);
 
-    return () => ctx.revert();
+      // Refresh ScrollTrigger after fonts load to guarantee accurate bounds
+      if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          ScrollTrigger.refresh();
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.warn('OverviewPage GSAP initialization fallback:', err);
+    }
+
+    return () => {
+      if (ctx) ctx.revert();
+    };
   }, []);
 
   return (

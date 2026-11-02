@@ -10,6 +10,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-three': ['three'],
+          'vendor-gsap': ['gsap', '@gsap/react'],
+          'vendor-lucide': ['lucide-react'],
+        },
+      },
+    },
+  },
   server: {
     port: 3000,
     host: true,

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { COMMAND_REGISTRY, MANUAL_SECTIONS, MANUAL_GUIDES } from './registry.js';
 import { useVoice } from './VoiceContext.jsx';
+import { prefersReducedMotion } from '../utils/motion.js';
 
 export default function VoiceManualModal({ isOpen, onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,20 +96,45 @@ export default function VoiceManualModal({ isOpen, onClose }) {
     });
   }, [searchQuery, selectedSection]);
 
-  if (!isOpen) return null;
+  // Animated Opening & Closing lifecycle states (ensures smooth exit before unmounting)
+  const [isRendered, setIsRendered] = useState(isOpen);
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsRendered(true);
+      setIsClosing(false);
+    } else if (isRendered) {
+      if (prefersReducedMotion()) {
+        setIsRendered(false);
+        setIsClosing(false);
+      } else {
+        setIsClosing(true);
+        const timer = setTimeout(() => {
+          setIsRendered(false);
+          setIsClosing(false);
+        }, 180);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isOpen]);
+
+  if (!isRendered) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 transition-opacity duration-200 ${isClosing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-[#16324F]/70 backdrop-blur-sm transition-opacity duration-200" 
+        className={`fixed inset-0 bg-[#16324F]/70 backdrop-blur-sm transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`} 
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Dialog */}
       <div 
-        className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl border border-[#DCE6F0] flex flex-col overflow-hidden text-[#16324F] z-10 animate-modal-enter"
+        className={`relative w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl border border-[#DCE6F0] flex flex-col overflow-hidden text-[#16324F] z-10 ${
+          isClosing ? 'animate-modal-exit' : 'animate-modal-enter'
+        }`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="voice-manual-title"

@@ -120,21 +120,22 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
     const scrollEl = document.getElementById('neurovision-main-scroll');
     if (!scrollEl) return;
 
-    let ticking = false;
+    let rafId = null;
     const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const top = scrollEl.scrollTop;
-          setIsScrolled(top > 20);
-          setShowScrollTop(top > 300);
-          ticking = false;
-        });
-        ticking = true;
-      }
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        const top = scrollEl.scrollTop;
+        setIsScrolled((prev) => top > (prev ? 16 : 36));
+        setShowScrollTop(top > 300);
+        rafId = null;
+      });
     };
 
     scrollEl.addEventListener('scroll', handleScroll, { passive: true });
-    return () => scrollEl.removeEventListener('scroll', handleScroll);
+    return () => {
+      scrollEl.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const { status: serverStatus } = useServerStatus();

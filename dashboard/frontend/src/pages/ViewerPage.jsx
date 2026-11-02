@@ -55,6 +55,7 @@ import {
 } from '../api/adaptive';
 import { REGION_LEGEND, DEMO_CASE_METADATA } from '../utils/mockData';
 import { useVoice } from '../voice/VoiceContext';
+import { prefersReducedMotion } from '../utils/motion';
 
 export default function ViewerPage({ currentResult, onNavigate }) {
   // Patient and Dataset State
@@ -126,30 +127,81 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   const [opacity, setOpacity] = useState(0.85);
   const [brainAppearance, setBrainAppearance] = useState('regions');
 
-  // Interactive Animated Dropdown States & Refs
-  const [isCaseDropdownOpen, setIsCaseDropdownOpen] = useState(false);
+  // Interactive Animated Dropdown States & Lifecycle Managers
+  const [caseDropdownState, setCaseDropdownState] = useState('closed'); // 'closed' | 'open' | 'closing'
   const [caseSearch, setCaseSearch] = useState('');
-  const [isAppearanceDropdownOpen, setIsAppearanceDropdownOpen] = useState(false);
+  const [appearanceDropdownState, setAppearanceDropdownState] = useState('closed'); // 'closed' | 'open' | 'closing'
   const caseDropdownRef = useRef(null);
   const appearanceDropdownRef = useRef(null);
 
-  // Click-outside listener for dropdown menus
+  const closeCaseDropdown = useCallback(() => {
+    setCaseDropdownState((prev) => {
+      if (prev === 'closed' || prev === 'closing') return prev;
+      if (prefersReducedMotion()) return 'closed';
+      setTimeout(() => setCaseDropdownState('closed'), 160);
+      return 'closing';
+    });
+  }, []);
+
+  const openCaseDropdown = useCallback(() => {
+    setCaseDropdownState('open');
+    setCaseSearch('');
+  }, []);
+
+  const toggleCaseDropdown = useCallback(() => {
+    if (caseDropdownState === 'open') {
+      closeCaseDropdown();
+    } else {
+      openCaseDropdown();
+    }
+  }, [caseDropdownState, closeCaseDropdown, openCaseDropdown]);
+
+  const closeAppearanceDropdown = useCallback(() => {
+    setAppearanceDropdownState((prev) => {
+      if (prev === 'closed' || prev === 'closing') return prev;
+      if (prefersReducedMotion()) return 'closed';
+      setTimeout(() => setAppearanceDropdownState('closed'), 160);
+      return 'closing';
+    });
+  }, []);
+
+  const openAppearanceDropdown = useCallback(() => {
+    setAppearanceDropdownState('open');
+  }, []);
+
+  const toggleAppearanceDropdown = useCallback(() => {
+    if (appearanceDropdownState === 'open') {
+      closeAppearanceDropdown();
+    } else {
+      openAppearanceDropdown();
+    }
+  }, [appearanceDropdownState, closeAppearanceDropdown, openAppearanceDropdown]);
+
+  // Click-outside & Escape key listener for dropdown menus
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (caseDropdownRef.current && !caseDropdownRef.current.contains(e.target)) {
-        setIsCaseDropdownOpen(false);
+        closeCaseDropdown();
       }
       if (appearanceDropdownRef.current && !appearanceDropdownRef.current.contains(e.target)) {
-        setIsAppearanceDropdownOpen(false);
+        closeAppearanceDropdown();
       }
     };
-    if (isCaseDropdownOpen || isAppearanceDropdownOpen) {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (caseDropdownState === 'open') closeCaseDropdown();
+        if (appearanceDropdownState === 'open') closeAppearanceDropdown();
+      }
+    };
+    if (caseDropdownState === 'open' || appearanceDropdownState === 'open') {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isCaseDropdownOpen, isAppearanceDropdownOpen]);
+  }, [caseDropdownState, appearanceDropdownState, closeCaseDropdown, closeAppearanceDropdown]);
 
   // Sub-region filters
   const [subregions, setSubregions] = useState({
@@ -849,14 +901,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="relative" ref={caseDropdownRef}>
               <button
                 type="button"
-                onClick={() => {
-                  setIsCaseDropdownOpen(!isCaseDropdownOpen);
-                  setCaseSearch('');
-                }}
+                onClick={toggleCaseDropdown}
                 style={{ backgroundColor: '#101B2D' }}
                 className="flex items-center gap-2 bg-[#101B2D] hover:bg-[#18263B] border border-[#30445E] hover:border-cyan-400/60 text-slate-100 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer shadow-xs transition-all"
                 aria-haspopup="listbox"
-                aria-expanded={isCaseDropdownOpen}
+                aria-expanded={caseDropdownState === 'open'}
               >
                 <span className="truncate max-w-[140px] sm:max-w-[180px]">
                   {currentResult && selectedPatientId === currentResult.session_id
@@ -868,16 +917,18 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                 </span>
                 <ChevronDown
                   className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                    isCaseDropdownOpen ? 'rotate-180 text-cyan-400' : ''
+                    caseDropdownState === 'open' ? 'rotate-180 text-cyan-400' : ''
                   }`}
                 />
               </button>
 
               {/* Animated Popover */}
-              {isCaseDropdownOpen && (
+              {caseDropdownState !== 'closed' && (
                 <div 
                   style={{ backgroundColor: '#18263B' }}
-                  className="absolute top-full left-0 mt-2 z-[100] w-72 max-h-80 flex flex-col bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-cyan-500/30 animate-dropdown-down text-xs font-mono"
+                  className={`absolute top-full left-0 mt-2 z-[100] w-72 max-h-80 flex flex-col bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-cyan-500/30 text-xs font-mono ${
+                    caseDropdownState === 'closing' ? 'animate-dropdown-exit' : 'animate-dropdown-down'
+                  }`}
                 >
                   {/* Popover Header */}
                   <div 
@@ -913,7 +964,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                         type="button"
                         onClick={() => {
                           setSelectedPatientId(currentResult.session_id);
-                          setIsCaseDropdownOpen(false);
+                          closeCaseDropdown();
                         }}
                         style={{
                           backgroundColor: selectedPatientId === currentResult.session_id ? 'rgba(6, 182, 212, 0.15)' : '#18263B'
@@ -945,7 +996,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                               type="button"
                               onClick={() => {
                                 setSelectedPatientId(p.id);
-                                setIsCaseDropdownOpen(false);
+                                closeCaseDropdown();
                               }}
                               style={{
                                 backgroundColor: isSelected ? 'rgba(6, 182, 212, 0.15)' : '#18263B'
@@ -975,7 +1026,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                         type="button"
                         onClick={() => {
                           setSelectedPatientId('BraTS2021_01017');
-                          setIsCaseDropdownOpen(false);
+                          closeCaseDropdown();
                         }}
                         style={{ backgroundColor: 'rgba(6, 182, 212, 0.15)' }}
                         className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-cyan-300 font-bold border border-cyan-500/40"
@@ -1683,11 +1734,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   {/* Custom Animated Appearance Dropdown Trigger */}
                   <button
                     type="button"
-                    onClick={() => setIsAppearanceDropdownOpen(!isAppearanceDropdownOpen)}
+                    onClick={toggleAppearanceDropdown}
                     style={{ backgroundColor: '#101B2D' }}
                     className="w-full flex items-center justify-between gap-2 bg-[#101B2D] hover:bg-[#18263B] border border-[#30445E] hover:border-blue-400 text-slate-100 text-xs font-mono rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-xs"
                     aria-haspopup="listbox"
-                    aria-expanded={isAppearanceDropdownOpen}
+                    aria-expanded={appearanceDropdownState === 'open'}
                   >
                     {(() => {
                       const curOpt = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === brainAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
@@ -1702,16 +1753,18 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                     })()}
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
-                        isAppearanceDropdownOpen ? 'rotate-180 text-blue-400' : ''
+                        appearanceDropdownState === 'open' ? 'rotate-180 text-blue-400' : ''
                       }`}
                     />
                   </button>
 
                   {/* Animated Popover Dropdown (Opens upward with 100% solid background so it never clips or bleeds) */}
-                  {isAppearanceDropdownOpen && (
+                  {appearanceDropdownState !== 'closed' && (
                     <div 
                       style={{ backgroundColor: '#18263B' }}
-                      className="absolute bottom-full left-0 mb-2 z-[100] w-full bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-blue-500/30 animate-dropdown-up text-xs font-mono space-y-1"
+                      className={`absolute bottom-full left-0 mb-2 z-[100] w-full bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-blue-500/30 text-xs font-mono space-y-1 ${
+                        appearanceDropdownState === 'closing' ? 'animate-dropdown-exit' : 'animate-dropdown-up'
+                      }`}
                     >
                       <div 
                         style={{ backgroundColor: '#101B2D' }}
@@ -1732,7 +1785,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                             type="button"
                             onClick={() => {
                               setBrainAppearance(opt.id);
-                              setIsAppearanceDropdownOpen(false);
+                              closeAppearanceDropdown();
                             }}
                             style={{
                               backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.2)' : '#18263B'
@@ -1927,8 +1980,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 1: MASK COMPARISON MODAL (AI Prediction vs Corrected) */}
       {showCompareModal && compareData && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-mri-surface border border-cyan-400/50 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-mri-surface border border-cyan-400/50 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4 animate-modal-enter">
             <div className="flex items-center justify-between border-b border-mri-border pb-3">
               <div className="flex items-center gap-2">
                 <GitCompare className="w-5 h-5 text-cyan-400" />
@@ -2000,8 +2053,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 2: SAVE DRAFT MODAL */}
       {showDraftModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-mri-surface border border-purple-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-mri-surface border border-purple-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-modal-enter">
             <div className="flex items-center justify-between border-b border-mri-border pb-3">
               <div className="flex items-center gap-2">
                 <Save className="w-5 h-5 text-purple-400" />
@@ -2048,8 +2101,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 3: SUBMIT FOR REVIEW MODAL */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-mri-surface border border-emerald-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-mri-surface border border-emerald-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-modal-enter">
             <div className="flex items-center justify-between border-b border-mri-border pb-3">
               <div className="flex items-center gap-2">
                 <Send className="w-5 h-5 text-emerald-400" />

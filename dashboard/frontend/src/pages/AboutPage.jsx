@@ -27,30 +27,53 @@ export default function AboutPage({ onNavigate }) {
   useLayoutEffect(() => {
     if (prefersReducedMotion() || !containerRef.current) return;
 
-    const ctx = gsap.context(() => {
-      gsap.from('.about-spec-card', {
-        opacity: 0,
-        y: 12,
-        duration: MOTION.durations.normal,
-        stagger: 0.08,
-        ease: MOTION.easings.out,
-      });
+    let ctx;
+    try {
+      ctx = gsap.context(() => {
+        gsap.fromTo(
+          '.about-spec-card',
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: MOTION.durations.normal,
+            stagger: 0.08,
+            ease: MOTION.easings.out,
+            clearProps: 'all',
+          }
+        );
 
-      gsap.from('.about-viva-panel', {
-        scrollTrigger: {
-          trigger: '.about-viva-panel',
-          scroller: '#neurovision-main-scroll',
-          start: 'top 85%',
-          toggleActions: 'play none none none',
-        },
-        opacity: 0,
-        y: 16,
-        duration: MOTION.durations.slow,
-        ease: MOTION.easings.out,
-      });
-    }, containerRef);
+        gsap.fromTo(
+          '.about-viva-panel',
+          { opacity: 0, y: 16 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: MOTION.durations.slow,
+            ease: MOTION.easings.out,
+            clearProps: 'all',
+            scrollTrigger: {
+              trigger: '.about-viva-panel',
+              scroller: '#neurovision-main-scroll',
+              start: 'top 90%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      }, containerRef);
 
-    return () => ctx.revert();
+      if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          ScrollTrigger.refresh();
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.warn('AboutPage GSAP initialization fallback:', err);
+    }
+
+    return () => {
+      if (ctx) ctx.revert();
+    };
   }, []);
 
   useEffect(() => {
