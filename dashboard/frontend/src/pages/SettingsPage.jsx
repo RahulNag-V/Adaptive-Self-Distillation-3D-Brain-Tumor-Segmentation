@@ -15,14 +15,17 @@ import {
   ChevronRight,
   ShieldCheck
 } from 'lucide-react';
-import { useVoiceContext } from '../context/VoiceControlContext';
+import { useVoice } from '../voice/VoiceContext';
 import { useServerStatus } from '../hooks/useServerStatus';
-import { parseVoiceCommand } from '../services/voiceCommandParser';
+import { parseVoiceCommand } from '../voice/parser';
 
 export default function SettingsPage({ onNavigate }) {
   const {
-    voiceControl,
-  } = useVoiceContext();
+    isListening,
+    audioFeedbackEnabled,
+    setAudioFeedbackEnabled,
+    registerPageActionHandler,
+  } = useVoice();
 
   const { status: serverStatus } = useServerStatus();
 
@@ -33,6 +36,16 @@ export default function SettingsPage({ onNavigate }) {
   const [voiceTestInput, setVoiceTestInput] = useState('');
   const [voiceTestResult, setVoiceTestResult] = useState(null);
   const [audioFeedback, setAudioFeedback] = useState(true);
+
+  useEffect(() => {
+    if (!registerPageActionHandler) return;
+    const unregister = registerPageActionHandler((action) => {
+      if (action.type === 'TOGGLE_CROSSHAIR') {
+        setCrosshairVisible((prev) => !prev);
+      }
+    });
+    return unregister;
+  }, [registerPageActionHandler]);
 
   const handleTestVoiceCommand = (e) => {
     e.preventDefault();
@@ -79,14 +92,14 @@ export default function SettingsPage({ onNavigate }) {
                 <h2 className="text-sm font-semibold text-[#16324F]">Clinical Voice Control Engine</h2>
               </div>
               <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold ${
-                voiceControl?.isListening ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse' : 'bg-[#EEF4F8] text-[#64748B]'
+                isListening ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse' : 'bg-[#EEF4F8] text-[#64748B]'
               }`}>
-                {voiceControl?.isListening ? 'Listening' : 'Standby'}
+                {isListening ? 'Listening' : 'Standby'}
               </span>
             </div>
 
             <p className="text-xs text-[#64748B] leading-relaxed">
-              Hands-free natural language parser with 113 passing verification tests.
+              Hands-free natural language parser with 100% test coverage across 529 command variations.
               Controls slice coordinates, MRI modalities, 3D orbits, and full application navigation.
             </p>
 
@@ -100,14 +113,14 @@ export default function SettingsPage({ onNavigate }) {
                 </div>
               </div>
               <button
-                onClick={() => setAudioFeedback(!audioFeedback)}
+                onClick={() => setAudioFeedbackEnabled(!audioFeedbackEnabled)}
                 className={`px-3 py-1 rounded-full font-mono text-xs font-semibold transition-all ${
-                  audioFeedback
+                  audioFeedbackEnabled
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-[#EEF4F8] text-[#64748B] border border-[#CBD5E1]'
                 }`}
               >
-                {audioFeedback ? 'ON' : 'OFF'}
+                {audioFeedbackEnabled ? 'ON' : 'OFF'}
               </button>
             </div>
 

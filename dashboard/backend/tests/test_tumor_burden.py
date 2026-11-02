@@ -174,10 +174,85 @@ def test_real_patient_tumor_burden_analysis():
 
 
 def test_nonexistent_patient_error_handling():
-    """Verify error handling on nonexistent patient."""
+    """Test 5: Verify error handling on nonexistent patient identifier."""
     res = TumorBurdenService.analyze_tumor_burden("BraTS2021_99999_invalid")
     assert res["success"] is False
-    assert "not found" in res["error"].lower()
+    assert "could not be found" in res["error"].lower() or "not found" in res["error"].lower()
+    assert res["error"] == "The requested patient could not be found in the available dataset."
+
+
+def test_session_uuid_resolution_and_calculation():
+    """Test 2: Verify backend resolves a session UUID to actual uploaded scan files."""
+    session_id = "b416facb-4ecd-4327-b376-44c7431613ee"
+    res = TumorBurdenService.analyze_tumor_burden(session_id, seg_source="prediction")
+    assert res["success"] is True, f"Failed on session UUID: {res.get('error')}"
+    assert res["patient_id"] == session_id
+    assert res["has_segmentation"] is True
+    assert res["whole_tumor"]["volume_cm3"] > 0
+
+
+def test_invalid_uuid_error_handling():
+    """Test 4: Verify clear session-not-found error for unknown session UUID."""
+    unknown_uuid = "00000000-0000-0000-0000-000000000000"
+    res = TumorBurdenService.analyze_tumor_burden(unknown_uuid)
+    assert res["success"] is False
+    assert res["error"] == "The analysis session has expired or is unavailable. Please load the scan again."
+
+
+def test_missing_modality_error_reporting(tmp_path=None):
+    """Test 6: Verify exact missing MRI modality is reported."""
+    import tempfile
+    import shutil
+    import uuid
+
+    temp_session_id = str(uuid.uuid4())
+    temp_dir = BACKEND_DIR / "runtime" / "sessions" / temp_session_id
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        # Create T1, T1ce, T2 but omit FLAIR
+        for m in ["t1", "t1ce", "t2"]:
+            (temp_dir / f"{m}.nii.gz").write_bytes(b"dummy")
+
+        res = TumorBurdenService.analyze_tumor_burden(temp_session_id)
+        assert res["success"] is False
+        assert res["error"] == "Calculation cannot proceed. The following MRI modality is missing: FLAIR."
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def test_unreadable_nifti_error_reporting():
+    """Test 7: Verify unreadable/corrupted MRI file yields clear validation error without crash."""
+    import shutil
+    import uuid
+
+    temp_session_id = str(uuid.uuid4())
+    temp_dir = BACKEND_DIR / "runtime" / "sessions" / temp_session_id
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        # Create all 4 files with corrupted content
+        for m in ["flair", "t1", "t1ce", "t2"]:
+            (temp_dir / f"{m}.nii.gz").write_bytes(b"corrupt header and garbage bytes")
+
+        res = TumorBurdenService.analyze_tumor_burden(temp_session_id)
+        assert res["success"] is False
+        assert res["error"] == "The MRI file could not be read. Please verify that the uploaded file is a valid NIfTI volume."
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def test_patient_switching_and_data_isolation():
+    """Test 8: Verify data isolation between different patients and sessions."""
+    p1 = "BraTS2021_01017"
+    p2 = "b416facb-4ecd-4327-b376-44c7431613ee"
+
+    res1 = TumorBurdenService.analyze_tumor_burden(p1, seg_source="ground_truth")
+    res2 = TumorBurdenService.analyze_tumor_burden(p2, seg_source="prediction")
+
+    assert res1["patient_id"] == p1
+    assert res2["patient_id"] == p2
+    # Ensure independent results
+    assert res1["assessment_source"] == "ground_truth"
+    assert res2["assessment_source"] == "prediction"
 
 
 if __name__ == "__main__":
@@ -187,8 +262,13 @@ if __name__ == "__main__":
         ("Slice-wise Area & Peak Slice Detection", test_slice_wise_area_and_peak_identification),
         ("Empty Mask Zero-Burden Handling", test_empty_mask_handling),
         ("Relative Intracranial Burden Calculation", test_relative_intracranial_burden_calculation),
-        ("Real Patient Ground Truth Integration (BraTS2021_01017)", test_real_patient_tumor_burden_analysis),
-        ("Nonexistent Patient Graceful Error Handling", test_nonexistent_patient_error_handling),
+        ("Test 1 & 3: Real Patient Ground Truth Integration (BraTS2021_01017)", test_real_patient_tumor_burden_analysis),
+        ("Test 2: Session UUID Resolution (b416facb...)", test_session_uuid_resolution_and_calculation),
+        ("Test 4: Invalid UUID Error Handling", test_invalid_uuid_error_handling),
+        ("Test 5: Nonexistent Patient Graceful Error Handling", test_nonexistent_patient_error_handling),
+        ("Test 6: Missing Modality Error Reporting", test_missing_modality_error_reporting),
+        ("Test 7: Unreadable NIfTI Error Reporting", test_unreadable_nifti_error_reporting),
+        ("Test 8: Patient Switching & Data Isolation", test_patient_switching_and_data_isolation),
     ]
 
     passed = 0

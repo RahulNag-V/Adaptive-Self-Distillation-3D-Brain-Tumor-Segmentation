@@ -1,0 +1,33 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Git
+.git/
+.gitignore
+
+# Frontend & Node
+node_modules/
+dashboard/frontend/
+
+# Local data & logs
+data/raw/
+*.log
+scratch/
+
+# Runtime sessions
+dashboard/backend/runtime/sessions/
+runtime/sessions/
+
+# Local env files
+.env
+.env.*
+!.env.example

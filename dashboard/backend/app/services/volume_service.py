@@ -142,10 +142,13 @@ class VolumeService:
             # Check session prediction
             p1 = SESSIONS_RUNTIME_DIR / subject_id / "prediction.nii.gz"
             p2 = SESSIONS_DIR / subject_id / "prediction.nii.gz"
-            if p1.exists():
-                target_path = p1
-            elif p2.exists():
-                target_path = p2
+            p3 = subj_dir / "prediction.nii.gz"
+            p4 = subj_dir / f"{subject_id}_pred.nii.gz"
+            p5 = subj_dir / f"{subject_id}_prediction.nii.gz"
+            for cand in [p1, p2, p3, p4, p5]:
+                if cand.exists():
+                    target_path = cand
+                    break
         elif kind.lower() in ["corrected", "annotation"]:
             # Check active human correction mask
             p_corr = ANNOTATIONS_BASE / subject_id / "corrected_seg.nii.gz"
@@ -155,20 +158,25 @@ class VolumeService:
                 # Fallback to prediction or ground truth
                 p_pred1 = SESSIONS_RUNTIME_DIR / subject_id / "prediction.nii.gz"
                 p_pred2 = SESSIONS_DIR / subject_id / "prediction.nii.gz"
-                if p_pred1.exists():
-                    target_path = p_pred1
-                elif p_pred2.exists():
-                    target_path = p_pred2
-                elif (subj_dir / f"{subject_id}_seg.nii.gz").exists():
-                    target_path = subj_dir / f"{subject_id}_seg.nii.gz"
+                p_pred3 = subj_dir / "prediction.nii.gz"
+                p_seg1 = subj_dir / f"{subject_id}_seg.nii.gz"
+                p_seg2 = subj_dir / "seg.nii.gz"
+                for cand in [p_pred1, p_pred2, p_pred3, p_seg1, p_seg2]:
+                    if cand.exists():
+                        target_path = cand
+                        break
         elif kind.lower() in ["original", "orig", "original_prediction"]:
             p_orig = ANNOTATIONS_BASE / subject_id / "original_seg.nii.gz"
             if p_orig.exists():
                 target_path = p_orig
             else:
-                p_pred = SESSIONS_DIR / subject_id / "prediction.nii.gz"
-                if p_pred.exists():
-                    target_path = p_pred
+                p_pred1 = SESSIONS_RUNTIME_DIR / subject_id / "prediction.nii.gz"
+                p_pred2 = SESSIONS_DIR / subject_id / "prediction.nii.gz"
+                p_pred3 = subj_dir / "prediction.nii.gz"
+                for cand in [p_pred1, p_pred2, p_pred3]:
+                    if cand.exists():
+                        target_path = cand
+                        break
         elif kind.lower() == "ct":
             p1 = subj_dir / f"{subject_id}_ct.nii.gz"
             p2 = subj_dir / "ct.nii.gz"

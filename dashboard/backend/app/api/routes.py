@@ -41,6 +41,30 @@ async def get_health():
     )
 
 
+@router.get("/ready")
+async def get_ready():
+    """
+    Readiness probe reporting actual model loading and GPU/CPU device status.
+    """
+    seg_ready = InferenceService.is_ready()
+    status_dict = InferenceService.get_status()
+    classifier_loaded = False
+    try:
+        from app.services.classification_service import ClassificationService
+        _, dev = ClassificationService.get_model()
+        classifier_loaded = True
+    except Exception:
+        classifier_loaded = False
+
+    is_all_ready = seg_ready and classifier_loaded
+    return {
+        "status": "ready" if is_all_ready else "degraded",
+        "segmentation_model_loaded": seg_ready,
+        "classifier_model_loaded": classifier_loaded,
+        "device": status_dict.get("device", "cpu")
+    }
+
+
 @router.post("/upload", response_model=UploadResponse)
 async def upload_modalities(
     flair: UploadFile = File(None),
@@ -318,7 +342,7 @@ async def get_patient_info(patient_id: str):
 @router.get("/patients/{patient_id}/tumor-burden")
 async def get_patient_tumor_burden(
     patient_id: str,
-    seg_source: str = Query("ground_truth", description="ground_truth or prediction")
+    seg_source: str = Query("ground_truth", description="ground_truth, prediction, or corrected")
 ):
     """
     Calculates quantitative tumor burden, affected slice extents, relative intracranial burden,
@@ -327,11 +351,18 @@ async def get_patient_tumor_burden(
     clean_id = sanitize_filename(patient_id)
     from app.services.tumor_burden_service import TumorBurdenService
     result = TumorBurdenService.analyze_tumor_burden(clean_id, seg_source=seg_source)
-    if not result.get("success", False) and "not found" in result.get("error", "").lower():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=result.get("error", f"Patient {clean_id} not found.")
-        )
+    if not result.get("success", False):
+        err = result.get("error", "")
+        if "expired or is unavailable" in err or "could not be found" in err:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=err
+            )
+        if "missing:" in err or "could not be read" in err:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=err
+            )
     return result
 
 

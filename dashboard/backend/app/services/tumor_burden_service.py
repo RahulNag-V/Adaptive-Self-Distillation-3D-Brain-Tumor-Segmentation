@@ -6,7 +6,9 @@ and relative intracranial tumor burden from real multimodal MRI and BraTS segmen
 from pathlib import Path
 import json
 import logging
+import re
 from typing import Dict, Any, Optional, List, Tuple
+import uuid
 import numpy as np
 import nibabel as nib
 
@@ -15,6 +17,15 @@ from app.services.volume_service import VolumeService
 logger = logging.getLogger("neuroseg3d.burden")
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "tumor_burden_config.json"
+
+UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
+
+
+def is_valid_uuid(val: str) -> bool:
+    """Checks whether an identifier string is a valid UUID format."""
+    if not val:
+        return False
+    return bool(UUID_PATTERN.match(str(val).strip()))
 
 
 def load_burden_config() -> Dict[str, Any]:
@@ -52,7 +63,7 @@ class TumorBurdenService:
         if not subj_dir:
             return (1.0, 1.0, 1.0)
 
-        for mod in ["flair", "t1", "t1ce", "t2"]:
+        for mod in ["flair", "t1", "t1ce", "t2", "ct"]:
             p = subj_dir / f"{subject_id}_{mod}.nii.gz"
             if not p.exists():
                 p = subj_dir / f"{mod}.nii.gz"
@@ -79,18 +90,57 @@ class TumorBurdenService:
         Computes physical volume, slice-wise peak area, anatomical extent,
         relative intracranial volume burden, and research classification.
         """
-        # 1. Retrieve canonical MRI volume
-        mri_vol = VolumeService.get_volume_array(subject_id, "flair")
-        if mri_vol is None:
-            for m in ["t1", "t1ce", "t2"]:
-                mri_vol = VolumeService.get_volume_array(subject_id, m)
-                if mri_vol is not None:
-                    break
+        # 1. Distinguish between Session UUID and Dataset Patient ID
+        is_session = is_valid_uuid(subject_id)
+        if is_session:
+            subj_dir = VolumeService._find_session_dir(subject_id)
+            if not subj_dir or not subj_dir.exists():
+                return {
+                    "success": False,
+                    "error": "The analysis session has expired or is unavailable. Please load the scan again.",
+                    "patient_id": subject_id,
+                }
+        else:
+            subj_dir = VolumeService._find_subject_dir(subject_id)
+            if not subj_dir or not subj_dir.exists():
+                return {
+                    "success": False,
+                    "error": "The requested patient could not be found in the available dataset.",
+                    "patient_id": subject_id,
+                }
 
-        if mri_vol is None:
+        # 2. Check available modalities in resolved directory
+        mod_files: Dict[str, Path] = {}
+        for mod in ["flair", "t1", "t1ce", "t2", "ct"]:
+            p1 = subj_dir / f"{subject_id}_{mod}.nii.gz"
+            p2 = subj_dir / f"{mod}.nii.gz"
+            if p1.exists():
+                mod_files[mod] = p1
+            elif p2.exists():
+                mod_files[mod] = p2
+
+        # Check if CT session (CT scan without standard MRI modalities)
+        is_ct_session = ("ct" in mod_files) and not any(m in mod_files for m in ["flair", "t1", "t1ce", "t2"])
+
+        if is_ct_session:
+            canonical_mod = "ct"
+        else:
+            # Check for all four required MRI modalities: FLAIR, T1, T1ce, T2
+            for required_mod, label in [("flair", "FLAIR"), ("t1", "T1"), ("t1ce", "T1ce"), ("t2", "T2")]:
+                if required_mod not in mod_files:
+                    return {
+                        "success": False,
+                        "error": f"Calculation cannot proceed. The following MRI modality is missing: {label}.",
+                        "patient_id": subject_id,
+                    }
+            canonical_mod = "flair"
+
+        # Load canonical volume (flair or ct)
+        mri_vol = VolumeService.get_volume_array(subject_id, canonical_mod)
+        if mri_vol is None or not np.all(np.isfinite(mri_vol)):
             return {
                 "success": False,
-                "error": f"Patient '{subject_id}' not found or has no readable MRI modalities.",
+                "error": "The MRI file could not be read. Please verify that the uploaded file is a valid NIfTI volume.",
                 "patient_id": subject_id,
             }
 
@@ -105,31 +155,44 @@ class TumorBurdenService:
         coronal_pixel_area_mm2 = float(sx * sz)
         sagittal_pixel_area_mm2 = float(sy * sz)
 
-        # 2. Retrieve segmentation mask based on requested source
-        is_ground_truth = seg_source.lower() in ["ground_truth", "gt"]
-        seg_kind = "seg" if is_ground_truth else "pred"
-        seg_vol = VolumeService.get_volume_array(subject_id, seg_kind)
+        # 3. Retrieve segmentation mask based on requested source
+        seg_source_lower = (seg_source or "ground_truth").lower()
+        if seg_source_lower in ["ground_truth", "gt"]:
+            seg_kind = "seg"
+            assessment_source_name = "Ground Truth (Manual Expert Annotation)"
+            assessment_source_tag = "ground_truth"
+        elif seg_source_lower in ["corrected", "annotation"]:
+            seg_kind = "corrected"
+            assessment_source_name = "Human-Corrected Clinical Annotation"
+            assessment_source_tag = "corrected"
+        elif seg_source_lower in ["original", "orig"]:
+            seg_kind = "original"
+            assessment_source_name = "Original Model Prediction (Pre-Correction)"
+            assessment_source_tag = "original"
+        else:
+            seg_kind = "pred"
+            assessment_source_name = "Model Prediction (Adaptive UNETR + Self-Distillation)"
+            assessment_source_tag = "prediction"
 
-        assessment_source_name = (
-            "Ground Truth (Manual Expert Annotation)"
-            if is_ground_truth
-            else "Model Prediction (Adaptive UNETR + Self-Distillation)"
-        )
+        is_ground_truth = (seg_kind == "seg")
+        seg_vol = VolumeService.get_volume_array(subject_id, seg_kind)
 
         has_mask = seg_vol is not None
         if not has_mask:
-            # Check why prediction is missing if requested
-            pred_note = ""
-            if not is_ground_truth:
-                pred_note = "Model prediction has not been generated for this case yet. Click 'Run Prediction' to execute sliding-window inference."
+            if seg_kind == "seg":
+                pred_note = f"Ground truth segmentation mask is not available for patient '{subject_id}'."
+            elif seg_kind == "corrected":
+                pred_note = f"Corrected segmentation mask has not been saved for patient '{subject_id}' yet. Use the 3D annotation brush to contour lesions or switch to Model Prediction."
+            else:
+                pred_note = f"Segmentation mask (prediction) not available for patient '{subject_id}'. Model prediction has not been generated for this case yet. Click 'Run Prediction' to execute sliding-window inference."
 
             return {
                 "success": False,
                 "patient_id": subject_id,
-                "assessment_source": "prediction" if not is_ground_truth else "ground_truth",
+                "assessment_source": assessment_source_tag,
                 "assessment_source_label": assessment_source_name,
                 "has_segmentation": False,
-                "error": f"Segmentation mask ({seg_kind}) not available for patient '{subject_id}'. {pred_note}".strip(),
+                "error": pred_note,
                 "dimensions": {"sagittal": shape_x, "coronal": shape_y, "axial": shape_z},
                 "voxel_spacing_mm": [round(sx, 3), round(sy, 3), round(sz, 3)],
             }
@@ -215,8 +278,12 @@ class TumorBurdenService:
             }
 
         # 6. Intracranial / Brain Volume Denominator
-        # Skull-stripped BraTS brain foreground voxels (> 0)
-        brain_mask = mri_vol > 0
+        # For MRI: skull-stripped BraTS brain foreground voxels (> 0)
+        # For CT: brain parenchyma Hounsfield window (0 to 100 HU)
+        if is_ct_session:
+            brain_mask = (mri_vol >= 0) & (mri_vol <= 100)
+        else:
+            brain_mask = mri_vol > 0
         brain_voxels = int(np.count_nonzero(brain_mask))
         brain_volume_cm3 = round(brain_voxels * voxel_vol_cm3, 2)
 

@@ -352,23 +352,72 @@ export default function MedicalViewer({
       alpha: true,
       powerPreference: 'high-performance',
     });
-    renderer.setSize(width, height);
+    renderer.setSize(width, height, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
+
+    // Ensure the WebGL canvas fills the entire viewport container
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.touchAction = 'none';
+    renderer.domElement.style.cursor = 'inherit';
     mountEl.appendChild(renderer.domElement);
 
-    // 4. OrbitControls
-    const controls = new OrbitControls(camera, renderer.domElement);
+    // 4. OrbitControls bound directly to mountEl for full-viewport cursor interaction
+    const controls = new OrbitControls(camera, mountEl);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.rotateSpeed = 0.85;
-    controls.zoomSpeed = 1.0;
-    controls.panSpeed = 0.8;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.95;
+    controls.panSpeed = 0.85;
+    controls.enableZoom = false; // Handled smoothly and exclusively by our dedicated wheel handler below
     controls.minDistance = 1.2;
     controls.maxDistance = 8.0;
     controls.target.set(0, 0, 0);
+
+    // Dedicated high-precision wheel navigation:
+    // • Wheel Up / Down: Smooth Zoom / Dolly In / Out
+    // • Shift + Wheel: Smooth vertical pitch/tilt rotation
+    const handleWheel = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Pause continuous auto-rotation on manual interaction
+      setAutoRotate(false);
+
+      if (e.shiftKey) {
+        // Shift + Wheel: Tilt/pitch vertical rotation
+        const sign = e.deltaY < 0 ? -1 : 1;
+        const rad = THREE.MathUtils.degToRad(8);
+        const offset = camera.position.clone().sub(controls.target);
+        const right = new THREE.Vector3().crossVectors(camera.up, offset).normalize();
+        offset.applyAxisAngle(right, sign * rad);
+        camera.position.copy(controls.target).add(offset);
+        controls.update();
+      } else {
+        // Standard Wheel: Smooth Zoom In / Zoom Out (Dolly)
+        const zoomDelta = e.deltaY < 0 ? 0.90 : 1.11;
+        const offset = camera.position.clone().sub(controls.target);
+        const currentDistance = offset.length();
+        const newDistance = THREE.MathUtils.clamp(currentDistance * zoomDelta, 1.2, 8.0);
+        offset.setLength(newDistance);
+        camera.position.copy(controls.target).add(offset);
+        controls.update();
+      }
+    };
+
+    // Pause auto-rotation when user clicks or touches to rotate
+    const handlePointerDown = () => {
+      setAutoRotate(false);
+    };
+
+    mountEl.addEventListener('wheel', handleWheel, { passive: false });
+    mountEl.addEventListener('pointerdown', handlePointerDown);
 
     // 5. Scientifically Inspired Anatomical Lighting (Superior & Inferior 360° Illumination)
     const initPreset = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === activeAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
@@ -581,7 +630,7 @@ export default function MedicalViewer({
 
     threeStateRef.current.animationFrameId = requestAnimationFrame(animate);
 
-    // 9. Resize Handling via ResizeObserver
+    // 9. Resize Handling via ResizeObserver (pass false to preserve 100% CSS styling)
     const handleResize = () => {
       if (!mountEl || !renderer || !camera) return;
       const w = mountEl.clientWidth;
@@ -589,7 +638,7 @@ export default function MedicalViewer({
       if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderer.setSize(w, h, false);
     };
 
     const resizeObserver = new ResizeObserver(handleResize);
@@ -598,6 +647,8 @@ export default function MedicalViewer({
     // Cleanup GPU resources
     return () => {
       resizeObserver.disconnect();
+      mountEl.removeEventListener('wheel', handleWheel);
+      mountEl.removeEventListener('pointerdown', handlePointerDown);
       if (threeStateRef.current.animationFrameId) {
         cancelAnimationFrame(threeStateRef.current.animationFrameId);
       }
@@ -960,7 +1011,7 @@ export default function MedicalViewer({
   useEffect(() => {
     if (!viewerCommand) return;
     const { type } = viewerCommand;
-    if (type === 'ROTATE' || type === 'ROTATE_ONCE') {
+    if (type === 'ROTATE' || type === 'ROTATE_ONCE' || type === 'ROTATE_VERTICAL') {
       // One-shot discrete rotation: rotate once and ensure continuous autoRotate is stopped!
       setAutoRotate(false);
       handleRotateCamera(viewerCommand.direction, viewerCommand.degrees);
@@ -1156,9 +1207,10 @@ export default function MedicalViewer({
         {/* 3D WebGL Three.js Viewport (Visible in 3D Mode) */}
         <div
           ref={threeMountRef}
-          className={`w-full h-full cursor-grab active:cursor-grabbing ${
+          className={`w-full h-full relative cursor-grab active:cursor-grabbing touch-none select-none ${
             viewMode === '3d' ? 'block' : 'hidden'
           }`}
+          style={{ touchAction: 'none' }}
         />
 
         {/* Loading Overlay for 3D Brain Model */}

@@ -42,6 +42,7 @@ import {
   rollbackModel,
   seedDemoSample
 } from '../api/adaptive';
+import { useVoice } from '../voice/VoiceContext';
 
 export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewer }) {
   // Top-level stats & datasets
@@ -101,6 +102,29 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  const { registerPageActionHandler } = useVoice();
+
+  // Voice confirmation-guarded actions
+  useEffect(() => {
+    if (!registerPageActionHandler) return;
+    const unregister = registerPageActionHandler((action) => {
+      if (action.confirmed) {
+        if (action.type === 'START_TRAINING') {
+          handleStartTraining();
+        } else if (action.type === 'PROMOTE_CANDIDATE') {
+          const cands = registry?.candidate_models || [];
+          const passedCand = cands.find((c) => c.evaluation_passed);
+          if (passedCand) {
+            handlePromoteCandidate(passedCand.model_id);
+          }
+        } else if (action.type === 'ROLLBACK_MODEL') {
+          handleRollback();
+        }
+      }
+    });
+    return unregister;
+  }, [registerPageActionHandler, registry]);
 
   // --- Supervisory Review Actions ---
   const handleExecuteReview = async () => {

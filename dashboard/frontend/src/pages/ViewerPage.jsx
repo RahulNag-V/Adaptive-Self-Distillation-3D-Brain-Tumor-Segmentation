@@ -54,7 +54,7 @@ import {
   compareMasks 
 } from '../api/adaptive';
 import { REGION_LEGEND, DEMO_CASE_METADATA } from '../utils/mockData';
-import { useVoiceContext } from '../context/VoiceControlContext';
+import { useVoice } from '../voice/VoiceContext';
 
 export default function ViewerPage({ currentResult, onNavigate }) {
   // Patient and Dataset State
@@ -408,7 +408,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   };
 
   // Voice Control Integration
-  const { registerViewerHandler, updateViewerStatus } = useVoiceContext();
+  const { registerViewerHandler, updateViewerStatus } = useVoice();
 
   // Keep shared voice viewer status synchronized
   useEffect(() => {
@@ -447,30 +447,61 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       // 3. Multi-Axis and Single-Axis Coordinate Controls (Sections 4 & 5)
       else if (type === 'SET_COORDINATES') {
+        let hasInvalid = false;
+        let invalidMsg = '';
+        const newCoords = {};
+
         if (action.coordinates.x !== undefined) {
-          setSagittalSlice(Math.max(0, Math.min(dimensions.sagittal - 1, action.coordinates.x)));
+          if (action.coordinates.x < 0 || action.coordinates.x >= dimensions.sagittal) {
+            hasInvalid = true;
+            invalidMsg = `Sagittal (X) coordinate ${action.coordinates.x} is out of bounds (Valid range: 0 to ${dimensions.sagittal - 1}).`;
+          } else {
+            newCoords.x = action.coordinates.x;
+          }
         }
         if (action.coordinates.y !== undefined) {
-          setCoronalSlice(Math.max(0, Math.min(dimensions.coronal - 1, action.coordinates.y)));
+          if (action.coordinates.y < 0 || action.coordinates.y >= dimensions.coronal) {
+            hasInvalid = true;
+            invalidMsg = `Coronal (Y) coordinate ${action.coordinates.y} is out of bounds (Valid range: 0 to ${dimensions.coronal - 1}).`;
+          } else {
+            newCoords.y = action.coordinates.y;
+          }
         }
         if (action.coordinates.z !== undefined) {
-          setAxialSlice(Math.max(0, Math.min(dimensions.axial - 1, action.coordinates.z)));
+          if (action.coordinates.z < 0 || action.coordinates.z >= dimensions.axial) {
+            hasInvalid = true;
+            invalidMsg = `Axial (Z) coordinate ${action.coordinates.z} is out of bounds (Valid range: 0 to ${dimensions.axial - 1}).`;
+          } else {
+            newCoords.z = action.coordinates.z;
+          }
         }
-        if (updateViewerStatus && action.feedback) {
-          updateViewerStatus({ lastFeedback: action.feedback });
+
+        if (hasInvalid) {
+          if (updateViewerStatus) updateViewerStatus({ lastFeedback: invalidMsg });
+        } else {
+          if (newCoords.x !== undefined) setSagittalSlice(newCoords.x);
+          if (newCoords.y !== undefined) setCoronalSlice(newCoords.y);
+          if (newCoords.z !== undefined) setAxialSlice(newCoords.z);
+          if (updateViewerStatus && action.feedback) {
+            updateViewerStatus({ lastFeedback: action.feedback });
+          }
         }
       }
 
       else if (type === 'SET_AXIS_COORDINATE') {
-        if (action.axis === 'z') {
-          setAxialSlice(Math.max(0, Math.min(dimensions.axial - 1, action.value)));
-        } else if (action.axis === 'y') {
-          setCoronalSlice(Math.max(0, Math.min(dimensions.coronal - 1, action.value)));
-        } else if (action.axis === 'x') {
-          setSagittalSlice(Math.max(0, Math.min(dimensions.sagittal - 1, action.value)));
-        }
-        if (updateViewerStatus && action.feedback) {
-          updateViewerStatus({ lastFeedback: action.feedback });
+        const maxVal = action.axis === 'z' ? dimensions.axial : action.axis === 'y' ? dimensions.coronal : dimensions.sagittal;
+        const planeName = action.axis === 'z' ? 'Axial (Z)' : action.axis === 'y' ? 'Coronal (Y)' : 'Sagittal (X)';
+        if (action.value < 0 || action.value >= maxVal) {
+          if (updateViewerStatus) {
+            updateViewerStatus({ lastFeedback: `${planeName} coordinate ${action.value} is out of bounds (Valid range: 0 to ${maxVal - 1}).` });
+          }
+        } else {
+          if (action.axis === 'z') setAxialSlice(action.value);
+          else if (action.axis === 'y') setCoronalSlice(action.value);
+          else if (action.axis === 'x') setSagittalSlice(action.value);
+          if (updateViewerStatus && action.feedback) {
+            updateViewerStatus({ lastFeedback: action.feedback });
+          }
         }
       }
 
@@ -494,17 +525,27 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           if (updateViewerStatus) updateViewerStatus({ lastFeedback: `Current case is ${selectedPatientId}` });
         } else if (action.query) {
           const q = String(action.query).toLowerCase().replace(/[^a-z0-9]/g, '');
-          const found = patients.find((p) => {
+          const exact = patients.find((p) => {
             const pid = p.id.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return pid === q || pid.endsWith(q) || pid.includes(q);
+            return pid === q || pid.endsWith(q) || pid === `brats2021${q}`;
           });
-          if (found) {
-            setSelectedPatientId(found.id);
-            if (updateViewerStatus) updateViewerStatus({ lastFeedback: `Selected case ${found.id}` });
+          if (exact) {
+            setSelectedPatientId(exact.id);
+            if (updateViewerStatus) updateViewerStatus({ lastFeedback: `Loading case ${exact.id}.` });
           } else {
-            // Explicit requirement: Preserve current case if not found & display informative message
-            if (updateViewerStatus) {
-              updateViewerStatus({ lastFeedback: `Case not found. The current case has not changed.` });
+            const partials = patients.filter((p) => {
+              const pid = p.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+              return pid.includes(q);
+            });
+            if (partials.length > 1) {
+              const candidateList = partials.slice(0, 3).map((c) => c.id).join(', ');
+              if (updateViewerStatus) {
+                updateViewerStatus({ lastFeedback: `Multiple cases match "${action.query}": ${candidateList}. Please specify exact ID.` });
+              }
+            } else {
+              if (updateViewerStatus) {
+                updateViewerStatus({ lastFeedback: "I couldn't find that patient in the available dataset." });
+              }
             }
           }
         }
@@ -562,6 +603,15 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         });
       }
 
+      else if (type === 'ROTATE_VERTICAL') {
+        setThreeCommand({
+          type: 'ROTATE_VERTICAL',
+          direction: action.direction || 'up',
+          degrees: action.degrees || 15,
+          id: Date.now(),
+        });
+      }
+
       else if (type === 'START_CONTINUOUS_ROTATION') {
         // Continuous rotation on 3D view
         setThreeCommand({
@@ -594,8 +644,17 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       }
 
       else if (type === 'SET_BRAIN_APPEARANCE') {
-        setBrainAppearance(action.mode);
-        setThreeCommand({ type: 'SET_BRAIN_APPEARANCE', mode: action.mode, id: Date.now() });
+        const APPEARANCES = ['regions', 'natural', 'contrast', 'original'];
+        let targetMode = action.mode;
+        if (action.mode === 'cycle') {
+          const curIdx = APPEARANCES.indexOf(brainAppearance);
+          const nextIdx = action.direction === 'prev'
+            ? (curIdx <= 0 ? APPEARANCES.length - 1 : curIdx - 1)
+            : (curIdx >= 0 ? (curIdx + 1) % APPEARANCES.length : 0);
+          targetMode = APPEARANCES[nextIdx];
+        }
+        setBrainAppearance(targetMode);
+        setThreeCommand({ type: 'SET_BRAIN_APPEARANCE', mode: targetMode, id: Date.now() });
       }
 
       else if (type === 'SHOW_LAYERS_PANEL') {
@@ -604,6 +663,21 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       else if (type === 'HIDE_LAYERS_PANEL') {
         setActiveRightTab('burden');
+      }
+
+      else if (type === 'SHOW_VOLUMETRICS_PANEL') {
+        setActiveRightTab('burden');
+      }
+
+      else if (type === 'SHOW_LAYERS_AND_VOLUMETRICS') {
+        setActiveRightTab('layers');
+      }
+
+      else if (type === 'LIST_PATIENTS') {
+        const patientNames = patients.slice(0, 5).map((p) => p.id).join(', ');
+        if (updateViewerStatus) {
+          updateViewerStatus({ lastFeedback: `Available patients include ${patientNames}, and others in the cohort.` });
+        }
       }
 
       else if (type === 'UNSUPPORTED_FEATURE' || type === 'SET_RENDER_MODE') {
@@ -648,7 +722,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       // Fullscreen Maximize / Minimize
       else if (type === 'FULLSCREEN') {
         if (action.enabled) {
-          const target = viewLayout === 'quad' ? 'axial' : viewLayout;
+          const target = action.target === '3d' ? '3d' : (viewLayout === 'quad' ? 'axial' : viewLayout);
           setMaximizedViewer(target);
         } else {
           setMaximizedViewer(null);
@@ -686,7 +760,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       }
 
       else if (type === 'TOGGLE_SUBREGION') {
-        toggleSubregion(action.key);
+        if (action.enabled !== undefined) {
+          setSubregions((prev) => ({ ...prev, [action.key]: action.enabled }));
+        } else {
+          toggleSubregion(action.key);
+        }
       }
 
       // 10. Image Display Adjustments

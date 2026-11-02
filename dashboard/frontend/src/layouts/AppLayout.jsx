@@ -23,8 +23,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useServerStatus } from '../hooks/useServerStatus';
-import VoiceControlWidget from '../components/VoiceControlWidget';
-import { useVoiceContext } from '../context/VoiceControlContext';
+import VoiceButton from '../voice/VoiceButton';
+import { useVoice } from '../voice/VoiceContext';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Home / Overview', icon: LayoutDashboard },
@@ -100,7 +100,7 @@ const ROUTE_METADATA = {
 export default function AppLayout({ activeTab, onTabChange, onPlayIntro, children }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const currentMeta = ROUTE_METADATA[activeTab] || ROUTE_METADATA.overview;
-  const { voiceControl, registerLayoutHandler } = useVoiceContext();
+  const { registerLayoutHandler } = useVoice();
   
   // Collapsible sidebar state with localStorage persistence
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -421,8 +421,8 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Voice Control Widget */}
-            <VoiceControlWidget voiceControl={voiceControl} activeTab={activeTab} />
+            {/* Voice Control Button Group */}
+            <VoiceButton />
 
             {/* Play Intro Button */}
             {onPlayIntro && (
@@ -464,7 +464,7 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
         </header>
 
         {/* Dynamic Page Content (Light SaaS background or Dark MRI Viewing Environment) */}
-        <main className={`flex-1 overflow-y-auto ${
+        <main id="neurovision-main-scroll" className={`flex-1 overflow-y-auto ${
           isViewerTab ? 'bg-[#101B2D] text-[#F1F5F9] mri-viewport' : 'bg-[#F7FAFC] text-[#16324F]'
         }`}>
           <div className="animate-page-in h-full">

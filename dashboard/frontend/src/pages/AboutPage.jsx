@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useVoice } from '../voice/VoiceContext';
 import { 
   ShieldAlert, 
   Info, 
@@ -19,6 +20,17 @@ import {
 
 export default function AboutPage({ onNavigate }) {
   const [activeFaq, setActiveFaq] = useState(0);
+  const { registerPageActionHandler } = useVoice();
+
+  useEffect(() => {
+    if (!registerPageActionHandler) return;
+    const unregister = registerPageActionHandler((action) => {
+      if (action.type === 'EXPAND_VIVA_QUESTION') {
+        setActiveFaq((prev) => (prev + 1) % 5);
+      }
+    });
+    return unregister;
+  }, [registerPageActionHandler]);
 
   const VIVA_QUESTIONS = [
     {

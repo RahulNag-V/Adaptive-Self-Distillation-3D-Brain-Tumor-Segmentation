@@ -12,7 +12,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import ReportPage from './pages/ReportPage';
 import SettingsPage from './pages/SettingsPage';
 import CinematicIntro from './components/CinematicIntro';
-import { VoiceControlProvider } from './context/VoiceControlContext';
+import { VoiceProvider } from './voice/VoiceContext';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -54,9 +54,22 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab) return tab;
+    }
+    return 'overview';
+  });
   const [liveResult, setLiveResult] = useState(null);
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('nointro') === 'true' || params.get('tab')) return false;
+    }
+    return true;
+  });
 
   const handleSegmentationComplete = (result) => {
     setLiveResult(result);
@@ -125,7 +138,7 @@ export default function App() {
       {showIntro && (
         <CinematicIntro onComplete={() => setShowIntro(false)} />
       )}
-      <VoiceControlProvider
+      <VoiceProvider
         activeTab={activeTab}
         onNavigate={setActiveTab}
         onPlayIntro={() => setShowIntro(true)}
@@ -139,7 +152,7 @@ export default function App() {
             {renderActivePage()}
           </ErrorBoundary>
         </AppLayout>
-      </VoiceControlProvider>
+      </VoiceProvider>
     </ErrorBoundary>
   );
 }

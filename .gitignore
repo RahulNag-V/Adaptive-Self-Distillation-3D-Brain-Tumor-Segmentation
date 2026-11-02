@@ -20,22 +20,44 @@ env/
 node_modules/
 dashboard/frontend/node_modules/
 dashboard/frontend/.firebase/
-dashboard/frontend/.env.local
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs & Temporary Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tmp
+*.temp
+dashboard/frontend/audit_full_matrix.json
+dashboard/frontend/src/services/generateAuditMatrix.js
+dashboard/frontend/src/services/manualAudit.js
+dashboard/frontend/src/services/printFailures.js
 
 # Large Datasets & Raw Data
 data/raw/
+data/processed/
 *.nii
 *.nii.gz
 NeuroVisionAI/
 
 # Runtime temporary sessions & caches
 dashboard/backend/runtime/
+dashboard/backend/runtime/sessions/
 
 # Checkpoints & Model Weights (large binaries)
 checkpoints/
 dashboard/checkpoints/
 *.pth
 *.pt
+*.ckpt
 *.bin
 *.onnx
 

@@ -1,98 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Mic, 
   MicOff, 
   Volume2, 
   VolumeX, 
-  HelpCircle, 
   CheckCircle2, 
   AlertCircle, 
   Loader2, 
   X, 
   Sparkles,
-  Command,
-  ChevronDown,
-  ChevronUp,
-  Layers,
-  RotateCw,
-  Sliders,
-  ZoomIn,
-  Navigation,
-  Compass,
   FolderOpen,
-  Check,
-  Crosshair,
-  Box,
-  Eye
+  Compass,
+  BookOpen
 } from 'lucide-react';
-import { VOICE_COMMANDS_HELP } from '../services/voiceCommandParser';
 import { useVoiceContext } from '../context/VoiceControlContext';
-
-const CATEGORY_META = {
-  'All': { 
-    icon: Sparkles, 
-    color: 'text-blue-600', 
-    bg: 'bg-blue-50', 
-    border: 'border-blue-200',
-    description: 'All available voice commands across the platform' 
-  },
-  'Website Navigation': { 
-    icon: Compass, 
-    color: 'text-sky-600', 
-    bg: 'bg-sky-50', 
-    border: 'border-sky-200',
-    description: 'Jump between dashboard, viewer, lab, and reports' 
-  },
-  'X, Y, Z Coordinates': { 
-    icon: Crosshair, 
-    color: 'text-teal-600', 
-    bg: 'bg-teal-50', 
-    border: 'border-teal-200',
-    description: 'Exact anatomical coordinate slice navigation' 
-  },
-  'Case & Dataset Selection': { 
-    icon: FolderOpen, 
-    color: 'text-purple-600', 
-    bg: 'bg-purple-50', 
-    border: 'border-purple-200',
-    description: 'Load BraTS patients, cohorts, and demo scans' 
-  },
-  'Rotation & Camera Movement': { 
-    icon: RotateCw, 
-    color: 'text-amber-600', 
-    bg: 'bg-amber-50', 
-    border: 'border-amber-200',
-    description: '3D Orbiting, continuous spinning, and camera reset' 
-  },
-  '3D Mesh & Rendering Modes': { 
-    icon: Box, 
-    color: 'text-emerald-600', 
-    bg: 'bg-emerald-50', 
-    border: 'border-emerald-200',
-    description: 'Surface meshes, volume MIP, bounding box overlays' 
-  },
-  'Menu, Sidebar & Panels': { 
-    icon: Sliders, 
-    color: 'text-indigo-600', 
-    bg: 'bg-indigo-50', 
-    border: 'border-indigo-200',
-    description: 'Sidebar toggle, fullscreen view, and panel layouts' 
-  },
-  'Segmentation & Overlays': { 
-    icon: Eye, 
-    color: 'text-rose-600', 
-    bg: 'bg-rose-50', 
-    border: 'border-rose-200',
-    description: 'WT, TC, ET tumor masks, opacity, and ground truth' 
-  },
-};
+import VoiceManualModal from './VoiceManualModal';
 
 export default function VoiceControlWidget({
   voiceControl,
   activeTab = 'viewer',
-  onHelpOpen,
 }) {
-  const { viewerStatus, registerLayoutHandler } = useVoiceContext();
+  const { viewerStatus, registerLayoutHandler, pendingConfirmation } = useVoiceContext();
+  const [showManualModal, setShowManualModal] = useState(false);
 
   if (!voiceControl) {
     return null;
@@ -112,79 +41,58 @@ export default function VoiceControlWidget({
     stopListening,
   } = voiceControl;
 
-  const [showHelpModal, setShowHelpModal] = useState(false);
-  const [activeHelpCategory, setActiveHelpCategory] = useState('All');
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const dropdownRef = useRef(null);
-
-  // Close custom dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsCategoryDropdownOpen(false);
-      }
-    };
-    if (isCategoryDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isCategoryDropdownOpen]);
-
-  // Listen for voice layout commands targeting the help panel
+  // Listen for voice layout commands targeting the manual modal
   useEffect(() => {
     if (!registerLayoutHandler) return;
     const unregister = registerLayoutHandler((action) => {
-      if (action.type === 'OPEN_HELP_MODAL') {
-        setShowHelpModal(true);
-      } else if (action.type === 'CLOSE_HELP_MODAL') {
-        setShowHelpModal(false);
+      if (action.type === 'OPEN_MANUAL' || action.type === 'OPEN_HELP_MODAL') {
+        setShowManualModal(true);
+      } else if (action.type === 'CLOSE_MANUAL' || action.type === 'CLOSE_HELP_MODAL') {
+        setShowManualModal(false);
       }
     });
     return unregister;
   }, [registerLayoutHandler]);
 
-  // Global keyboard shortcut 'v' or 'm' to toggle voice control (when not typing in an input)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
-        return;
-      }
-      if (e.key === 'v' || e.key === 'V') {
-        e.preventDefault();
-        toggleListening();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleListening]);
-
   if (!isSupported) {
     return (
-      <div className="relative group">
+      <div className="flex items-center gap-1.5">
         <button
           disabled
-          className="p-1.5 rounded-lg bg-medical-card/60 border border-medical-border/60 text-medical-muted/40 cursor-not-allowed opacity-50 flex items-center gap-1.5 text-xs font-mono"
-          title="Speech Recognition is not supported in this browser"
+          className="p-1.5 rounded-lg bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed opacity-60 flex items-center gap-1.5 text-xs font-mono"
+          title="Web Speech Recognition API is not supported in this browser. Please use Chrome, Edge, or Safari."
         >
           <MicOff className="w-4 h-4" />
           <span className="hidden xl:inline">Voice Unavailable</span>
         </button>
+
+        {/* Manual Button still accessible even if speech is not supported in browser! */}
+        <button
+          onClick={() => setShowManualModal(true)}
+          type="button"
+          aria-label="Voice Control Manual"
+          title="Voice Control Manual"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] transition-all shadow-2xs"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-[#2563EB]" />
+          <span className="hidden sm:inline font-mono font-medium text-[11px]">Manual</span>
+        </button>
+
+        <VoiceManualModal isOpen={showManualModal} onClose={() => setShowManualModal(false)} />
       </div>
     );
   }
 
   return (
     <>
-      {/* 1. HEADER MIC PILL */}
+      {/* 1. HEADER VOICE & MANUAL BUTTON GROUP */}
       <div className="relative flex items-center gap-1.5">
+        {/* Existing Voice button with preserved styling and accurate state indication */}
         <button
           onClick={toggleListening}
           type="button"
-          aria-label={isListening ? 'Stop Voice Control (V)' : 'Start Voice Control (V)'}
-          title={isListening ? 'Stop Voice Recognition (Press V)' : 'Start Voice Control (Press V)'}
+          aria-label={isListening ? 'Stop Voice Control (Ctrl+V)' : 'Start Voice Control (Ctrl+V)'}
+          title={isListening ? 'Stop Voice Recognition (Press Ctrl+V)' : 'Start Voice Control (Press Ctrl+V)'}
           className={`relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all shadow-2xs ${
             isListening
               ? 'bg-rose-50 border-rose-400 text-rose-700 shadow-sm'
@@ -206,19 +114,23 @@ export default function VoiceControlWidget({
             <>
               <Mic className="w-3.5 h-3.5 text-[#2563EB]" />
               <span className="hidden sm:inline font-medium">Voice</span>
+              <kbd className="hidden md:inline-block px-1 py-0.2 text-[9px] font-mono text-[#64748B] bg-[#F1F5F9] border border-[#CBD5E1] rounded">
+                Ctrl+V
+              </kbd>
             </>
           )}
         </button>
 
-        {/* Quick Voice Help Button */}
+        {/* VOICE CONTROL MANUAL BUTTON IMMEDIATELY BESIDE VOICE BUTTON */}
         <button
-          onClick={() => setShowHelpModal(true)}
+          onClick={() => setShowManualModal(true)}
           type="button"
-          aria-label="Voice Commands Guide"
-          title="Voice Commands Guide"
-          className="p-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#64748B] hover:text-[#16324F] transition-all shadow-2xs"
+          aria-label="Voice Control Manual"
+          title="Open Voice Control Manual & Command Reference"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] hover:border-[#2563EB]/40 text-[#16324F] transition-all shadow-2xs"
         >
-          <HelpCircle className="w-3.5 h-3.5 text-[#2563EB]" />
+          <BookOpen className="w-3.5 h-3.5 text-[#2563EB]" />
+          <span className="hidden sm:inline font-mono font-medium text-[11px]">Manual</span>
         </button>
 
         {/* Audio Speech Synthesis Feedback Toggle */}
@@ -241,8 +153,8 @@ export default function VoiceControlWidget({
         </button>
       </div>
 
-      {/* 2. FLOATING HUD FEEDBACK BAR (When Listening, Processing, or Command Executed) */}
-      {(isListening || status !== 'idle' || errorMessage) && (
+      {/* 2. FLOATING HUD FEEDBACK BAR */}
+      {(isListening || (status !== 'standby' && status !== 'idle') || errorMessage || pendingConfirmation) && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4 animate-slideUp">
           <div className="bg-white/95 border border-[#DCE6F0] backdrop-blur-md rounded-2xl shadow-xl p-3.5 text-xs text-[#16324F] flex flex-col gap-2 ring-1 ring-[#2563EB]/15">
             {/* Top Row: State Indicator, Transcript, and Dismiss */}
@@ -254,19 +166,34 @@ export default function VoiceControlWidget({
                     Listening
                   </span>
                 ) : status === 'processing' ? (
-                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200 text-[10px] font-bold uppercase tracking-wider">
-                    <Loader2 className="w-2.5 h-2.5 animate-spin text-cyan-600" />
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-bold uppercase tracking-wider">
+                    <Loader2 className="w-2.5 h-2.5 animate-spin text-sky-600" />
                     Processing
+                  </span>
+                ) : status === 'executing' ? (
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+                    <Loader2 className="w-2.5 h-2.5 animate-spin text-indigo-600" />
+                    Executing
                   </span>
                 ) : status === 'success' ? (
                   <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider">
                     <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
                     Success
                   </span>
+                ) : status === 'error' ? (
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-200 text-[10px] font-bold uppercase tracking-wider">
+                    <AlertCircle className="w-2.5 h-2.5 text-rose-600" />
+                    Error
+                  </span>
+                ) : status === 'unsupported' ? (
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 border border-gray-300 text-[10px] font-bold uppercase tracking-wider">
+                    <AlertCircle className="w-2.5 h-2.5 text-gray-500" />
+                    Unsupported
+                  </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
-                    <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
-                    Notice
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 border border-slate-200 text-[10px] font-bold uppercase tracking-wider">
+                    <Mic className="w-2.5 h-2.5 text-slate-500" />
+                    Standby
                   </span>
                 )}
 
@@ -275,7 +202,7 @@ export default function VoiceControlWidget({
                   {transcript ? (
                     <span className="text-[#16324F] italic">"{transcript}"</span>
                   ) : isListening ? (
-                    <span className="text-[#64748B]">Say a command (e.g., "Show FLAIR", "Next slice")...</span>
+                    <span className="text-[#64748B]">Say a command (e.g., "Scroll down", "Show FLAIR", "Stop")...</span>
                   ) : (
                     <span className="text-[#64748B]">Voice control standby</span>
                   )}
@@ -285,11 +212,12 @@ export default function VoiceControlWidget({
               {/* Action Buttons */}
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
-                  onClick={() => setShowHelpModal(true)}
-                  className="px-2.5 py-1 rounded-md bg-white hover:bg-[#F8FAFC] border border-[#DCE6F0] text-[11px] font-medium text-blue-700 shadow-xs transition-colors"
-                  title="View Command Help"
+                  onClick={() => setShowManualModal(true)}
+                  className="px-2.5 py-1 rounded-md bg-white hover:bg-[#F8FAFC] border border-[#DCE6F0] text-[11px] font-medium text-blue-700 shadow-xs transition-colors flex items-center gap-1"
+                  title="View Command Manual"
                 >
-                  Commands
+                  <BookOpen className="w-3 h-3 text-[#2563EB]" />
+                  <span>Manual</span>
                 </button>
                 <button
                   onClick={stopListening}
@@ -301,7 +229,21 @@ export default function VoiceControlWidget({
               </div>
             </div>
 
-            {/* Middle Row: Clinical Telemetry Chips (Case, View Plane, Coordinates) */}
+            {/* Pending Confirmation Banner */}
+            {pendingConfirmation && (
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  <span>Confirmation Required:</span>
+                </div>
+                <p className="text-[11px] text-amber-800">{pendingConfirmation.prompt}</p>
+                <div className="text-[10px] font-mono font-semibold text-amber-900 pt-1">
+                  Say <strong>"Confirm"</strong> to proceed or <strong>"Cancel"</strong> to abort.
+                </div>
+              </div>
+            )}
+
+            {/* Clinical Telemetry Chips (Case, View Plane, Coordinates) */}
             {viewerStatus && (
               <div className="flex items-center gap-2 pt-1 border-t border-[#DCE6F0] text-[10px] overflow-x-auto no-scrollbar">
                 {viewerStatus.selectedPatientId && (
@@ -329,21 +271,11 @@ export default function VoiceControlWidget({
               </div>
             )}
 
-            {/* Bottom Row: Last Executed Command, Feedback or Error Banner */}
+            {/* Bottom Row: Executed Feedback or Error Banner */}
             {errorMessage ? (
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-800">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
                 <span className="truncate">{errorMessage}</span>
-              </div>
-            ) : viewerStatus?.lastFeedback ? (
-              <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-blue-50/70 border border-blue-200 text-[11px] text-blue-900">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <CheckCircle2 className="w-3 h-3 text-blue-600 shrink-0" />
-                  <span className="text-blue-800 font-medium truncate">{viewerStatus.lastFeedback}</span>
-                </span>
-                {lastCommand && (
-                  <span className="text-[10px] text-[#64748B] shrink-0 ml-2">{lastCommand.timestamp}</span>
-                )}
               </div>
             ) : lastCommand && lastCommand.success ? (
               <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900">
@@ -377,250 +309,8 @@ export default function VoiceControlWidget({
         </div>
       )}
 
-      {/* 4. COMPACT VOICE COMMANDS GUIDE MODAL */}
-      {showHelpModal && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-3xl max-h-[85vh] bg-white border border-[#DCE6F0] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[#16324F]">
-            {/* Modal Header */}
-            <div className="p-4 sm:p-5 bg-white border-b border-[#DCE6F0] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
-                  <Mic className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-[#16324F]">Voice Command Reference</h3>
-                  <p className="text-xs text-[#64748B] mt-0.5">Speak naturally to control MRI slices, modalities, rotation, and segmentation</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowHelpModal(false)}
-                className="p-1.5 rounded-lg text-[#64748B] hover:text-[#16324F] hover:bg-[#F8FAFC] transition-colors"
-                aria-label="Close Help"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Category Filter Custom Drop-down Menu */}
-            <div className="px-4 sm:px-6 py-3.5 bg-[#F8FAFC] border-b border-[#DCE6F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64748B] shrink-0">
-                  <Sliders className="w-4 h-4 text-blue-600" />
-                  <span>Category:</span>
-                </div>
-
-                {/* Custom Interactive Dropdown Component */}
-                <div className="relative flex-1 max-w-sm sm:max-w-md" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                    className="w-full flex items-center justify-between gap-2.5 pl-3 pr-3.5 py-2 bg-white border border-[#DCE6F0] hover:border-blue-400 rounded-xl text-xs font-semibold text-[#16324F] shadow-xs transition-all text-left focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 cursor-pointer"
-                    aria-haspopup="listbox"
-                    aria-expanded={isCategoryDropdownOpen}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {(() => {
-                        const meta = CATEGORY_META[activeHelpCategory] || CATEGORY_META['All'];
-                        const IconComponent = meta.icon;
-                        return (
-                          <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${meta.bg} ${meta.color} border ${meta.border}`}>
-                            <IconComponent className="w-3.5 h-3.5" />
-                          </div>
-                        );
-                      })()}
-                      <span className="truncate font-bold text-[#16324F]">
-                        {activeHelpCategory === 'All' ? 'All Categories' : activeHelpCategory}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                        {activeHelpCategory === 'All'
-                          ? `${VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)} cmds`
-                          : `${VOICE_COMMANDS_HELP.find((c) => c.category === activeHelpCategory)?.commands.length || 0} cmds`}
-                      </span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-[#64748B] transition-transform duration-200 ${
-                          isCategoryDropdownOpen ? 'rotate-180 text-blue-600' : ''
-                        }`}
-                      />
-                    </div>
-                  </button>
-
-                  {/* Dropdown Popover */}
-                  {isCategoryDropdownOpen && (
-                    <div 
-                      style={{ backgroundColor: '#FFFFFF' }}
-                      className="absolute top-full left-0 mt-2 z-50 w-full sm:w-[380px] bg-white border border-[#DCE6F0] rounded-2xl shadow-2xl p-2 animate-dropdown-down max-h-[340px] overflow-y-auto ring-1 ring-blue-500/10"
-                    >
-                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center justify-between border-b border-[#F1F5F9] mb-1">
-                        <span>Select Category</span>
-                        <span className="text-blue-600 font-semibold">{VOICE_COMMANDS_HELP.length + 1} options</span>
-                      </div>
-
-                      {/* "All Categories" option */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveHelpCategory('All');
-                          setIsCategoryDropdownOpen(false);
-                        }}
-                        className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between gap-3 group cursor-pointer ${
-                          activeHelpCategory === 'All'
-                            ? 'bg-blue-50/90 border border-blue-200 shadow-2xs'
-                            : 'hover:bg-[#F8FAFC] border border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
-                            <Sparkles className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-bold text-[#16324F] flex items-center gap-1.5">
-                              <span>All Categories</span>
-                            </div>
-                            <span className="text-[10px] text-[#64748B] block truncate max-w-[210px]">
-                              Complete vocabulary across all features
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            activeHelpCategory === 'All' ? 'bg-blue-600 text-white' : 'bg-[#F1F5F9] text-[#64748B] group-hover:bg-[#E2E8F0]'
-                          }`}>
-                            {VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)}
-                          </span>
-                          {activeHelpCategory === 'All' && (
-                            <Check className="w-4 h-4 text-blue-600" />
-                          )}
-                        </div>
-                      </button>
-
-                      {/* Individual Category options */}
-                      {VOICE_COMMANDS_HELP.map((c) => {
-                        const meta = CATEGORY_META[c.category] || CATEGORY_META['All'];
-                        const IconComp = meta.icon;
-                        const isSelected = activeHelpCategory === c.category;
-
-                        return (
-                          <button
-                            key={c.category}
-                            type="button"
-                            onClick={() => {
-                              setActiveHelpCategory(c.category);
-                              setIsCategoryDropdownOpen(false);
-                            }}
-                            className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between gap-3 group cursor-pointer ${
-                              isSelected
-                                ? 'bg-blue-50/90 border border-blue-200 shadow-2xs'
-                                : 'hover:bg-[#F8FAFC] border border-transparent'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${meta.bg} ${meta.color} border ${meta.border}`}>
-                                <IconComp className="w-3.5 h-3.5" />
-                              </div>
-                              <div>
-                                <div className={`text-xs font-bold ${isSelected ? 'text-blue-900' : 'text-[#16324F]'}`}>
-                                  {c.category}
-                                </div>
-                                <span className="text-[10px] text-[#64748B] block truncate max-w-[210px]">
-                                  {meta.description}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                isSelected ? 'bg-blue-600 text-white' : 'bg-[#F1F5F9] text-[#64748B] group-hover:bg-[#E2E8F0]'
-                              }`}>
-                                {c.commands.length}
-                              </span>
-                              {isSelected && (
-                                <Check className="w-4 h-4 text-blue-600" />
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {activeHelpCategory !== 'All' && (
-                  <button
-                    onClick={() => setActiveHelpCategory('All')}
-                    className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-xs font-medium text-[#64748B] hover:text-[#16324F] transition-colors shrink-0 shadow-xs cursor-pointer"
-                    title="Reset to All Categories"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 text-xs text-[#64748B] shrink-0 font-medium">
-                <span>Displaying:</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-bold text-[11px]">
-                  {activeHelpCategory === 'All'
-                    ? `${VOICE_COMMANDS_HELP.reduce((acc, c) => acc + c.commands.length, 0)} commands`
-                    : `${VOICE_COMMANDS_HELP.find((c) => c.category === activeHelpCategory)?.commands.length || 0} commands`}
-                </span>
-              </div>
-            </div>
-
-            {/* Commands List Body */}
-            <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 bg-white">
-              {VOICE_COMMANDS_HELP.filter(
-                (c) => activeHelpCategory === 'All' || c.category === activeHelpCategory
-              ).map((cat) => (
-                <div key={cat.category} className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#DCE6F0]">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700">
-                      {cat.category}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                      {cat.commands.length} commands
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {cat.commands.map((cmd) => (
-                      <div
-                        key={cmd.speech}
-                        className="p-3.5 rounded-xl bg-[#F8FAFC] hover:bg-[#EEF4F8] border border-[#E2E8F0] hover:border-blue-300 transition-all shadow-xs flex flex-col justify-between space-y-1.5"
-                      >
-                        <div className="text-xs sm:text-sm font-bold text-[#16324F] flex items-center gap-1">
-                          <span className="text-blue-600 font-bold">"</span>
-                          <span className="text-[#16324F]">{cmd.speech}</span>
-                          <span className="text-blue-600 font-bold">"</span>
-                        </div>
-                        <p className="text-xs text-[#64748B] leading-relaxed">
-                          {cmd.effect}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-3.5 sm:p-4 bg-[#F8FAFC] border-t border-[#DCE6F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#64748B] shrink-0">
-              <span className="flex items-center gap-1.5">
-                <Command className="w-3.5 h-3.5 text-blue-600" />
-                Press <kbd className="px-2 py-0.5 rounded bg-white border border-[#CBD5E1] text-[#16324F] font-semibold shadow-xs">V</kbd> anywhere to toggle voice listening
-              </span>
-              <button
-                onClick={() => setShowHelpModal(false)}
-                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-all"
-              >
-                Got It
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 4. OFFICIAL VOICE CONTROL MANUAL MODAL */}
+      <VoiceManualModal isOpen={showManualModal} onClose={() => setShowManualModal(false)} />
     </>
   );
 }

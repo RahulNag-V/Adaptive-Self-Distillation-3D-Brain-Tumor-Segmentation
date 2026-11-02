@@ -17,6 +17,7 @@ import {
   GitCommit
 } from 'lucide-react';
 import { fetchModelComparison } from '../api/benchmarks';
+import { useVoice } from '../voice/VoiceContext';
 
 // Canonical fallback data directly from results/final_evaluation/final_comparison.json
 const FALLBACK_BENCHMARK = {
@@ -107,6 +108,18 @@ export default function ModelLabPage({ onNavigate }) {
   const [selectedModel, setSelectedModel] = useState("Adaptive MOD");
   const [activeMetricTab, setActiveMetricTab] = useState("dice"); // 'dice' | 'hd95' | 'architecture'
   const [loading, setLoading] = useState(true);
+
+  const { registerPageActionHandler } = useVoice();
+
+  useEffect(() => {
+    if (!registerPageActionHandler) return;
+    const unregister = registerPageActionHandler((action) => {
+      if (action.type === 'SET_MODEL_METRIC_TAB') {
+        setActiveMetricTab(action.tab);
+      }
+    });
+    return unregister;
+  }, [registerPageActionHandler]);
 
   useEffect(() => {
     async function loadData() {
