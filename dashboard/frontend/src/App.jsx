@@ -12,6 +12,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import ReportPage from './pages/ReportPage';
 import SettingsPage from './pages/SettingsPage';
 import CinematicIntro from './components/CinematicIntro';
+import PageTransition from './components/PageTransition';
+import { smoothScrollToTop } from './utils/motion';
 import { VoiceProvider } from './voice/VoiceContext';
 
 class ErrorBoundary extends React.Component {
@@ -71,9 +73,16 @@ export default function App() {
     return true;
   });
 
+  const handleTabChange = (nextTab) => {
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
+      smoothScrollToTop();
+    }
+  };
+
   const handleSegmentationComplete = (result) => {
     setLiveResult(result);
-    setActiveTab('results');
+    handleTabChange('results');
   };
 
   const renderActivePage = () => {
@@ -140,16 +149,18 @@ export default function App() {
       )}
       <VoiceProvider
         activeTab={activeTab}
-        onNavigate={setActiveTab}
+        onNavigate={handleTabChange}
         onPlayIntro={() => setShowIntro(true)}
       >
         <AppLayout 
           activeTab={activeTab} 
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onPlayIntro={() => setShowIntro(true)}
         >
           <ErrorBoundary>
-            {renderActivePage()}
+            <PageTransition pageKey={activeTab}>
+              {renderActivePage()}
+            </PageTransition>
           </ErrorBoundary>
         </AppLayout>
       </VoiceProvider>

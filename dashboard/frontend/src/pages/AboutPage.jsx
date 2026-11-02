@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useVoice } from '../voice/VoiceContext';
 import { 
   ShieldAlert, 
@@ -17,10 +17,41 @@ import {
   Sparkles,
   ArrowRight
 } from 'lucide-react';
+import { gsap, prefersReducedMotion, MOTION } from '../utils/motion';
 
 export default function AboutPage({ onNavigate }) {
   const [activeFaq, setActiveFaq] = useState(0);
   const { registerPageActionHandler } = useVoice();
+  const containerRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (prefersReducedMotion() || !containerRef.current) return;
+
+    const ctx = gsap.context(() => {
+      gsap.from('.about-spec-card', {
+        opacity: 0,
+        y: 12,
+        duration: MOTION.durations.normal,
+        stagger: 0.08,
+        ease: MOTION.easings.out,
+      });
+
+      gsap.from('.about-viva-panel', {
+        scrollTrigger: {
+          trigger: '.about-viva-panel',
+          scroller: '#neurovision-main-scroll',
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+        opacity: 0,
+        y: 16,
+        duration: MOTION.durations.slow,
+        ease: MOTION.easings.out,
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
 
   useEffect(() => {
     if (!registerPageActionHandler) return;
@@ -56,13 +87,13 @@ export default function AboutPage({ onNavigate }) {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 font-sans">
+    <div ref={containerRef} className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 font-sans">
       {/* 1. HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-[#DCE6F0] pb-6">
         <img
           src="/logo-circle.png"
           alt="NeuroVision AI Logo"
-          className="w-20 h-20 rounded-full object-cover shrink-0 shadow-medical-md ring-2 ring-blue-500/30"
+          className="w-20 h-20 rounded-full object-cover shrink-0 shadow-medical-md ring-2 ring-blue-500/30 hover:scale-105 transition-transform duration-300"
         />
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-mono text-blue-700">
@@ -81,7 +112,7 @@ export default function AboutPage({ onNavigate }) {
 
       {/* 2. CORE SPECIFICATIONS MATRIX */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+        <div className="about-spec-card p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5 hover:shadow-medical-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-center gap-2 text-blue-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <Cpu className="w-4 h-4" />
             <span>Research Model</span>
@@ -94,7 +125,7 @@ export default function AboutPage({ onNavigate }) {
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+        <div className="about-spec-card p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5 hover:shadow-medical-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-center gap-2 text-cyan-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <Layers className="w-4 h-4" />
             <span>Base Architecture</span>
@@ -107,7 +138,7 @@ export default function AboutPage({ onNavigate }) {
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+        <div className="about-spec-card p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5 hover:shadow-medical-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-center gap-2 text-emerald-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <FileCode className="w-4 h-4" />
             <span>Compute Platform</span>
@@ -120,7 +151,7 @@ export default function AboutPage({ onNavigate }) {
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5">
+        <div className="about-spec-card p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-1.5 hover:shadow-medical-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex items-center gap-2 text-amber-600 text-xs font-mono uppercase tracking-wider font-semibold">
             <Database className="w-4 h-4" />
             <span>Cohort Benchmark</span>
@@ -135,7 +166,7 @@ export default function AboutPage({ onNavigate }) {
       </div>
 
       {/* 3. VIVA & ACADEMIC EVALUATION DEFENSE GUIDE */}
-      <section className="p-6 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-4">
+      <section className="about-viva-panel p-6 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-4 transition-all duration-300">
         <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3">
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-blue-600" />
@@ -158,7 +189,7 @@ export default function AboutPage({ onNavigate }) {
               >
                 <button
                   onClick={() => setActiveFaq(isOpen ? -1 : idx)}
-                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs font-semibold text-[#16324F] hover:text-blue-600 transition-colors"
+                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs font-semibold text-[#16324F] hover:text-blue-600 transition-colors btn-press active:scale-[0.99]"
                 >
                   <span className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-mono flex items-center justify-center shrink-0 font-bold">
@@ -166,13 +197,19 @@ export default function AboutPage({ onNavigate }) {
                     </span>
                     <span>{item.q}</span>
                   </span>
-                  <ArrowRight className={`w-4 h-4 text-[#64748B] shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-90 text-blue-600' : ''}`} />
                 </button>
-                {isOpen && (
-                  <div className="px-4 pb-4 pt-1 border-t border-[#E2E8F0] text-xs text-[#475569] leading-relaxed font-sans bg-white">
-                    {item.a}
+                <div 
+                  className={`grid transition-[grid-template-rows] duration-250 ease-out ${
+                    isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="px-4 pb-4 pt-1 border-t border-[#E2E8F0] text-xs text-[#475569] leading-relaxed font-sans bg-white">
+                      {item.a}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
@@ -190,13 +227,13 @@ export default function AboutPage({ onNavigate }) {
         <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => onNavigate && onNavigate('models')}
-            className="px-3.5 py-2 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-xs font-mono font-medium transition-colors shadow-medical-sm"
+            className="btn-press px-3.5 py-2 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-xs font-mono font-medium transition-colors shadow-medical-sm"
           >
             Model Lab
           </button>
           <button
             onClick={() => onNavigate && onNavigate('viewer')}
-            className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
+            className="btn-press px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
           >
             Open 3D Viewer
           </button>

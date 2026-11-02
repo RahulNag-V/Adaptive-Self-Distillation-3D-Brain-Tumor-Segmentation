@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import { 
   Box, 
   Layers, 
@@ -16,18 +16,75 @@ import {
   TrendingUp,
   FileText
 } from 'lucide-react';
+import { gsap, prefersReducedMotion, MOTION } from '../utils/motion';
 
 export default function OverviewPage({ onNavigate }) {
+  const containerRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (prefersReducedMotion() || !containerRef.current) return;
+
+    const ctx = gsap.context(() => {
+      // 1. Hero highlights stagger entrance
+      gsap.from('.overview-hero-card', {
+        opacity: 0,
+        y: 12,
+        duration: MOTION.durations.slow,
+        ease: MOTION.easings.out,
+      });
+
+      gsap.from('.overview-highlight-item', {
+        opacity: 0,
+        y: 8,
+        duration: MOTION.durations.normal,
+        stagger: 0.08,
+        delay: 0.15,
+        ease: MOTION.easings.out,
+      });
+
+      // 2. Operational pipeline cards reveal
+      gsap.from('.overview-module-card', {
+        scrollTrigger: {
+          trigger: '.overview-modules-grid',
+          scroller: '#neurovision-main-scroll',
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+        opacity: 0,
+        y: 16,
+        duration: MOTION.durations.slow,
+        stagger: 0.12,
+        ease: MOTION.easings.out,
+      });
+
+      // 3. Technical specifications reveal
+      gsap.from('.overview-specs-panel', {
+        scrollTrigger: {
+          trigger: '.overview-specs-panel',
+          scroller: '#neurovision-main-scroll',
+          start: 'top 88%',
+          toggleActions: 'play none none none',
+        },
+        opacity: 0,
+        y: 14,
+        duration: MOTION.durations.slow,
+        ease: MOTION.easings.out,
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="min-h-full bg-gradient-to-b from-[#F7FAFC] via-[#EAF4FF] to-[#E5F7FA] p-4 sm:p-6 lg:p-8 space-y-8 font-sans">
+    <div ref={containerRef} className="min-h-full bg-gradient-to-b from-[#F7FAFC] via-[#EAF4FF] to-[#E5F7FA] p-4 sm:p-6 lg:p-8 space-y-8 font-sans">
       {/* 1. CLINICAL HERO PANEL */}
-      <section className="rounded-2xl bg-white/90 backdrop-blur-xs border border-[#DCE6F0] p-6 lg:p-8 shadow-medical-card">
+      <section className="overview-hero-card rounded-2xl bg-white/90 backdrop-blur-xs border border-[#DCE6F0] p-6 lg:p-8 shadow-medical-card transition-all duration-300">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4 sm:gap-6 max-w-3xl">
             <img
               src="/logo-circle.png"
               alt="NeuroVision AI Logo"
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shrink-0 shadow-medical-md ring-2 ring-[#2563EB]/25 hidden sm:block"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shrink-0 shadow-medical-md ring-2 ring-[#2563EB]/25 hidden sm:block hover:scale-105 transition-transform duration-300"
             />
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E3EEFF] border border-[#BFDBFE] text-xs font-mono text-[#2563EB]">
@@ -51,7 +108,7 @@ export default function OverviewPage({ onNavigate }) {
           <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
             <button
               onClick={() => onNavigate('viewer')}
-              className="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-all shadow-medical-sm hover:shadow-medical-md active:scale-[0.99]"
+              className="btn-press inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs shadow-medical-sm hover:shadow-medical-md transition-all duration-150"
             >
               <Box className="w-4 h-4" />
               <span>Launch 3D Workspace</span>
@@ -60,7 +117,7 @@ export default function OverviewPage({ onNavigate }) {
 
             <button
               onClick={() => onNavigate('models')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] font-medium text-xs transition-colors shadow-2xs"
+              className="btn-press inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] font-medium text-xs transition-colors shadow-2xs"
             >
               <Cpu className="w-4 h-4 text-[#2563EB]" />
               <span>Explore Model Lab</span>
@@ -71,15 +128,15 @@ export default function OverviewPage({ onNavigate }) {
 
         {/* Quick Highlights Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-6 pt-6 border-t border-[#DCE6F0]/70 text-xs font-mono">
-          <div className="p-3 rounded-xl bg-[#EEF4F8]/80 border border-[#DCE6F0] flex items-center justify-between">
+          <div className="overview-highlight-item p-3 rounded-xl bg-[#EEF4F8]/80 border border-[#DCE6F0] flex items-center justify-between hover:bg-[#E3EEFF]/60 transition-colors">
             <span className="text-[#64748B]">Enhancing Tumor (ET) Dice:</span>
             <span className="font-bold text-[#16866A]">+12.7% (0.7454)</span>
           </div>
-          <div className="p-3 rounded-xl bg-[#EEF4F8]/80 border border-[#DCE6F0] flex items-center justify-between">
+          <div className="overview-highlight-item p-3 rounded-xl bg-[#EEF4F8]/80 border border-[#DCE6F0] flex items-center justify-between hover:bg-[#E3EEFF]/60 transition-colors">
             <span className="text-[#64748B]">Boundary Error Reduction:</span>
             <span className="font-bold text-[#2563EB]">-5.73 mm HD95</span>
           </div>
-          <div className="p-3 rounded-xl bg-[#EEF4F8]/80 border border-[#DCE6F0] flex items-center justify-between">
+          <div className="overview-highlight-item p-3 rounded-xl bg-[#EEF4F8]/80 border border-[#DCE6F0] flex items-center justify-between hover:bg-[#E3EEFF]/60 transition-colors">
             <span className="text-[#64748B]">Benchmark Dataset:</span>
             <span className="font-bold text-[#16324F]">BraTS 2021 Cohort</span>
           </div>
@@ -95,9 +152,9 @@ export default function OverviewPage({ onNavigate }) {
           <span className="text-[11px] font-mono text-[#64748B]">3 Core Clinical Modules</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="overview-modules-grid grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Module 1: 3D Multiplanar Segmentation */}
-          <div className="p-6 rounded-2xl bg-white border border-[#DCE6F0] hover:border-[#2563EB]/50 hover:shadow-medical-md transition-all flex flex-col justify-between space-y-5">
+          <div className="overview-module-card p-6 rounded-2xl bg-white border border-[#DCE6F0] hover:border-[#2563EB]/50 hover:shadow-medical-md transition-all duration-300 flex flex-col justify-between space-y-5 hover:-translate-y-1">
             <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-[#E3EEFF] text-[#2563EB] flex items-center justify-center">
@@ -135,7 +192,7 @@ export default function OverviewPage({ onNavigate }) {
 
             <button
               onClick={() => onNavigate('viewer')}
-              className="w-full py-2.5 px-3 rounded-xl bg-[#EEF4F8] hover:bg-[#2563EB] hover:text-white text-[#16324F] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+              className="btn-press w-full py-2.5 px-3 rounded-xl bg-[#EEF4F8] hover:bg-[#2563EB] hover:text-white text-[#16324F] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
             >
               <span>Open 3D Viewer</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -143,7 +200,7 @@ export default function OverviewPage({ onNavigate }) {
           </div>
 
           {/* Module 2: Model Lab & Comparative Benchmarks */}
-          <div className="p-6 rounded-2xl bg-white border border-[#DCE6F0] hover:border-[#2563EB]/50 hover:shadow-medical-md transition-all flex flex-col justify-between space-y-5">
+          <div className="overview-module-card p-6 rounded-2xl bg-white border border-[#DCE6F0] hover:border-[#2563EB]/50 hover:shadow-medical-md transition-all duration-300 flex flex-col justify-between space-y-5 hover:-translate-y-1">
             <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-[#E3EEFF] text-[#2563EB] flex items-center justify-center">
@@ -181,7 +238,7 @@ export default function OverviewPage({ onNavigate }) {
 
             <button
               onClick={() => onNavigate('models')}
-              className="w-full py-2.5 px-3 rounded-xl bg-[#EEF4F8] hover:bg-[#2563EB] hover:text-white text-[#16324F] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+              className="btn-press w-full py-2.5 px-3 rounded-xl bg-[#EEF4F8] hover:bg-[#2563EB] hover:text-white text-[#16324F] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
             >
               <span>Explore Model Lab</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -189,7 +246,7 @@ export default function OverviewPage({ onNavigate }) {
           </div>
 
           {/* Module 3: Quantitative Reports & Volumetrics */}
-          <div className="p-6 rounded-2xl bg-white border border-[#DCE6F0] hover:border-[#06B6D4]/50 hover:shadow-medical-md transition-all flex flex-col justify-between space-y-5">
+          <div className="overview-module-card p-6 rounded-2xl bg-white border border-[#DCE6F0] hover:border-[#06B6D4]/50 hover:shadow-medical-md transition-all duration-300 flex flex-col justify-between space-y-5 hover:-translate-y-1">
             <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-[#E0F7FA] text-[#0891B2] flex items-center justify-center">
@@ -227,7 +284,7 @@ export default function OverviewPage({ onNavigate }) {
 
             <button
               onClick={() => onNavigate('reports')}
-              className="w-full py-2.5 px-3 rounded-xl bg-[#EEF4F8] hover:bg-[#06B6D4] hover:text-white text-[#16324F] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+              className="btn-press w-full py-2.5 px-3 rounded-xl bg-[#EEF4F8] hover:bg-[#06B6D4] hover:text-white text-[#16324F] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
             >
               <span>Generate Report</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -237,7 +294,7 @@ export default function OverviewPage({ onNavigate }) {
       </section>
 
       {/* 3. TECHNICAL SPECIFICATIONS & SYSTEM MATRIX */}
-      <section className="p-6 rounded-2xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-4">
+      <section className="overview-specs-panel p-6 rounded-2xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-4 transition-all duration-300">
         <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3.5">
           <div className="flex items-center gap-2.5">
             <Cpu className="w-4 h-4 text-[#2563EB]" />
@@ -251,25 +308,25 @@ export default function OverviewPage({ onNavigate }) {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
-          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1">
+          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1 hover:bg-[#E3EEFF]/50 transition-colors">
             <span className="text-[10px] text-[#64748B] uppercase block font-semibold">Architecture</span>
             <div className="font-bold text-[#16324F]">UNETR 3D (ViT-B/16)</div>
             <div className="text-[10px] text-[#64748B] font-sans">16³ patch embeddings</div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1">
+          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1 hover:bg-[#E3EEFF]/50 transition-colors">
             <span className="text-[10px] text-[#64748B] uppercase block font-semibold">Loss Formulation</span>
             <div className="font-bold text-[#16324F]">Adaptive EMA Distill</div>
             <div className="text-[10px] text-[#64748B] font-sans">Dynamic gradient alignment</div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1">
+          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1 hover:bg-[#E3EEFF]/50 transition-colors">
             <span className="text-[10px] text-[#64748B] uppercase block font-semibold">Sliding Window</span>
             <div className="font-bold text-[#16324F]">96 × 96 × 96</div>
             <div className="text-[10px] text-[#64748B] font-sans">0.25 overlap, gaussian blend</div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1">
+          <div className="p-3.5 rounded-xl bg-[#EEF4F8]/70 border border-[#DCE6F0] space-y-1 hover:bg-[#E3EEFF]/50 transition-colors">
             <span className="text-[10px] text-[#64748B] uppercase block font-semibold">Acceleration</span>
             <div className="font-bold text-[#16866A]">PyTorch 2.11 + CUDA</div>
             <div className="text-[10px] text-[#64748B] font-sans">FP16 Automatic Mixed Prec</div>

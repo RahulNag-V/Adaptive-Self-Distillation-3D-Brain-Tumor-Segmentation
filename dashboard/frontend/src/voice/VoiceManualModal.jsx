@@ -101,14 +101,14 @@ export default function VoiceManualModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-[#16324F]/70 backdrop-blur-sm transition-opacity" 
+        className="fixed inset-0 bg-[#16324F]/70 backdrop-blur-sm transition-opacity duration-200" 
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Dialog */}
       <div 
-        className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl border border-[#DCE6F0] flex flex-col overflow-hidden text-[#16324F] z-10"
+        className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl border border-[#DCE6F0] flex flex-col overflow-hidden text-[#16324F] z-10 animate-modal-enter"
         role="dialog"
         aria-modal="true"
         aria-labelledby="voice-manual-title"

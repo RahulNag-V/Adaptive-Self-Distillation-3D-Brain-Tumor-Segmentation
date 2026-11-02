@@ -229,10 +229,10 @@ export default function ModelLabPage({ onNavigate }) {
               <button
                 key={mName}
                 onClick={() => setSelectedModel(mName)}
-                className={`p-3.5 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+                className={`btn-press p-3.5 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between active:scale-[0.98] ${
                   isSelected
                     ? 'bg-blue-50/80 border-2 border-blue-600 text-[#16324F] shadow-medical-sm ring-1 ring-blue-500/20'
-                    : 'bg-white border-[#DCE6F0] hover:border-blue-300 text-[#64748B] hover:text-[#16324F] shadow-medical-sm'
+                    : 'bg-white border-[#DCE6F0] hover:border-blue-300 text-[#64748B] hover:text-[#16324F] shadow-medical-sm hover:-translate-y-0.5'
                 }`}
               >
                 {info.type === 'proposed' && (
