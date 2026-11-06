@@ -148,36 +148,38 @@ export default function ModelLabPage({ onNavigate }) {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       {/* 1. RESEARCH BENCHMARK HEADER */}
-      <section className="rounded-xl bg-white border border-[#DCE6F0] p-6 shadow-medical-card">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DCE6F0] pb-5">
+      <section className="rounded-xl bg-[#101722] border border-[#1C2636] p-6 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1C2636] pb-5">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-mono font-semibold uppercase">
-                Academic Model Lab & Benchmark
+              <span className="px-2.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-[#4C8DFF] text-[11px] font-mono font-semibold uppercase tracking-wider">
+                Academic Model Lab &amp; Benchmark
               </span>
               <span className="text-[11px] font-mono text-[#64748B]">
-                BraTS 2021 Cohort (50 Subjects)
+                BraTS 2021 Cohort (50 Subjects) &bull; Verified Evaluation
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-[#16324F] tracking-tight">
+            <h1 className="text-2xl font-bold text-[#F4F7FC] tracking-tight">
               Baseline UNETR vs. Proposed Adaptive Self-Distillation
             </h1>
-            <p className="text-xs text-[#64748B]">
-              Empirical validation across Whole Tumor (WT), Tumor Core (TC), and Enhancing Tumor (ET) compartments.
+            <p className="text-xs text-[#94A3B8]">
+              Empirical multi-compartment validation across Whole Tumor (WT), Tumor Core (TC), and Enhancing Tumor (ET).
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onNavigate && onNavigate('analytics')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#16324F] text-xs font-mono font-medium transition-colors shadow-medical-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono font-medium transition-colors"
             >
-              <Activity className="w-3.5 h-3.5 text-blue-600" />
+              <Activity className="w-3.5 h-3.5 text-[#4C8DFF]" />
               <span>Training Analytics</span>
             </button>
             <button
               onClick={() => onNavigate && onNavigate('reports')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-sm"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Export Report</span>
@@ -187,26 +189,26 @@ export default function ModelLabPage({ onNavigate }) {
 
         {/* Highlight Card: Key Takeaways */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5 text-xs font-mono">
-          <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-            <span className="text-[10px] text-[#64748B] uppercase font-semibold">Enhancing Tumor Precision</span>
-            <div className="text-lg font-bold text-emerald-700">0.7454 Dice (+12.7%)</div>
-            <div className="text-[11px] text-[#64748B] font-sans">
+          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
+            <span className="text-[10px] text-[#94A3B8] uppercase font-semibold">Enhancing Tumor Precision</span>
+            <div className="text-lg font-bold text-emerald-400">0.7454 Dice (+12.7%)</div>
+            <div className="text-[11px] text-[#94A3B8] font-sans">
               Online Tokenizer distillation significantly improves boundary delineations in fine active core structures.
             </div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-            <span className="text-[10px] text-[#64748B] uppercase font-semibold">Boundary Error Reduction</span>
-            <div className="text-lg font-bold text-blue-700">77.48 mm HD95 (-5.73mm)</div>
-            <div className="text-[11px] text-[#64748B] font-sans">
+          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
+            <span className="text-[10px] text-[#94A3B8] uppercase font-semibold">Boundary Error Reduction</span>
+            <div className="text-lg font-bold text-[#38BDF8]">77.48 mm HD95 (-5.73mm)</div>
+            <div className="text-[11px] text-[#94A3B8] font-sans">
               Hausdorff Distance 95% decreases from 83.21mm down to 77.48mm under semantic self-distillation.
             </div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-            <span className="text-[10px] text-[#64748B] uppercase font-semibold">Dynamic Gradient Balance</span>
-            <div className="text-lg font-bold text-emerald-700">&lambda; Adaptive (1.0 &rarr; 2.0)</div>
-            <div className="text-[11px] text-[#64748B] font-sans">
+          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
+            <span className="text-[10px] text-[#94A3B8] uppercase font-semibold">Dynamic Gradient Balance</span>
+            <div className="text-lg font-bold text-amber-400">&lambda; Adaptive (1.0 &rarr; 2.0)</div>
+            <div className="text-[11px] text-[#94A3B8] font-sans">
               Dynamic EMA balancing prevents gradient collapse across heterogeneous multi-compartment targets.
             </div>
           </div>
@@ -216,10 +218,10 @@ export default function ModelLabPage({ onNavigate }) {
       {/* 2. MODEL SELECTOR & COMPARISON CARDS */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-[#64748B] font-semibold">
-            Candidate Architectures Evaluated
+          <h2 className="text-xs font-mono uppercase tracking-wider text-[#94A3B8] font-semibold">
+            Candidate Architectures Evaluated (5 Models)
           </h2>
-          <span className="text-[11px] font-mono text-[#64748B]">Click model to inspect details</span>
+          <span className="text-[11px] font-mono text-[#64748B]">Click model card to inspect profile</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -229,26 +231,26 @@ export default function ModelLabPage({ onNavigate }) {
               <button
                 key={mName}
                 onClick={() => setSelectedModel(mName)}
-                className={`btn-press p-3.5 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between active:scale-[0.98] ${
+                className={`p-3.5 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-blue-50/80 border-2 border-blue-600 text-[#16324F] shadow-medical-sm ring-1 ring-blue-500/20'
-                    : 'bg-white border-[#DCE6F0] hover:border-blue-300 text-[#64748B] hover:text-[#16324F] shadow-medical-sm hover:-translate-y-0.5'
+                    ? 'bg-blue-600/15 border-blue-500 text-[#F4F7FC] shadow-lg ring-1 ring-blue-500/30'
+                    : 'bg-[#101722] border-[#1C2636] hover:border-slate-700 text-[#94A3B8] hover:text-[#F4F7FC]'
                 }`}
               >
                 {info.type === 'proposed' && (
-                  <span className="absolute -top-2 right-3 px-1.5 py-0.2 rounded bg-blue-600 text-white text-[9px] font-mono font-bold uppercase tracking-wider shadow-sm">
+                  <span className="absolute -top-2 right-3 px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-mono font-bold uppercase tracking-wider shadow-sm">
                     Proposed
                   </span>
                 )}
 
                 <div className="space-y-1">
-                  <div className="text-xs font-bold text-[#16324F] truncate">{mName}</div>
-                  <div className="text-[10px] font-mono text-[#64748B] truncate">{info.distillation}</div>
+                  <div className="text-xs font-bold text-[#F4F7FC] truncate">{mName}</div>
+                  <div className="text-[10px] font-mono text-[#94A3B8] truncate">{info.distillation}</div>
                 </div>
 
-                <div className="mt-4 pt-2 border-t border-[#E2E8F0] flex items-center justify-between font-mono text-xs">
+                <div className="mt-4 pt-2 border-t border-[#1C2636] flex items-center justify-between font-mono text-xs">
                   <span className="text-[#64748B] text-[10px]">Mean Dice</span>
-                  <span className={`font-bold ${isSelected ? 'text-blue-700' : 'text-[#16324F]'}`}>
+                  <span className={`font-bold ${isSelected ? 'text-[#4C8DFF]' : 'text-[#F4F7FC]'}`}>
                     {(info.mean_dice * 100).toFixed(1)}%
                   </span>
                 </div>
@@ -259,42 +261,45 @@ export default function ModelLabPage({ onNavigate }) {
       </section>
 
       {/* 3. BENCHMARK METRIC VISUALIZER (DICE & HD95 CHARTS) */}
-      <section className="p-6 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#DCE6F0] pb-4">
+      <section className="p-6 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C2636] pb-4">
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-[#16324F]">Comparative Evaluation Breakdown</h3>
-            <p className="text-xs text-[#64748B]">
-              Quantitative comparison across Whole Tumor (WT), Tumor Core (TC), Enhancing Tumor (ET), and Mean scores.
+            <h3 className="text-sm font-semibold text-[#F4F7FC]">Comparative Evaluation Breakdown</h3>
+            <p className="text-xs text-[#94A3B8]">
+              Quantitative metric comparison across Whole Tumor (WT), Tumor Core (TC), Enhancing Tumor (ET), and Mean scores.
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#EEF4F8] border border-[#DCE6F0] text-xs font-mono">
+          <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#151E2B] border border-[#1C2636] text-xs font-mono">
             <button
+              data-tab-id="dice"
               onClick={() => setActiveMetricTab('dice')}
-              className={`px-3 py-1 rounded-md transition-all ${
+              className={`px-3 py-1.5 rounded-md transition-all ${
                 activeMetricTab === 'dice'
                   ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                  : 'text-[#64748B] hover:text-[#16324F]'
+                  : 'text-[#94A3B8] hover:text-[#F4F7FC] hover:bg-[#1C2636]'
               }`}
             >
               Dice Similarity
             </button>
             <button
+              data-tab-id="hd95"
               onClick={() => setActiveMetricTab('hd95')}
-              className={`px-3 py-1 rounded-md transition-all ${
+              className={`px-3 py-1.5 rounded-md transition-all ${
                 activeMetricTab === 'hd95'
                   ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                  : 'text-[#64748B] hover:text-[#16324F]'
+                  : 'text-[#94A3B8] hover:text-[#F4F7FC] hover:bg-[#1C2636]'
               }`}
             >
               HD95 (mm)
             </button>
             <button
+              data-tab-id="architecture"
               onClick={() => setActiveMetricTab('architecture')}
-              className={`px-3 py-1 rounded-md transition-all ${
+              className={`px-3 py-1.5 rounded-md transition-all ${
                 activeMetricTab === 'architecture'
                   ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                  : 'text-[#64748B] hover:text-[#16324F]'
+                  : 'text-[#94A3B8] hover:text-[#F4F7FC] hover:bg-[#1C2636]'
               }`}
             >
               Specs Matrix
@@ -314,13 +319,13 @@ export default function ModelLabPage({ onNavigate }) {
                   ET_dice: 'Enhancing Tumor (ET)',
                 };
                 return (
-                  <div key={metricKey} className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+                  <div key={metricKey} className="p-4 rounded-xl bg-[#151E2B]/80 border border-[#1C2636] space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-[#16324F]">{labelMap[metricKey]}</span>
-                      <span className="text-[10px] font-mono text-[#64748B]">Max: 1.0</span>
+                      <span className="text-xs font-semibold text-[#F4F7FC]">{labelMap[metricKey]}</span>
+                      <span className="text-[10px] font-mono text-[#64748B]">Range: 0 - 1.0</span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {Object.entries(benchmarkData).map(([mName, info]) => {
                         const val = info[metricKey] || 0;
                         const pct = Math.round(val * 100);
@@ -328,21 +333,21 @@ export default function ModelLabPage({ onNavigate }) {
                         return (
                           <div key={mName} className="space-y-1 text-xs font-mono">
                             <div className="flex justify-between text-[11px]">
-                              <span className={isSelected ? 'text-blue-700 font-bold' : 'text-[#64748B]'}>
+                              <span className={isSelected ? 'text-[#4C8DFF] font-bold' : 'text-[#94A3B8]'}>
                                 {mName}
                               </span>
-                              <span className={isSelected ? 'text-blue-700 font-bold' : 'text-[#16324F]'}>
+                              <span className={isSelected ? 'text-[#4C8DFF] font-bold' : 'text-[#F4F7FC]'}>
                                 {val.toFixed(4)}
                               </span>
                             </div>
-                            <div className="w-full h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
+                            <div className="w-full h-2 rounded-full bg-[#080B12] overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-500 ${
                                   isSelected
-                                    ? 'bg-blue-600 shadow-sm'
+                                    ? 'bg-blue-500 shadow-sm'
                                     : mName.includes('Proposed') || mName.includes('Adaptive')
-                                    ? 'bg-cyan-500'
-                                    : 'bg-[#94A3B8]'
+                                    ? 'bg-cyan-400'
+                                    : 'bg-[#334155]'
                                 }`}
                                 style={{ width: `${pct}%` }}
                               />
@@ -356,7 +361,7 @@ export default function ModelLabPage({ onNavigate }) {
               })}
             </div>
             <p className="text-[11px] font-mono text-[#64748B] text-right">
-              * Higher Dice indicates greater spatial overlap with ground truth expert annotations.
+              * Higher Dice indicates superior spatial overlap with expert ground truth contours.
             </p>
           </div>
         )}
@@ -373,13 +378,13 @@ export default function ModelLabPage({ onNavigate }) {
                   ET_hd95: 'ET Boundary HD95',
                 };
                 return (
-                  <div key={metricKey} className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
+                  <div key={metricKey} className="p-4 rounded-xl bg-[#151E2B]/80 border border-[#1C2636] space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-[#16324F]">{labelMap[metricKey]}</span>
-                      <span className="text-[10px] font-mono text-emerald-700 font-medium">Lower is better</span>
+                      <span className="text-xs font-semibold text-[#F4F7FC]">{labelMap[metricKey]}</span>
+                      <span className="text-[10px] font-mono text-emerald-400 font-medium">Lower is better</span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {Object.entries(benchmarkData).map(([mName, info]) => {
                         const val = info[metricKey] || 85.0;
                         const barWidth = Math.max(10, Math.min(100, Math.round((100 - val))));
@@ -387,19 +392,19 @@ export default function ModelLabPage({ onNavigate }) {
                         return (
                           <div key={mName} className="space-y-1 text-xs font-mono">
                             <div className="flex justify-between text-[11px]">
-                              <span className={isSelected ? 'text-blue-700 font-bold' : 'text-[#64748B]'}>
+                              <span className={isSelected ? 'text-[#4C8DFF] font-bold' : 'text-[#94A3B8]'}>
                                 {mName}
                               </span>
-                              <span className={isSelected ? 'text-blue-700 font-bold' : 'text-[#16324F]'}>
+                              <span className={isSelected ? 'text-[#4C8DFF] font-bold' : 'text-[#F4F7FC]'}>
                                 {val.toFixed(2)} mm
                               </span>
                             </div>
-                            <div className="w-full h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
+                            <div className="w-full h-2 rounded-full bg-[#080B12] overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-500 ${
                                   isSelected
-                                    ? 'bg-blue-600'
-                                    : 'bg-[#94A3B8]'
+                                    ? 'bg-blue-500'
+                                    : 'bg-[#334155]'
                                 }`}
                                 style={{ width: `${barWidth}%` }}
                               />
@@ -423,7 +428,7 @@ export default function ModelLabPage({ onNavigate }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono border-collapse">
               <thead>
-                <tr className="border-b border-[#DCE6F0] text-[#64748B] uppercase text-[10px]">
+                <tr className="border-b border-[#1C2636] text-[#94A3B8] uppercase text-[10px] tracking-wider">
                   <th className="py-2.5 px-3">Architecture</th>
                   <th className="py-2.5 px-3">Parameters</th>
                   <th className="py-2.5 px-3">GFLOPs</th>
@@ -432,7 +437,7 @@ export default function ModelLabPage({ onNavigate }) {
                   <th className="py-2.5 px-3">Active Checkpoint</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F1F5F9]">
+              <tbody className="divide-y divide-[#1C2636]">
                 {Object.entries(benchmarkData).map(([mName, info]) => {
                   const isSelected = selectedModel === mName;
                   return (
@@ -440,17 +445,19 @@ export default function ModelLabPage({ onNavigate }) {
                       key={mName} 
                       onClick={() => setSelectedModel(mName)}
                       className={`cursor-pointer transition-colors ${
-                        isSelected ? 'bg-blue-50 text-blue-900 font-semibold' : 'hover:bg-[#F8FAFC] text-[#16324F]'
+                        isSelected 
+                          ? 'bg-blue-600/15 text-[#F4F7FC] font-semibold border-l-2 border-blue-500' 
+                          : 'hover:bg-[#151E2B] text-[#94A3B8]'
                       }`}
                     >
                       <td className="py-3 px-3 flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-blue-600' : 'bg-slate-400'}`} />
-                        <span className="font-semibold text-[#16324F]">{mName}</span>
+                        <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-blue-500' : 'bg-slate-600'}`} />
+                        <span className="font-semibold text-[#F4F7FC]">{mName}</span>
                       </td>
-                      <td className="py-3 px-3 text-[#16324F]">{info.parameters}</td>
-                      <td className="py-3 px-3">{info.gflops}</td>
-                      <td className="py-3 px-3 text-blue-700">{info.distillation}</td>
-                      <td className="py-3 px-3 text-emerald-700 truncate max-w-xs">{info.loss_formulation}</td>
+                      <td className="py-3 px-3 text-[#F4F7FC]">{info.parameters}</td>
+                      <td className="py-3 px-3 text-[#38BDF8]">{info.gflops}</td>
+                      <td className="py-3 px-3 text-blue-400">{info.distillation}</td>
+                      <td className="py-3 px-3 text-emerald-400 truncate max-w-xs">{info.loss_formulation}</td>
                       <td className="py-3 px-3 text-[11px] text-[#64748B] font-mono truncate max-w-xs">{info.checkpoint}</td>
                     </tr>
                   );
@@ -464,71 +471,71 @@ export default function ModelLabPage({ onNavigate }) {
       {/* 4. ACTIVE MODEL DEEP-DIVE & MATHEMATICAL FORMULATION */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Selected Model Architectural Card */}
-        <div className="p-6 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-4">
-          <div className="flex items-center justify-between border-b border-[#DCE6F0] pb-3">
+        <div className="p-6 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
             <div className="flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-blue-600" />
-              <h3 className="text-sm font-semibold text-[#16324F]">
+              <Cpu className="w-4 h-4 text-[#4C8DFF]" />
+              <h3 className="text-sm font-semibold text-[#F4F7FC]">
                 Detailed Profile: {selectedModel}
               </h3>
             </div>
-            <span className="px-2 py-0.5 rounded bg-[#EEF4F8] border border-[#DCE6F0] text-[10px] font-mono text-blue-700 font-semibold">
+            <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono text-[#4C8DFF] font-semibold">
               Checkpoint: {activeModelData.checkpoint?.split('/').pop()}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-            <div className="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <span className="text-[10px] text-[#64748B] uppercase block">Mean Dice</span>
-              <div className="text-base font-bold text-[#16324F]">{(activeModelData.mean_dice * 100).toFixed(2)}%</div>
+            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
+              <span className="text-[10px] text-[#94A3B8] uppercase block">Mean Dice</span>
+              <div className="text-base font-bold text-[#F4F7FC]">{(activeModelData.mean_dice * 100).toFixed(2)}%</div>
             </div>
-            <div className="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <span className="text-[10px] text-[#64748B] uppercase block">Mean HD95</span>
-              <div className="text-base font-bold text-emerald-700">{activeModelData.mean_hd95?.toFixed(2)} mm</div>
+            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
+              <span className="text-[10px] text-[#94A3B8] uppercase block">Mean HD95</span>
+              <div className="text-base font-bold text-emerald-400">{activeModelData.mean_hd95?.toFixed(2)} mm</div>
             </div>
-            <div className="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <span className="text-[10px] text-[#64748B] uppercase block">Model Parameters</span>
-              <div className="text-sm font-semibold text-[#16324F]">{activeModelData.parameters}</div>
+            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
+              <span className="text-[10px] text-[#94A3B8] uppercase block">Model Parameters</span>
+              <div className="text-sm font-semibold text-[#F4F7FC]">{activeModelData.parameters}</div>
             </div>
-            <div className="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
-              <span className="text-[10px] text-[#64748B] uppercase block">Inference Flops</span>
-              <div className="text-sm font-semibold text-[#16324F]">{activeModelData.gflops} GFLOPs</div>
+            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
+              <span className="text-[10px] text-[#94A3B8] uppercase block">Inference FLOPs</span>
+              <div className="text-sm font-semibold text-[#38BDF8]">{activeModelData.gflops} GFLOPs</div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-2 text-xs font-mono">
-            <div className="text-[#64748B] text-[11px] uppercase font-semibold">Active Objective Function</div>
-            <code className="text-emerald-800 block text-[11px] bg-white p-2 rounded border border-[#DCE6F0]">
+          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-2 text-xs font-mono">
+            <div className="text-[#94A3B8] text-[11px] uppercase font-semibold">Active Objective Function</div>
+            <code className="text-emerald-400 block text-[11px] bg-[#080B12] p-2.5 rounded border border-[#1C2636] overflow-x-auto">
               {activeModelData.loss_formulation}
             </code>
           </div>
         </div>
 
         {/* Academic Methodology & Viva Reference */}
-        <div className="p-6 rounded-xl bg-white border border-[#DCE6F0] shadow-medical-card space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#DCE6F0] pb-3">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <h3 className="text-sm font-semibold text-[#16324F]">
+        <div className="p-6 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-[#1C2636] pb-3">
+            <Sparkles className="w-4 h-4 text-[#4C8DFF]" />
+            <h3 className="text-sm font-semibold text-[#F4F7FC]">
               Self-Distillation Mathematical Framework
             </h3>
           </div>
 
-          <div className="space-y-3 text-xs text-[#64748B] leading-relaxed font-sans">
+          <div className="space-y-3 text-xs text-[#94A3B8] leading-relaxed font-sans">
             <p>
               In conventional 3D UNETR pipelines, multi-class segmentation models suffer from severe gradient 
               competition between large contiguous structures (Whole Tumor) and hyper-intense focal lesions (Enhancing Tumor).
             </p>
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] text-blue-900 font-medium">
-              L_total = L_DiceCE + &lambda;_ot(t) * L_OnlineTokenizer + &lambda;_dp(t) * L_DensePredictor
+            <div className="p-3 rounded-lg bg-blue-950/40 border border-blue-500/30 font-mono text-[11px] text-blue-200 font-medium">
+              L_total = L_DiceCE + &lambda;_ot(t) &times; L_OnlineTokenizer + &lambda;_dp(t) &times; L_DensePredictor
             </div>
             <p>
-              The proposed <strong className="text-[#16324F]">Adaptive Self-Distillation</strong> framework utilizes an Exponential Moving Average (EMA) 
+              The proposed <strong className="text-[#F4F7FC]">Adaptive Self-Distillation</strong> framework utilizes an Exponential Moving Average (EMA) 
               loss monitor to modulate distillation coefficients:
             </p>
-            <ul className="list-disc list-inside space-y-1 font-mono text-[11px] text-[#16324F]">
-              <li><strong>&lambda;_ot</strong> scales from 1.0 to 2.0 to stabilize token semantic embeddings.</li>
-              <li><strong>&lambda;_dp</strong> scales from 1.0 to 1.58 to force fine-grained feature representation.</li>
-              <li>Dual objective prevents catastrophic forgetting during downstream active fine-tuning.</li>
+            <ul className="list-disc list-inside space-y-1 font-mono text-[11px] text-[#F4F7FC]">
+              <li><strong className="text-[#38BDF8]">&lambda;_ot</strong> scales from 1.0 to 2.0 to stabilize token semantic embeddings.</li>
+              <li><strong className="text-amber-400">&lambda;_dp</strong> scales from 1.0 to 1.58 to force fine-grained feature representation.</li>
+              <li>Dual dynamic objective prevents catastrophic forgetting during downstream active fine-tuning.</li>
             </ul>
           </div>
         </div>
@@ -536,4 +543,3 @@ export default function ModelLabPage({ onNavigate }) {
     </div>
   );
 }
-

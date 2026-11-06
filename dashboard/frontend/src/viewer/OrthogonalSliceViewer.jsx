@@ -24,11 +24,11 @@ const PLANE_CONFIG = {
     planeType: 'transverse',
     planeLabel: 'Transverse',
     description: 'Cranial-Caudal horizontal section',
-    badgeClass: 'bg-teal-500/20 text-teal-300 border-teal-500/40',
+    badgeClass: 'bg-[#35B982]/15 text-[#35B982] border-[#35B982]/30',
     accentColor: 'teal',
-    lineColor: 'border-teal-400/80',
-    pipBorder: 'border-teal-300',
-    pipBg: 'bg-teal-400',
+    lineColor: 'border-[#35B982]/80',
+    pipBorder: 'border-[#35B982]',
+    pipBg: 'bg-[#35B982]',
     nativeW: 240,
     nativeH: 240,
     // Radiological standard: Anterior Top, Posterior Bottom, Patient Right on Left, Patient Left on Right
@@ -40,11 +40,11 @@ const PLANE_CONFIG = {
     planeType: 'frontal',
     planeLabel: 'Frontal',
     description: 'Anterior-Posterior vertical section',
-    badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+    badgeClass: 'bg-[#35C6B0]/15 text-[#35C6B0] border-[#35C6B0]/30',
     accentColor: 'cyan',
-    lineColor: 'border-cyan-400/80',
-    pipBorder: 'border-cyan-300',
-    pipBg: 'bg-cyan-400',
+    lineColor: 'border-[#35C6B0]/80',
+    pipBorder: 'border-[#35C6B0]',
+    pipBg: 'bg-[#35C6B0]',
     nativeW: 240,
     nativeH: 155,
     // Superior Top, Inferior Bottom, Patient Right on Left, Patient Left on Right
@@ -56,11 +56,11 @@ const PLANE_CONFIG = {
     planeType: 'side view',
     planeLabel: 'Side View',
     description: 'Lateral vertical section',
-    badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+    badgeClass: 'bg-[#4C8DFF]/15 text-[#4C8DFF] border-[#4C8DFF]/30',
     accentColor: 'blue',
-    lineColor: 'border-sky-400/80',
-    pipBorder: 'border-sky-300',
-    pipBg: 'bg-sky-400',
+    lineColor: 'border-[#4C8DFF]/80',
+    pipBorder: 'border-[#4C8DFF]',
+    pipBg: 'bg-[#4C8DFF]',
     nativeW: 240,
     nativeH: 155,
     // Superior Top, Inferior Bottom, Anterior on Left, Posterior on Right
@@ -461,14 +461,14 @@ export default function OrthogonalSliceViewer({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onContextMenu={(e) => e.preventDefault()}
-      className="relative w-full h-full min-h-0 bg-mri-bg rounded-xl overflow-hidden border border-mri-border select-none flex flex-col group shadow-lg"
+      className="relative w-full h-full min-h-0 bg-[#05070B] rounded-xl overflow-hidden border border-[#1C2636] hover:border-[#243348] select-none flex flex-col group shadow-clinical-md"
     >
       {/* 1. TOP HEADER HUD (Responsive, Compact, Clear Metadata & Controls) */}
-      <div className="h-9 px-2.5 bg-mri-surface/95 border-b border-mri-border/80 flex items-center justify-between z-20 shrink-0 select-none backdrop-blur-sm">
+      <div className="h-8 px-2.5 bg-[#101722] border-b border-[#1C2636] flex items-center justify-between z-20 shrink-0 select-none backdrop-blur-sm">
         {/* Left: Plane Name | Anatomical Type | Modality | Slice Index */}
         <div className="flex items-center gap-1.5 min-w-0 truncate">
           <span 
-            className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase border shadow-sm shrink-0 ${cfg.badgeClass}`}
+            className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase border shadow-xs shrink-0 ${cfg.badgeClass}`}
             title={`${cfg.name} Plane (${cfg.planeLabel} - ${cfg.description})`}
           >
             {isUltraCompact ? cfg.name : headerTitle}
@@ -476,23 +476,23 @@ export default function OrthogonalSliceViewer({
 
           {!isCompact && (
             <>
-              <span className="text-[11px] font-medium text-mri-muted capitalize shrink-0">
+              <span className="text-[11px] font-medium text-[#8496AC] capitalize shrink-0 font-sans">
                 {cfg.planeLabel}
               </span>
-              <span className="text-mri-border/80 shrink-0">•</span>
-              <span className="px-1.5 py-0.5 rounded bg-mri-bg border border-mri-border/70 text-[10px] font-mono font-bold text-mri-text uppercase shrink-0">
+              <span className="text-[#1C2636] shrink-0">•</span>
+              <span className="px-1.5 py-0.5 rounded bg-[#151E2B] border border-[#243348] text-[10px] font-mono font-bold text-[#F4F7FC] uppercase shrink-0">
                 {modality}
               </span>
-              <span className="text-mri-border/80 shrink-0">•</span>
+              <span className="text-[#1C2636] shrink-0">•</span>
             </>
           )}
 
-          <span className="px-1.5 py-0.5 rounded bg-mri-bg border border-mri-border/80 text-[10px] font-mono font-tabular text-mri-text font-semibold shadow-sm shrink-0">
+          <span className="px-1.5 py-0.5 rounded bg-[#151E2B] border border-[#243348] text-[10px] font-mono font-tabular text-[#F4F7FC] font-semibold shadow-xs shrink-0">
             {isCompact ? `${sliceIndex + 1}/${totalSlices}` : `Slice ${sliceIndex + 1} / ${totalSlices}`}
           </span>
 
           {isEditing && (
-            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-[9px] font-mono text-amber-300 font-bold uppercase animate-pulse shrink-0">
+            <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[9px] font-mono text-amber-300 font-bold uppercase animate-pulse shrink-0">
               EDIT: {brushMode === 'erase' ? 'Eraser' : `L${activeLabel}`} (R:{brushRadius})
             </span>
           )}
@@ -500,12 +500,12 @@ export default function OrthogonalSliceViewer({
 
         {/* Right: Quick Crosshair & Fit Controls */}
         {showControls && (
-          <div className="flex items-center gap-0.5 bg-mri-bg/90 border border-mri-border/80 p-0.5 rounded-lg shadow-sm shrink-0 ml-1">
+          <div className="flex items-center gap-0.5 bg-[#151E2B] border border-[#243348] p-0.5 rounded-lg shadow-xs shrink-0 ml-1">
             {/* Toggle Crosshairs */}
             <button
               onClick={() => setShowCrosshair((prev) => !prev)}
-              className={`p-1 rounded text-xs transition-colors ${
-                showCrosshair ? 'bg-mri-surface text-mri-accent' : 'text-mri-muted hover:text-white hover:bg-mri-surface'
+              className={`p-1 rounded text-xs transition-colors cursor-pointer ${
+                showCrosshair ? 'bg-[#101722] text-[#4C8DFF]' : 'text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#101722]'
               }`}
               title={showCrosshair ? 'Hide Crosshairs' : 'Show Crosshairs'}
               aria-label="Toggle Crosshairs"
@@ -516,12 +516,12 @@ export default function OrthogonalSliceViewer({
             {/* Maximize / Restore Button */}
             <button
               onClick={onToggleMaximize || handleFitToView}
-              className="p-1 rounded text-mri-muted hover:text-white hover:bg-mri-surface transition-colors"
+              className="p-1 rounded text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#101722] transition-colors cursor-pointer"
               title={isMaximized ? 'Restore View (Esc)' : 'Maximize Whole Screen'}
               aria-label={isMaximized ? 'Restore View' : 'Maximize Whole Screen'}
             >
               {isMaximized ? (
-                <Minimize2 className="w-3.5 h-3.5 text-mri-accent" />
+                <Minimize2 className="w-3.5 h-3.5 text-[#4C8DFF]" />
               ) : (
                 <Maximize2 className="w-3.5 h-3.5" />
               )}
@@ -533,31 +533,31 @@ export default function OrthogonalSliceViewer({
       {/* 2. MAIN VIEWPORT AREA (Dynamic Scaling, Fitted Slices & Centering) */}
       <div 
         ref={viewportRef}
-        className={`relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-black/60 ${
+        className={`relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-black/70 ${
           isPanning ? 'cursor-grabbing' : 'cursor-crosshair'
         }`}
       >
         {/* Anatomical Compass Direction Indicators (R/L, A/P, S/I) */}
         <div 
-          className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded bg-[#151E2B]/90 border border-[#243348] text-[10px] font-mono font-bold text-[#8496AC] pointer-events-none shadow-xs"
           title={cfg.labels.top}
         >
           {cfg.shortLabels.top}
         </div>
         <div 
-          className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded bg-[#151E2B]/90 border border-[#243348] text-[10px] font-mono font-bold text-[#8496AC] pointer-events-none shadow-xs"
           title={cfg.labels.bottom}
         >
           {cfg.shortLabels.bottom}
         </div>
         <div 
-          className="absolute top-1/2 left-1.5 -translate-y-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          className="absolute top-1/2 left-1.5 -translate-y-1/2 z-10 px-1.5 py-0.5 rounded bg-[#151E2B]/90 border border-[#243348] text-[10px] font-mono font-bold text-[#8496AC] pointer-events-none shadow-xs"
           title={cfg.labels.left}
         >
           {cfg.shortLabels.left}
         </div>
         <div 
-          className="absolute top-1/2 right-1.5 -translate-y-1/2 z-10 px-1.5 py-0.5 rounded bg-medical-darkest/80 border border-medical-border/60 text-[10px] font-mono font-bold text-medical-muted/90 pointer-events-none shadow-sm"
+          className="absolute top-1/2 right-1.5 -translate-y-1/2 z-10 px-1.5 py-0.5 rounded bg-[#151E2B]/90 border border-[#243348] text-[10px] font-mono font-bold text-[#8496AC] pointer-events-none shadow-xs"
           title={cfg.labels.right}
         >
           {cfg.shortLabels.right}
@@ -585,11 +585,11 @@ export default function OrthogonalSliceViewer({
                 height: `${baseHeight}px`,
                 imageRendering: zoom > 1.4 ? 'pixelated' : 'auto',
               }}
-              className="object-fill rounded shadow-2xl pointer-events-auto block border border-medical-border/40"
+              className="object-fill rounded shadow-2xl pointer-events-auto block border border-[#1C2636]"
               draggable={false}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-xs text-medical-muted font-mono">
+            <div className="w-full h-full flex items-center justify-center text-xs text-[#8496AC] font-mono">
               Loading MRI slice...
             </div>
           )}
@@ -654,20 +654,19 @@ export default function OrthogonalSliceViewer({
         {showControls && (
           <div
             ref={controlsRef}
-            className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-mri-surface/90 border border-mri-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity"
+            className="absolute bottom-2 right-2 z-20 flex items-center gap-1 bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md p-1 rounded-lg shadow-clinical-md opacity-90 hover:opacity-100 transition-opacity"
           >
-            {/* Segmentation Color Legend popover - opens upward aligned to right, NEVER overlapping controls! */}
+            {/* Segmentation Color Legend popover - opens upward aligned to right */}
             {showLegend && showOverlay && (
               <div 
-                style={{ backgroundColor: '#18263B' }}
-                className="absolute right-0 bottom-full mb-2 w-60 max-w-[calc(100vw-3rem)] bg-[#18263B] border border-[#30445E] backdrop-blur-md p-2 rounded-xl shadow-2xl z-40 text-[10px] font-mono animate-dropdown-up"
+                className="absolute right-0 bottom-full mb-2 w-60 max-w-[calc(100vw-3rem)] bg-[#151E2B] border border-[#243348] backdrop-blur-md p-2 rounded-xl shadow-clinical-lg z-40 text-[10px] font-mono animate-dropdown-up"
               >
-                <div className="flex items-center justify-between pb-1.5 border-b border-mri-border/60 text-mri-muted font-bold text-[9px] uppercase tracking-wider mb-1.5">
-                  <span className="flex items-center gap-1.5 text-mri-text">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <div className="flex items-center justify-between pb-1.5 border-b border-[#1C2636] text-[#8496AC] font-bold text-[9px] uppercase tracking-wider mb-1.5">
+                  <span className="flex items-center gap-1.5 text-[#F4F7FC]">
+                    <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse" />
                     BraTS Segmentation
                   </span>
-                  <span className="text-cyan-400 font-normal">{Math.round(opacity * 100)}%</span>
+                  <span className="text-[#4C8DFF] font-normal">{Math.round(opacity * 100)}%</span>
                 </div>
                 <div className="space-y-1.5">
                   <button
@@ -675,15 +674,15 @@ export default function OrthogonalSliceViewer({
                     onClick={() => onToggleSubregion && onToggleSubregion('wt')}
                     className={`w-full flex items-center justify-between p-1.5 rounded transition-colors ${
                       subregions.wt
-                        ? 'bg-amber-950/40 border border-amber-500/40 text-white'
-                        : 'bg-mri-bg border border-mri-border text-mri-muted hover:text-white'
-                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-amber-900/30' : 'cursor-default'}`}
+                        ? 'bg-[#EAB308]/15 border border-[#EAB308]/30 text-white'
+                        : 'bg-[#101722] border border-[#1C2636] text-[#8496AC] hover:text-white'
+                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-[#EAB308]/20' : 'cursor-default'}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`w-3 h-3 rounded-sm bg-[#EAB308] shrink-0 shadow-sm ${!subregions.wt ? 'opacity-30' : ''}`} />
-                      <span className="font-medium truncate">Whole Tumor (WT)</span>
+                      <span className="font-medium truncate font-sans">Whole Tumor (WT)</span>
                     </div>
-                    <span className="text-amber-400 font-mono text-[9px] shrink-0 ml-1.5">
+                    <span className="text-[#EAB308] font-mono text-[9px] shrink-0 ml-1.5">
                       {subregions.wt ? 'Yellow' : 'Off'}
                     </span>
                   </button>
@@ -692,15 +691,15 @@ export default function OrthogonalSliceViewer({
                     onClick={() => onToggleSubregion && onToggleSubregion('tc')}
                     className={`w-full flex items-center justify-between p-1.5 rounded transition-colors ${
                       subregions.tc
-                        ? 'bg-rose-950/40 border border-rose-500/40 text-white'
-                        : 'bg-mri-bg border border-mri-border text-mri-muted hover:text-white'
-                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-rose-900/30' : 'cursor-default'}`}
+                        ? 'bg-[#F43F5E]/15 border border-[#F43F5E]/30 text-white'
+                        : 'bg-[#101722] border border-[#1C2636] text-[#8496AC] hover:text-white'
+                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-[#F43F5E]/20' : 'cursor-default'}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`w-3 h-3 rounded-sm bg-[#F43F5E] shrink-0 shadow-sm ${!subregions.tc ? 'opacity-30' : ''}`} />
-                      <span className="font-medium truncate">Tumor Core (TC)</span>
+                      <span className="font-medium truncate font-sans">Tumor Core (TC)</span>
                     </div>
-                    <span className="text-rose-400 font-mono text-[9px] shrink-0 ml-1.5">
+                    <span className="text-[#F43F5E] font-mono text-[9px] shrink-0 ml-1.5">
                       {subregions.tc ? 'Coral' : 'Off'}
                     </span>
                   </button>
@@ -709,21 +708,21 @@ export default function OrthogonalSliceViewer({
                     onClick={() => onToggleSubregion && onToggleSubregion('et')}
                     className={`w-full flex items-center justify-between p-1.5 rounded transition-colors ${
                       subregions.et
-                        ? 'bg-cyan-950/40 border border-cyan-500/40 text-white'
-                        : 'bg-mri-bg border border-mri-border text-mri-muted hover:text-white'
-                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-cyan-900/30' : 'cursor-default'}`}
+                        ? 'bg-[#06B6D4]/15 border border-[#06B6D4]/30 text-white'
+                        : 'bg-[#101722] border border-[#1C2636] text-[#8496AC] hover:text-white'
+                    } ${onToggleSubregion ? 'cursor-pointer hover:bg-[#06B6D4]/20' : 'cursor-default'}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`w-3 h-3 rounded-sm bg-[#06B6D4] shrink-0 shadow-sm ${!subregions.et ? 'opacity-30' : ''}`} />
-                      <span className="font-medium truncate">Enhancing (ET)</span>
+                      <span className="font-medium truncate font-sans">Enhancing (ET)</span>
                     </div>
-                    <span className="text-cyan-400 font-mono text-[9px] shrink-0 ml-1.5">
+                    <span className="text-[#06B6D4] font-mono text-[9px] shrink-0 ml-1.5">
                       {subregions.et ? 'Cyan' : 'Off'}
                     </span>
                   </button>
                 </div>
                 {onToggleSubregion && (
-                  <div className="text-[9px] text-mri-muted/80 text-center pt-1 mt-1 border-t border-mri-border/40">
+                  <div className="text-[9px] text-[#8496AC] text-center pt-1 mt-1 border-t border-[#1C2636]">
                     Click layer to toggle visibility
                   </div>
                 )}
@@ -733,10 +732,10 @@ export default function OrthogonalSliceViewer({
             {/* Palette Button with authentic BraTS 3-color swatch */}
             <button
               onClick={() => setShowLegend((prev) => !prev)}
-              className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono ${
+              className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono cursor-pointer ${
                 showLegend
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-mri-bg text-mri-muted hover:text-white'
+                  ? 'bg-[#4C8DFF] text-white'
+                  : 'hover:bg-[#101722] text-[#8496AC] hover:text-white'
               }`}
               title={showLegend ? 'Hide BraTS Palette Legend' : 'Show BraTS Palette Legend'}
               aria-label="Toggle Segmentation Legend"
@@ -750,10 +749,10 @@ export default function OrthogonalSliceViewer({
             {/* Cine Auto-Scroll Play / Pause */}
             <button
               onClick={() => setIsPlaying((prev) => !prev)}
-              className={`p-1.5 rounded transition-colors ${
+              className={`p-1.5 rounded transition-colors cursor-pointer ${
                 isPlaying
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-mri-bg text-mri-muted hover:text-white'
+                  ? 'bg-[#4C8DFF] text-white'
+                  : 'hover:bg-[#101722] text-[#8496AC] hover:text-white'
               }`}
               title={isPlaying ? 'Pause Cine Scroll' : 'Play Cine Scroll (Auto-cycle slices)'}
               aria-label="Cine Play"
@@ -764,7 +763,7 @@ export default function OrthogonalSliceViewer({
             {/* Zoom In */}
             <button
               onClick={handleZoomIn}
-              className="p-1.5 rounded hover:bg-mri-bg text-mri-muted hover:text-white transition-colors"
+              className="p-1.5 rounded hover:bg-[#101722] text-[#8496AC] hover:text-white transition-colors cursor-pointer"
               title="Zoom In"
               aria-label="Zoom In"
             >
@@ -774,7 +773,7 @@ export default function OrthogonalSliceViewer({
             {/* Zoom Out */}
             <button
               onClick={handleZoomOut}
-              className="p-1.5 rounded hover:bg-mri-bg text-mri-muted hover:text-white transition-colors"
+              className="p-1.5 rounded hover:bg-[#101722] text-[#8496AC] hover:text-white transition-colors cursor-pointer"
               title="Zoom Out"
               aria-label="Zoom Out"
             >
@@ -787,7 +786,7 @@ export default function OrthogonalSliceViewer({
                 setIsPlaying(false);
                 handleResetView();
               }}
-              className="p-1.5 rounded hover:bg-mri-bg text-mri-muted hover:text-white transition-colors"
+              className="p-1.5 rounded hover:bg-[#101722] text-[#8496AC] hover:text-white transition-colors cursor-pointer"
               title="Reset View & Pan"
               aria-label="Reset View"
             >
@@ -798,16 +797,16 @@ export default function OrthogonalSliceViewer({
       </div>
 
       {/* 3. BOTTOM VIEWER FOOTER (Compact, Non-overlapping Metadata & Instructions) */}
-      <div className="h-6 px-2.5 bg-mri-surface/95 border-t border-mri-border/60 flex items-center justify-between text-[10px] font-mono text-mri-muted z-10 shrink-0 select-none">
+      <div className="h-6 px-2.5 bg-[#101722] border-t border-[#1C2636] flex items-center justify-between text-[10px] font-mono text-[#8496AC] z-10 shrink-0 select-none">
         <div className="flex items-center gap-1.5 min-w-0 truncate">
           <span className="shrink-0">
-            MOD: <strong className="text-mri-text uppercase">{modality}</strong>
+            MOD: <strong className="text-[#F4F7FC] uppercase font-semibold">{modality}</strong>
           </span>
           {!isUltraCompact && (
             <>
-              <span className="text-mri-border/80 shrink-0">•</span>
+              <span className="text-[#1C2636] shrink-0">•</span>
               <span className="truncate">
-                VOX: <strong className="text-cyan-400 font-tabular">[{crosshair?.x ?? 0},{crosshair?.y ?? 0},{crosshair?.z ?? 0}]</strong>
+                VOX: <strong className="text-[#35C6B0] font-tabular">[{crosshair?.x ?? 0},{crosshair?.y ?? 0},{crosshair?.z ?? 0}]</strong>
               </span>
             </>
           )}
@@ -815,10 +814,10 @@ export default function OrthogonalSliceViewer({
         <div className="flex items-center gap-1.5 shrink-0 ml-1">
           {rotation !== 0 && (
             <>
-              <span className="text-cyan-400 font-semibold font-tabular">
+              <span className="text-[#4C8DFF] font-semibold font-tabular">
                 {rotation}°
               </span>
-              <span className="text-mri-border/80">•</span>
+              <span className="text-[#1C2636]">•</span>
             </>
           )}
           {(brightness !== 100 || contrast !== 100) && (
@@ -826,16 +825,16 @@ export default function OrthogonalSliceViewer({
               <span className="text-amber-400 font-tabular" title={`Brightness: ${brightness}%, Contrast: ${contrast}%`}>
                 B:{brightness}% C:{contrast}%
               </span>
-              <span className="text-mri-border/80">•</span>
+              <span className="text-[#1C2636]">•</span>
             </>
           )}
           <span>
-            ZOOM: <strong className="text-mri-text font-tabular">{(zoom * 100).toFixed(0)}%</strong>
+            ZOOM: <strong className="text-[#F4F7FC] font-tabular">{(zoom * 100).toFixed(0)}%</strong>
           </span>
           {!isCompact && (
             <>
-              <span className="text-mri-border/80">•</span>
-              <span className="text-mri-muted/80">
+              <span className="text-[#1C2636]">•</span>
+              <span className="text-[#8496AC]/80">
                 Wheel / Click
               </span>
             </>

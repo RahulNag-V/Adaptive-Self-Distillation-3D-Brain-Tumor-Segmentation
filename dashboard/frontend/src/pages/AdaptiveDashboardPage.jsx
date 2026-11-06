@@ -255,137 +255,143 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
   const candidateModels = Object.values(registry?.models || {}).filter(m => m.status === 'Candidate' || m.status === 'Validating');
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 animate-fadeIn text-[#16324F]">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#DCE6F0] pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
-              NeuroVision AI Continuous Improvement
-            </span>
-            <span className="text-xs text-[#64748B] font-mono">Phase 7: Governance & Registry</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#16324F] flex items-center gap-3">
-            <span>Adaptive Learning Dashboard</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          </h1>
-          <p className="text-sm text-[#64748B] mt-1">
-            Supervisory clinical review, data leakage prevention, background candidate training, and non-regression safe model promotion.
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 animate-fadeIn">
+      {/* 1. TOP HEADER & WORKSPACE COMMAND STRIP */}
+      <section className="rounded-xl bg-[#101722] border border-[#1C2636] p-6 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={refreshAllData}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white hover:bg-[#F8FAFC] border border-[#DCE6F0] text-xs text-[#16324F] font-mono transition-all shadow-sm"
-            title="Refresh All Metrics"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-
-          <button
-            onClick={handleSeedDemoSample}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-mono font-semibold transition-all shadow-sm"
-            title="Seed a verified sample into the training split for testing"
-          >
-            <PlusCircle className="w-3.5 h-3.5 text-amber-600" />
-            <span>Seed Approved Sample (Demo)</span>
-          </button>
-
-          <button
-            onClick={() => setShowTrainModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shadow-sm"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Trigger Adaptive Fine-Tuning</span>
-          </button>
-        </div>
-      </div>
-
-      {/* HITL TRAINING GUARD BANNER IF 0 SAMPLES INGESTED */}
-      {((datasetStats?.training_samples_ingested || 0) === 0 && approvedSamples.length === 0) && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1C2636] pb-5">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 font-bold text-amber-800">
-              <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>Human-in-the-Loop Training Guard Active</span>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-[#4C8DFF] text-[11px] font-mono font-semibold uppercase tracking-wider">
+                Continuous Learning &amp; Model Governance
+              </span>
+              <span className="text-[11px] font-mono text-[#64748B]">
+                Phase 7: Registry &bull; Zero Data Leakage
+              </span>
             </div>
-            <p className="opacity-90 max-w-3xl text-amber-800/90">
-              Adaptive models require at least 1 verified human correction before training to prevent model drift. You can either (1) correct a scan in the <strong>3D Viewer</strong> and submit it for review, or (2) click <strong>Seed Approved Sample</strong> to populate a verified demonstration case immediately.
+            <h1 className="text-2xl font-bold text-[#F4F7FC] tracking-tight flex items-center gap-3">
+              <span>Adaptive Continuous Learning Cockpit</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            </h1>
+            <p className="text-xs text-[#94A3B8]">
+              Supervisory clinical review, data leakage prevention, background candidate fine-tuning, and non-regression safe model promotion.
             </p>
           </div>
-          <button
-            onClick={handleSeedDemoSample}
-            disabled={loading}
-            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shrink-0 shadow-sm transition-all"
-          >
-            Seed Approved Sample (Demo)
-          </button>
-        </div>
-      )}
 
-      {/* 4 STAGE DATA GOVERNANCE DISTINCTION BANNER */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-[#64748B] font-mono">
-            <span>1. Data Collected</span>
-            <Database className="w-4 h-4 text-blue-600" />
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={refreshAllData}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono font-medium transition-colors"
+              title="Refresh All Metrics"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#4C8DFF] ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+
+            <button
+              onClick={handleSeedDemoSample}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-mono font-semibold transition-colors"
+              title="Seed a verified sample into the training split for testing"
+            >
+              <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
+              <span>Seed Approved Case (Demo)</span>
+            </button>
+
+            <button
+              onClick={() => setShowTrainModal(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shadow-sm"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Trigger Fine-Tuning</span>
+            </button>
           </div>
-          <div className="text-2xl font-bold text-[#16324F] font-mono">{totalTracked}</div>
+        </div>
+
+        {/* HITL TRAINING GUARD BANNER IF 0 SAMPLES INGESTED */}
+        {((datasetStats?.training_samples_ingested || 0) === 0 && approvedSamples.length === 0) && (
+          <div className="mt-5 p-4 rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 font-bold text-amber-300">
+                <ShieldAlert className="w-4 h-4 text-amber-400" />
+                <span>Human-in-the-Loop Training Guard Active</span>
+              </div>
+              <p className="opacity-90 max-w-3xl text-amber-300/80">
+                Adaptive models require at least 1 verified human correction before training to prevent model drift. You can either (1) correct a scan in the <strong>3D Viewer</strong> and submit it for review, or (2) click <strong>Seed Approved Case</strong> to populate a verified demonstration case immediately.
+              </p>
+            </div>
+            <button
+              onClick={handleSeedDemoSample}
+              disabled={loading}
+              className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shrink-0 shadow-sm transition-all"
+            >
+              Seed Approved Case (Demo)
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* 2. 4-STAGE DATA GOVERNANCE DISTINCTION PIPELINE */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-1">
+          <div className="flex items-center justify-between text-xs text-[#94A3B8] font-mono">
+            <span>1. Data Collected</span>
+            <Database className="w-4 h-4 text-[#4C8DFF]" />
+          </div>
+          <div className="text-2xl font-bold text-[#F4F7FC] font-mono">{totalTracked}</div>
           <span className="text-[11px] text-[#64748B] block">Studies / Human Annotations</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-[#64748B] font-mono">
+        <div className="p-4 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-1">
+          <div className="flex items-center justify-between text-xs text-[#94A3B8] font-mono">
             <span>2. Data Approved</span>
-            <UserCheck className="w-4 h-4 text-purple-600" />
+            <UserCheck className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="text-2xl font-bold text-purple-700 font-mono">
+          <div className="text-2xl font-bold text-purple-400 font-mono">
             {approvedSamples.length + includedInTraining.length}
           </div>
-          <span className="text-[11px] text-[#64748B] block">{pendingReview.length} awaiting review</span>
+          <span className="text-[11px] text-[#94A3B8] block">{pendingReview.length} awaiting review</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-[#64748B] font-mono">
+        <div className="p-4 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-1">
+          <div className="flex items-center justify-between text-xs text-[#94A3B8] font-mono">
             <span>3. Used for Training</span>
-            <Cpu className="w-4 h-4 text-amber-600" />
+            <Cpu className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-bold text-amber-700 font-mono">
+          <div className="text-2xl font-bold text-amber-400 font-mono">
             {datasetStats?.training_samples_ingested ?? includedInTraining.length}
           </div>
-          <span className="text-[11px] text-emerald-600 font-mono block">10 Fixed Validation Safe</span>
+          <span className="text-[11px] text-emerald-400 font-mono block">10 Fixed Validation Safe</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#DCE6F0] shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-[#64748B] font-mono">
+        <div className="p-4 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-1">
+          <div className="flex items-center justify-between text-xs text-[#94A3B8] font-mono">
             <span>4. Model Improved</span>
-            <Award className="w-4 h-4 text-emerald-600" />
+            <Award className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold text-emerald-700 font-mono">
+          <div className="text-2xl font-bold text-emerald-400 font-mono">
             {activeModel.version || 'v1.0.0'}
           </div>
-          <span className="text-[11px] text-[#64748B] block">Production Checkpoint Active</span>
+          <span className="text-[11px] text-[#94A3B8] block">Production Checkpoint Active</span>
         </div>
-      </div>
+      </section>
 
-      {/* SECTION 1: SUPERVISORY CLINICAL REVIEW QUEUE */}
-      <div className="bg-white border border-[#DCE6F0] rounded-xl p-5 space-y-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DCE6F0] pb-3">
+      {/* 3. SECTION 1: SUPERVISORY CLINICAL REVIEW QUEUE */}
+      <section className="bg-[#101722] border border-[#1C2636] rounded-xl p-6 space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C2636] pb-3">
           <div>
-            <h2 className="text-base font-bold text-[#16324F] flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-blue-600" />
+            <h2 className="text-base font-bold text-[#F4F7FC] flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-[#4C8DFF]" />
               <span>Supervisory Clinical Review Queue</span>
               {pendingReview.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
                   {pendingReview.length} Pending
                 </span>
               )}
             </h2>
-            <p className="text-xs text-[#64748B] mt-0.5">
+            <p className="text-xs text-[#94A3B8] mt-0.5">
               Annotations must be confirmed by a supervisory neuro-radiologist before admission to adaptive training.
             </p>
           </div>
@@ -393,27 +399,27 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
           {approvedSamples.length > 0 && (
             <button
               onClick={handleIngestApproved}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-mono font-semibold transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-mono font-semibold transition-all shadow-sm"
             >
-              <Database className="w-3.5 h-3.5" />
+              <Database className="w-3.5 h-3.5 text-purple-400" />
               <span>Ingest Approved ({approvedSamples.length}) into Dataset</span>
             </button>
           )}
         </div>
 
         {pendingReview.length === 0 ? (
-          <div className="text-center py-8 text-[#64748B] space-y-2">
-            <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-            <p className="text-xs font-medium text-[#16324F]">No annotations currently pending clinical review.</p>
+          <div className="text-center py-8 text-[#94A3B8] space-y-2">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+            <p className="text-xs font-medium text-[#F4F7FC]">No annotations currently pending clinical review.</p>
             <span className="text-[11px] text-[#64748B] block">
-              Perform interactive corrections in the 3D Viewer and click "Submit for Review".
+              Perform interactive corrections in the 3D Viewer and click "Submit Review".
             </span>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
+            <table className="w-full text-left text-xs font-mono border-collapse">
               <thead>
-                <tr className="border-b border-[#DCE6F0] text-[#64748B] text-[11px] uppercase tracking-wider">
+                <tr className="border-b border-[#1C2636] text-[#94A3B8] text-[10px] uppercase tracking-wider">
                   <th className="py-2.5 px-3">Patient / Study</th>
                   <th className="py-2.5 px-3">Modality</th>
                   <th className="py-2.5 px-3">Version</th>
@@ -422,18 +428,18 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                   <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#DCE6F0]">
+              <tbody className="divide-y divide-[#1C2636]">
                 {pendingReview.map((item) => (
-                  <tr key={item.patient_id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-3 px-3 font-semibold text-[#16324F]">
+                  <tr key={item.patient_id} className="hover:bg-[#151E2B] transition-colors">
+                    <td className="py-3 px-3 font-semibold text-[#F4F7FC]">
                       {item.patient_id}
                     </td>
-                    <td className="py-3 px-3 uppercase text-blue-700 font-semibold">
+                    <td className="py-3 px-3 uppercase text-[#38BDF8] font-semibold">
                       {item.modality_type || 'mri'}
                     </td>
-                    <td className="py-3 px-3 text-[#64748B]">v{item.version || 1}</td>
-                    <td className="py-3 px-3 text-[#64748B]">{item.annotator_id || 'radiologist'}</td>
-                    <td className="py-3 px-3 text-[#64748B] truncate max-w-xs" title={item.notes}>
+                    <td className="py-3 px-3 text-[#94A3B8]">v{item.version || 1}</td>
+                    <td className="py-3 px-3 text-[#94A3B8]">{item.annotator_id || 'radiologist'}</td>
+                    <td className="py-3 px-3 text-[#94A3B8] truncate max-w-xs" title={item.notes}>
                       {item.notes || 'No notes attached.'}
                     </td>
                     <td className="py-3 px-3 text-right space-x-2">
@@ -442,19 +448,19 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                           if (onOpenPatientInViewer) onOpenPatientInViewer(item.patient_id);
                           else if (onNavigate) onNavigate('viewer');
                         }}
-                        className="px-2.5 py-1 rounded bg-white hover:bg-[#F8FAFC] border border-[#DCE6F0] text-[#16324F] text-[11px] transition-colors shadow-sm"
+                        className="px-2.5 py-1 rounded bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-[11px] transition-colors"
                       >
                         Inspect
                       </button>
                       <button
                         onClick={() => setReviewAction({ patientId: item.patient_id, type: 'reject' })}
-                        className="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] transition-colors font-medium shadow-sm"
+                        className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[11px] transition-colors font-medium"
                       >
                         Reject
                       </button>
                       <button
                         onClick={() => setReviewAction({ patientId: item.patient_id, type: 'approve' })}
-                        className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm transition-colors"
+                        className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-sm transition-colors"
                       >
                         Approve
                       </button>
@@ -465,65 +471,65 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
             </table>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* SECTION 2: ADAPTIVE TRAINING PIPELINE MONITOR */}
-      <div className="bg-white border border-[#DCE6F0] rounded-xl p-5 space-y-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DCE6F0] pb-3">
+      {/* 4. SECTION 2: ADAPTIVE TRAINING PIPELINE MONITOR */}
+      <section className="bg-[#101722] border border-[#1C2636] rounded-xl p-6 space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C2636] pb-3">
           <div>
-            <h2 className="text-base font-bold text-[#16324F] flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-blue-600" />
+            <h2 className="text-base font-bold text-[#F4F7FC] flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-[#4C8DFF]" />
               <span>Adaptive Fine-Tuning Pipeline</span>
               {trainingStatus?.status === 'in_progress' ? (
-                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
+                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 animate-pulse">
                   Training in Progress
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#F1F5F9] text-[#64748B] border border-[#DCE6F0]">
+                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#151E2B] text-[#94A3B8] border border-[#1C2636]">
                   Idle / Ready
                 </span>
               )}
             </h2>
-            <p className="text-xs text-[#64748B] mt-0.5">
+            <p className="text-xs text-[#94A3B8] mt-0.5">
               Asynchronous background worker fine-tunes UNETR weights on approved human corrections without blocking UI.
             </p>
           </div>
         </div>
 
         {trainingStatus?.status === 'in_progress' ? (
-          <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-200 space-y-3">
+          <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-500/30 space-y-3">
             <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-[#16324F] font-semibold">
+              <span className="text-[#F4F7FC] font-semibold">
                 Epoch {trainingStatus.current_epoch} / {trainingStatus.total_epochs}
               </span>
-              <span className="text-blue-700 font-semibold">
+              <span className="text-[#38BDF8] font-semibold">
                 Loss: {trainingStatus.latest_loss !== undefined ? trainingStatus.latest_loss.toFixed(4) : 'Computing...'}
               </span>
             </div>
 
             {/* Progress bar */}
-            <div className="w-full bg-[#E2E8F0] rounded-full h-2.5 border border-[#CBD5E1] overflow-hidden">
+            <div className="w-full bg-[#080B12] rounded-full h-2.5 border border-[#1C2636] overflow-hidden">
               <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                className="bg-blue-500 h-2.5 rounded-full transition-all duration-300 shadow-sm"
                 style={{ width: `${Math.round((trainingStatus.current_epoch / Math.max(1, trainingStatus.total_epochs)) * 100)}%` }}
               />
             </div>
 
-            <div className="text-[11px] font-mono text-[#64748B] flex items-center justify-between">
+            <div className="text-[11px] font-mono text-[#94A3B8] flex items-center justify-between">
               <span>Candidate Tag: {trainingStatus.candidate_tag || 'candidate_model'}</span>
               <span>Optimizer: AdamW (lr={trainingStatus.learning_rate || 0.0001})</span>
             </div>
           </div>
         ) : (
-          <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#DCE6F0] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 rounded-xl bg-[#151E2B]/80 border border-[#1C2636] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="space-y-1">
-              <div className="text-[#16324F] font-semibold flex items-center gap-2">
+              <div className="text-[#F4F7FC] font-semibold flex items-center gap-2">
                 <span>Last Training Run:</span>
-                <span className="text-emerald-700 font-mono font-bold">
+                <span className="text-emerald-400 font-mono font-bold">
                   {trainingStatus?.last_completed_run ? 'Completed' : 'Ready for Training'}
                 </span>
               </div>
-              <p className="text-[#64748B]">
+              <p className="text-[#94A3B8]">
                 {trainingStatus?.last_completed_candidate 
                   ? `Checkpoint saved: ${trainingStatus.last_completed_candidate}. Awaiting validation cohort evaluation.` 
                   : 'Sufficient approved examples are ready. Trigger fine-tuning to train a candidate checkpoint.'}
@@ -532,23 +538,23 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
 
             <button
               onClick={() => setShowTrainModal(true)}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shrink-0 transition-colors"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm shrink-0 transition-colors"
             >
-              Configure & Trigger Run
+              Configure &amp; Trigger Run
             </button>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* SECTION 3: MODEL REGISTRY & SAFE PROMOTION */}
-      <div className="bg-white border border-[#DCE6F0] rounded-xl p-5 space-y-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#DCE6F0] pb-3">
+      {/* 5. SECTION 3: MODEL REGISTRY & SAFE PROMOTION */}
+      <section className="bg-[#101722] border border-[#1C2636] rounded-xl p-6 space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C2636] pb-3">
           <div>
-            <h2 className="text-base font-bold text-[#16324F] flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
-              <span>Model Registry & Safe Promotion</span>
+            <h2 className="text-base font-bold text-[#F4F7FC] flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#4C8DFF]" />
+              <span>Model Registry &amp; Safe Promotion</span>
             </h2>
-            <p className="text-xs text-[#64748B] mt-0.5">
+            <p className="text-xs text-[#94A3B8] mt-0.5">
               Candidates are evaluated against fixed 10-patient validation cohort. Promotion occurs only when non-regression criteria are strictly satisfied.
             </p>
           </div>
@@ -557,7 +563,7 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
             <button
               onClick={handleRollback}
               disabled={rollingBack}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-mono font-semibold transition-all disabled:opacity-50 shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-mono font-semibold transition-all disabled:opacity-50 shadow-sm"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${rollingBack ? 'animate-spin' : ''}`} />
               <span>Rollback to {registry.previous_active_model_id}</span>
@@ -567,9 +573,9 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
 
         {/* ACTIVE PRODUCTION MODEL vs CANDIDATES TABLE */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
+          <table className="w-full text-left text-xs font-mono border-collapse">
             <thead>
-              <tr className="border-b border-[#DCE6F0] text-[#64748B] text-[11px] uppercase tracking-wider">
+              <tr className="border-b border-[#1C2636] text-[#94A3B8] text-[10px] uppercase tracking-wider">
                 <th className="py-2.5 px-3">Model Version</th>
                 <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3">WT Dice</th>
@@ -579,28 +585,28 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                 <th className="py-2.5 px-3 text-right">Registry Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#DCE6F0]">
+            <tbody className="divide-y divide-[#1C2636]">
               {/* Active Model Row */}
-              <tr className="bg-emerald-50/60 border-l-4 border-emerald-600">
-                <td className="py-3 px-3 font-bold text-[#16324F] flex items-center gap-2">
+              <tr className="bg-emerald-950/20 border-l-4 border-emerald-500">
+                <td className="py-3 px-3 font-bold text-[#F4F7FC] flex items-center gap-2">
                   <span>{activeModel.version || registry?.active_model_id}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     LIVE PRODUCTION
                   </span>
                 </td>
                 <td className="py-3 px-3">
-                  <span className="text-emerald-700 font-semibold">Active</span>
+                  <span className="text-emerald-400 font-semibold">Active</span>
                 </td>
-                <td className="py-3 px-3 font-semibold text-[#16324F]">
+                <td className="py-3 px-3 font-semibold text-[#F4F7FC]">
                   {activeModel.metrics?.mean_wt_dice ? activeModel.metrics.mean_wt_dice.toFixed(3) : '0.912'}
                 </td>
-                <td className="py-3 px-3 font-semibold text-[#16324F]">
+                <td className="py-3 px-3 font-semibold text-[#F4F7FC]">
                   {activeModel.metrics?.mean_tc_dice ? activeModel.metrics.mean_tc_dice.toFixed(3) : '0.865'}
                 </td>
-                <td className="py-3 px-3 font-semibold text-[#16324F]">
+                <td className="py-3 px-3 font-semibold text-[#F4F7FC]">
                   {activeModel.metrics?.mean_et_dice ? activeModel.metrics.mean_et_dice.toFixed(3) : '0.838'}
                 </td>
-                <td className="py-3 px-3 text-emerald-700 font-medium">Baseline Standard</td>
+                <td className="py-3 px-3 text-emerald-400 font-medium">Baseline Standard</td>
                 <td className="py-3 px-3 text-right text-[#64748B]">Serving Live API</td>
               </tr>
 
@@ -613,30 +619,30 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                 </tr>
               ) : (
                 candidateModels.map((cand) => (
-                  <tr key={cand.model_id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-3 px-3 font-semibold text-[#16324F]">
+                  <tr key={cand.model_id} className="hover:bg-[#151E2B] transition-colors">
+                    <td className="py-3 px-3 font-semibold text-[#F4F7FC]">
                       {cand.version || cand.model_id}
                     </td>
                     <td className="py-3 px-3">
-                      <span className="text-amber-700 font-semibold">{cand.status}</span>
+                      <span className="text-amber-400 font-semibold">{cand.status}</span>
                     </td>
-                    <td className="py-3 px-3 text-[#16324F]">
+                    <td className="py-3 px-3 text-[#F4F7FC]">
                       {cand.metrics?.mean_wt_dice !== undefined ? cand.metrics.mean_wt_dice.toFixed(3) : 'Pending Eval'}
                     </td>
-                    <td className="py-3 px-3 text-[#16324F]">
+                    <td className="py-3 px-3 text-[#F4F7FC]">
                       {cand.metrics?.mean_tc_dice !== undefined ? cand.metrics.mean_tc_dice.toFixed(3) : 'Pending Eval'}
                     </td>
-                    <td className="py-3 px-3 text-[#16324F]">
+                    <td className="py-3 px-3 text-[#F4F7FC]">
                       {cand.metrics?.mean_et_dice !== undefined ? cand.metrics.mean_et_dice.toFixed(3) : 'Pending Eval'}
                     </td>
                     <td className="py-3 px-3">
                       {cand.evaluation_passed ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                        <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Passed Non-Regression
                         </span>
                       ) : cand.evaluated_at ? (
-                        <span className="inline-flex items-center gap-1 text-rose-700 font-semibold">
+                        <span className="inline-flex items-center gap-1 text-rose-400 font-semibold">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           Failed Safety Criteria
                         </span>
@@ -648,7 +654,7 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                       <button
                         onClick={() => handleEvaluateCandidate(cand.model_id)}
                         disabled={evaluatingCandidateId === cand.model_id}
-                        className="px-2.5 py-1 rounded bg-white hover:bg-[#F8FAFC] border border-[#DCE6F0] text-[#16324F] text-[11px] disabled:opacity-50 shadow-sm transition-colors"
+                        className="px-2.5 py-1 rounded bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-[11px] disabled:opacity-50 transition-colors"
                       >
                         {evaluatingCandidateId === cand.model_id ? 'Evaluating...' : 'Evaluate'}
                       </button>
@@ -658,8 +664,8 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                         disabled={!cand.evaluation_passed || promotingCandidateId === cand.model_id}
                         className={`px-3 py-1 rounded text-[11px] font-bold shadow-sm transition-all ${
                           cand.evaluation_passed
-                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                            : 'bg-[#F1F5F9] text-[#94A3B8] border border-[#E2E8F0] cursor-not-allowed'
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                            : 'bg-[#151E2B] text-[#64748B] border border-[#1C2636] cursor-not-allowed'
                         }`}
                       >
                         {promotingCandidateId === cand.model_id ? 'Promoting...' : 'Promote to Production'}
@@ -671,73 +677,73 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      {/* SECTION 4: AUDIT LOG */}
-      <div className="bg-white border border-[#DCE6F0] rounded-xl p-5 space-y-3 shadow-sm">
-        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#64748B] flex items-center gap-2">
-          <History className="w-4 h-4 text-blue-600" />
+      {/* 6. SECTION 4: AUDIT LOG */}
+      <section className="bg-[#101722] border border-[#1C2636] rounded-xl p-6 space-y-3 shadow-xl">
+        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#94A3B8] flex items-center gap-2">
+          <History className="w-4 h-4 text-[#4C8DFF]" />
           <span>System Governance Audit Log</span>
         </h3>
-        <div className="space-y-1.5 font-mono text-xs max-h-48 overflow-y-auto divide-y divide-[#DCE6F0]">
-          <div className="py-1.5 flex items-center justify-between text-[#64748B]">
-            <span className="text-[#16324F] font-medium">Active UNETR Production Checkpoint Initialized</span>
-            <span>Version: {activeModel.version || '1.0.0'}</span>
+        <div className="space-y-1.5 font-mono text-xs max-h-48 overflow-y-auto divide-y divide-[#1C2636]">
+          <div className="py-1.5 flex items-center justify-between text-[#94A3B8]">
+            <span className="text-[#F4F7FC] font-medium">Active UNETR Production Checkpoint Initialized</span>
+            <span className="text-[#38BDF8]">Version: {activeModel.version || '1.0.0'}</span>
           </div>
-          <div className="py-1.5 flex items-center justify-between text-[#64748B]">
-            <span className="text-[#16324F] font-medium">Fixed Validation Cohort Verified</span>
-            <span className="text-emerald-700 font-semibold">10 BraTS Subjects Protected</span>
+          <div className="py-1.5 flex items-center justify-between text-[#94A3B8]">
+            <span className="text-[#F4F7FC] font-medium">Fixed Validation Cohort Verified</span>
+            <span className="text-emerald-400 font-semibold">10 BraTS Subjects Protected</span>
           </div>
           {registry?.audit_trail?.map((event, idx) => (
-            <div key={idx} className="py-1.5 flex items-center justify-between text-[#64748B]">
-              <span className="text-[#16324F]">{event.action || event.title}</span>
-              <span>{event.timestamp || 'Recent'}</span>
+            <div key={idx} className="py-1.5 flex items-center justify-between text-[#94A3B8]">
+              <span className="text-[#F4F7FC]">{event.action || event.title}</span>
+              <span className="text-[#64748B]">{event.timestamp || 'Recent'}</span>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* MODAL 1: SUPERVISORY REVIEW DECISION MODAL */}
       {reviewAction && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-[#DCE6F0] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-[#16324F] flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-[#080B12]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#101722] border border-[#1C2636] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-[#F4F7FC] flex items-center gap-2">
               {reviewAction.type === 'approve' ? (
                 <>
-                  <UserCheck className="w-5 h-5 text-emerald-600" />
+                  <UserCheck className="w-5 h-5 text-emerald-400" />
                   <span>Approve Annotation for Training</span>
                 </>
               ) : (
                 <>
-                  <UserX className="w-5 h-5 text-rose-600" />
+                  <UserX className="w-5 h-5 text-rose-400" />
                   <span>Reject Annotation</span>
                 </>
               )}
             </h3>
 
-            <p className="text-xs text-[#64748B]">
-              Case: <strong className="text-[#16324F]">{reviewAction.patientId}</strong>.
+            <p className="text-xs text-[#94A3B8]">
+              Case: <strong className="text-[#F4F7FC]">{reviewAction.patientId}</strong>.
               {reviewAction.type === 'approve'
                 ? ' This annotation will be admitted to the adaptive training dataset.'
                 : ' Please state the clinical reason for rejecting this correction.'}
             </p>
 
             <div>
-              <label className="text-xs font-semibold text-[#16324F] block mb-1">
-                Reviewer Rationale & Notes:
+              <label className="text-xs font-semibold text-[#F4F7FC] block mb-1">
+                Reviewer Rationale &amp; Notes:
               </label>
               <textarea
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
                 placeholder={reviewAction.type === 'approve' ? 'e.g., Contour boundaries verified against axial T1ce...' : 'e.g., Boundary over-segmentation on coronal slices...'}
-                className="w-full h-24 p-2.5 rounded-lg bg-[#F8FAFC] border border-[#DCE6F0] text-[#16324F] text-xs font-mono focus:outline-none focus:border-blue-600 focus:bg-white transition-colors"
+                className="w-full h-24 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setReviewAction(null)}
-                className="px-3 py-1.5 rounded-lg border border-[#DCE6F0] text-xs text-[#64748B] hover:text-[#16324F] hover:bg-[#F8FAFC] transition-colors"
+                className="px-3 py-1.5 rounded-lg border border-[#1C2636] text-xs text-[#94A3B8] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors"
               >
                 Cancel
               </button>
@@ -746,8 +752,8 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                 disabled={reviewSubmitting}
                 className={`px-4 py-1.5 rounded-lg text-xs font-bold shadow-md transition-colors ${
                   reviewAction.type === 'approve'
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white'
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                    : 'bg-rose-600 hover:bg-rose-500 text-white'
                 }`}
               >
                 {reviewSubmitting ? 'Submitting...' : `Confirm ${reviewAction.type === 'approve' ? 'Approval' : 'Rejection'}`}
@@ -759,72 +765,72 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
 
       {/* MODAL 2: CONFIGURE & TRIGGER FINE-TUNING MODAL */}
       {showTrainModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-[#DCE6F0] rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-[#DCE6F0] pb-3">
-              <Cpu className="w-5 h-5 text-blue-600" />
-              <h3 className="font-bold text-[#16324F] text-base">Trigger Adaptive Fine-Tuning</h3>
+        <div className="fixed inset-0 z-50 bg-[#080B12]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#101722] border border-[#1C2636] rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-[#1C2636] pb-3">
+              <Cpu className="w-5 h-5 text-[#4C8DFF]" />
+              <h3 className="font-bold text-[#F4F7FC] text-base">Trigger Adaptive Fine-Tuning</h3>
             </div>
 
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-[#94A3B8]">
               Fine-tune the candidate UNETR model using approved human annotations. Checkpoints will be stored separately and validated prior to promotion.
             </p>
 
             <div className="space-y-3 text-xs font-mono">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[#16324F] font-semibold block mb-1">Epochs:</label>
+                  <label className="text-[#F4F7FC] font-semibold block mb-1">Epochs:</label>
                   <input
                     type="number"
                     min="1"
                     max="50"
                     value={trainConfig.epochs}
                     onChange={(e) => setTrainConfig(prev => ({ ...prev, epochs: Number(e.target.value) }))}
-                    className="w-full p-2 rounded bg-[#F8FAFC] border border-[#DCE6F0] text-[#16324F] text-xs focus:outline-none focus:border-blue-600 focus:bg-white"
+                    className="w-full p-2 rounded bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="text-[#16324F] font-semibold block mb-1">Learning Rate:</label>
+                  <label className="text-[#F4F7FC] font-semibold block mb-1">Learning Rate:</label>
                   <input
                     type="number"
                     step="0.00001"
                     value={trainConfig.learningRate}
                     onChange={(e) => setTrainConfig(prev => ({ ...prev, learningRate: Number(e.target.value) }))}
-                    className="w-full p-2 rounded bg-[#F8FAFC] border border-[#DCE6F0] text-[#16324F] text-xs focus:outline-none focus:border-blue-600 focus:bg-white"
+                    className="w-full p-2 rounded bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[#16324F] font-semibold block mb-1">Candidate Model Tag:</label>
+                <label className="text-[#F4F7FC] font-semibold block mb-1">Candidate Model Tag:</label>
                 <input
                   type="text"
                   value={trainConfig.candidateTag}
                   onChange={(e) => setTrainConfig(prev => ({ ...prev, candidateTag: e.target.value }))}
-                  className="w-full p-2 rounded bg-[#F8FAFC] border border-[#DCE6F0] text-[#16324F] text-xs focus:outline-none focus:border-blue-600 focus:bg-white"
+                  className="w-full p-2 rounded bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="text-[#16324F] font-semibold block mb-1">Training Run Notes:</label>
+                <label className="text-[#F4F7FC] font-semibold block mb-1">Training Run Notes:</label>
                 <textarea
                   value={trainConfig.notes}
                   onChange={(e) => setTrainConfig(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full h-20 p-2 rounded bg-[#F8FAFC] border border-[#DCE6F0] text-[#16324F] text-xs focus:outline-none focus:border-blue-600 focus:bg-white"
+                  className="w-full h-20 p-2 rounded bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               {((datasetStats?.training_samples_ingested || 0) === 0 && (datasetStats?.samples_approved_pending_ingestion || 0) === 0) && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="p-3 rounded-lg bg-amber-950/30 border border-amber-500/30 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <span>0 approved samples in dataset. Seed or approve a sample first.</span>
                   <button
                     type="button"
                     onClick={async () => {
                       await handleSeedDemoSample();
                     }}
-                    className="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shrink-0 shadow-sm"
+                    className="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] shrink-0 shadow-sm"
                   >
-                    Seed Approved Sample Now
+                    Seed Approved Case Now
                   </button>
                 </div>
               )}
@@ -833,7 +839,7 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowTrainModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-[#DCE6F0] text-xs text-[#64748B] hover:text-[#16324F] hover:bg-[#F8FAFC] transition-colors"
+                className="px-3 py-1.5 rounded-lg border border-[#1C2636] text-xs text-[#94A3B8] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors"
               >
                 Cancel
               </button>
@@ -842,8 +848,8 @@ export default function AdaptiveDashboardPage({ onNavigate, onOpenPatientInViewe
                 disabled={triggeringTraining || ((datasetStats?.training_samples_ingested || 0) === 0 && (datasetStats?.samples_approved_pending_ingestion || 0) === 0)}
                 className={`px-4 py-2 rounded-lg font-semibold text-xs shadow-md transition-all ${
                   ((datasetStats?.training_samples_ingested || 0) === 0 && (datasetStats?.samples_approved_pending_ingestion || 0) === 0)
-                    ? 'bg-[#F1F5F9] text-[#94A3B8] border border-[#E2E8F0] cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    ? 'bg-[#151E2B] text-[#64748B] border border-[#1C2636] cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white'
                 }`}
               >
                 {triggeringTraining ? 'Dispatching...' : 'Start Fine-Tuning Job'}

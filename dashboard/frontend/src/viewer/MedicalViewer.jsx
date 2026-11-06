@@ -1141,16 +1141,16 @@ export default function MedicalViewer({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full min-h-0 flex flex-col bg-mri-bg rounded-xl overflow-hidden border border-mri-border select-none group shadow-lg"
+      className="relative w-full h-full min-h-0 flex flex-col bg-[#05070B] rounded-xl overflow-hidden border border-[#1C2636] hover:border-[#243348] select-none group shadow-clinical-md"
     >
       {/* Top Floating Viewport HUD */}
       <div className="absolute top-2.5 left-2.5 z-20 flex flex-wrap items-center gap-2 pointer-events-none">
-        <div className="px-2.5 py-1 rounded-md bg-mri-surface/90 border border-mri-border/80 backdrop-blur-md text-[11px] font-mono text-mri-text flex items-center gap-1.5 shadow-md">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
+        <div className="px-2.5 py-1 rounded-md bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md text-[11px] font-mono text-[#F4F7FC] flex items-center gap-1.5 shadow-xs">
+          <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse shrink-0"></span>
           <span className="font-semibold uppercase tracking-wider">
             {viewMode === '3d' ? '3D Anatomy' : `${viewMode} Plane`}
           </span>
-          <span className="text-mri-muted text-[10px] hidden sm:inline">
+          <span className="text-[#8496AC] text-[10px] hidden sm:inline">
             {viewMode === '3d' 
               ? '• Atlas Reference' 
               : `• Slice ${viewMode === 'axial' ? axialSlice : viewMode === 'coronal' ? coronalSlice : sagittalSlice}`}
@@ -1159,24 +1159,24 @@ export default function MedicalViewer({
         {viewMode === '3d' && (
           <div className="flex items-center gap-1.5">
             {/* Atlas reference badge */}
-            <div className="px-2 py-1 rounded-md bg-mri-surface/90 border border-mri-border/80 backdrop-blur-md text-[10px] font-mono text-mri-muted flex items-center gap-1.5 shadow-md">
+            <div className="px-2 py-1 rounded-md bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md text-[10px] font-mono text-[#8496AC] flex items-center gap-1.5 shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
               <span className="hidden sm:inline">Normal Brain Atlas</span>
             </div>
 
             {/* Tumor mesh state badge */}
             {meshLoading ? (
-              <div className="px-2 py-1 rounded-md bg-mri-surface/90 border border-cyan-500/40 backdrop-blur-md text-[10px] font-mono text-cyan-300 flex items-center gap-1.5 shadow-md animate-pulse">
+              <div className="px-2 py-1 rounded-md bg-[#151E2B]/90 border border-[#4C8DFF]/40 backdrop-blur-md text-[10px] font-mono text-[#4C8DFF] flex items-center gap-1.5 shadow-xs animate-pulse">
                 <Loader2 className="w-3 h-3 animate-spin shrink-0" />
                 <span>Extracting Tumor Mesh...</span>
               </div>
             ) : meshData?.has_mesh ? (
-              <div className="px-2 py-1 rounded-md bg-mri-surface/90 border border-emerald-500/40 backdrop-blur-md text-[10px] font-mono text-emerald-300 flex items-center gap-1.5 shadow-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+              <div className="px-2 py-1 rounded-md bg-[#35B982]/15 border border-[#35B982]/30 backdrop-blur-md text-[10px] font-mono text-[#35B982] flex items-center gap-1.5 shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#35B982] shrink-0"></span>
                 <span>Patient MRI Tumor ({meshData.surfaces?.wt?.vertex_count?.toLocaleString() || 0} verts)</span>
               </div>
             ) : (
-              <div className="px-2 py-1 rounded-md bg-mri-surface/90 border border-mri-border/80 backdrop-blur-md text-[10px] font-mono text-mri-muted flex items-center gap-1.5 shadow-md">
+              <div className="px-2 py-1 rounded-md bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md text-[10px] font-mono text-[#8496AC] flex items-center gap-1.5 shadow-xs">
                 <span>No Tumor in Mask</span>
               </div>
             )}
@@ -1189,12 +1189,12 @@ export default function MedicalViewer({
         <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1">
           <button
             onClick={onToggleMaximize}
-            className="p-1 rounded-md bg-mri-surface/90 border border-mri-border/80 text-mri-muted hover:text-white hover:bg-mri-bg transition-colors shadow-md"
+            className="p-1 rounded-md bg-[#151E2B]/90 border border-[#243348] text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#101722] transition-colors shadow-xs cursor-pointer"
             title={isMaximized ? 'Restore View (Esc)' : 'Maximize Whole Screen'}
             aria-label={isMaximized ? 'Restore View' : 'Maximize Whole Screen'}
           >
             {isMaximized ? (
-              <Minimize2 className="w-3.5 h-3.5 text-mri-accent" />
+              <Minimize2 className="w-3.5 h-3.5 text-[#4C8DFF]" />
             ) : (
               <Maximize2 className="w-3.5 h-3.5" />
             )}
@@ -1215,11 +1215,11 @@ export default function MedicalViewer({
 
         {/* Loading Overlay for 3D Brain Model */}
         {viewMode === '3d' && modelLoading && (
-          <div className="absolute inset-0 bg-medical-darkest/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-medical-teal animate-spin" />
+          <div className="absolute inset-0 bg-[#05070B]/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 text-[#4C8DFF] animate-spin" />
             <div className="text-center space-y-1">
-              <p className="text-sm font-semibold text-white">Loading 3D Anatomical Brain Mesh...</p>
-              <p className="text-xs text-medical-muted font-mono">Applying multi-shade anatomical textures & gyri</p>
+              <p className="text-sm font-semibold text-[#F4F7FC]">Loading 3D Anatomical Brain Mesh...</p>
+              <p className="text-xs text-[#8496AC] font-mono">Applying multi-shade anatomical textures & gyri</p>
             </div>
           </div>
         )}
@@ -1228,7 +1228,7 @@ export default function MedicalViewer({
         {viewMode === '3d' && modelLoadError && (
           <div className="absolute inset-0 bg-red-950/40 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 text-center">
             <p className="text-sm font-semibold text-red-300">Failed to load 3D Brain model</p>
-            <p className="text-xs text-medical-muted font-mono mt-1">{modelLoadError}</p>
+            <p className="text-xs text-[#8496AC] font-mono mt-1">{modelLoadError}</p>
           </div>
         )}
 
@@ -1242,23 +1242,23 @@ export default function MedicalViewer({
             ref={canvas2dRef}
             width={700}
             height={550}
-            className="max-w-full max-h-full object-contain rounded-lg border border-medical-border/60 shadow-2xl"
+            className="max-w-full max-h-full object-contain rounded-lg border border-[#1C2636] shadow-2xl"
           />
         </div>
 
-        {/* Floating Viewport Quick Controls Pill at Bottom Right (Palette + swatch, Play, Zoom In, Zoom Out, Reset) */}
+        {/* Floating Viewport Quick Controls Pill at Bottom Right */}
         <div
           ref={controlsRef}
-          className="absolute bottom-2 right-2 z-20 flex items-center gap-1.5 bg-mri-surface/90 border border-mri-border/80 backdrop-blur-md p-1 rounded-lg shadow-lg opacity-90 hover:opacity-100 transition-opacity"
+          className="absolute bottom-2 right-2 z-20 flex items-center gap-1 bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md p-1 rounded-lg shadow-clinical-md opacity-90 hover:opacity-100 transition-opacity"
         >
-          {/* Appearance dropdown popover - opens upward aligned to right of controls pill so it NEVER clips! */}
+          {/* Appearance dropdown popover */}
           {viewMode === '3d' && showPaletteMenu && (
-            <div className="absolute right-0 bottom-full mb-2 w-64 max-w-[calc(100vw-3rem)] bg-mri-surface border border-mri-border rounded-lg shadow-2xl p-2 z-40 backdrop-blur-md">
-              <div className="flex items-center justify-between pb-1.5 border-b border-mri-border/60 mb-1.5">
-                <span className="text-[10px] font-mono uppercase text-mri-muted font-bold tracking-wider">
+            <div className="absolute right-0 bottom-full mb-2 w-64 max-w-[calc(100vw-3rem)] bg-[#151E2B] border border-[#243348] rounded-xl shadow-clinical-lg p-2 z-40 backdrop-blur-md">
+              <div className="flex items-center justify-between pb-1.5 border-b border-[#1C2636] mb-1.5">
+                <span className="text-[10px] font-mono uppercase text-[#8496AC] font-bold tracking-wider">
                   3D Brain Appearance
                 </span>
-                <span className="text-[9px] font-mono text-cyan-400">
+                <span className="text-[9px] font-mono text-[#4C8DFF]">
                   {BRAIN_APPEARANCE_OPTIONS.length} Presets
                 </span>
               </div>
@@ -1267,10 +1267,10 @@ export default function MedicalViewer({
                   <button
                     key={opt.id}
                     onClick={() => handleSelectAppearance(opt.id)}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium text-left transition-colors ${
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-colors cursor-pointer ${
                       activeAppearance === opt.id
-                        ? 'bg-blue-600/30 text-cyan-300 border border-cyan-500/40'
-                        : 'text-mri-text hover:bg-mri-bg border border-transparent'
+                        ? 'bg-[#4C8DFF]/20 text-[#4C8DFF] border border-[#4C8DFF]/40'
+                        : 'text-[#F4F7FC] hover:bg-[#101722] border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -1279,53 +1279,53 @@ export default function MedicalViewer({
                         style={{ backgroundColor: opt.swatchColor }}
                       />
                       <div className="min-w-0">
-                        <span className="block truncate font-semibold text-xs text-white">{opt.name}</span>
-                        <span className="block truncate text-[10px] text-mri-muted font-mono">{opt.badge}</span>
+                        <span className="block truncate font-semibold text-xs text-[#F4F7FC]">{opt.name}</span>
+                        <span className="block truncate text-[10px] text-[#8496AC] font-mono">{opt.badge}</span>
                       </div>
                     </div>
-                    {activeAppearance === opt.id && <Check className="w-4 h-4 text-cyan-400 shrink-0 ml-1.5" />}
+                    {activeAppearance === opt.id && <Check className="w-4 h-4 text-[#4C8DFF] shrink-0 ml-1.5" />}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Orientation dropdown popover - opens upward aligned to right of controls pill */}
+          {/* Orientation dropdown popover */}
           {viewMode === '3d' && showAngleMenu && (
-            <div className="absolute right-0 bottom-full mb-2 w-52 max-w-[calc(100vw-3rem)] bg-mri-surface border border-mri-border rounded-lg shadow-2xl p-1.5 z-40 backdrop-blur-md">
-              <div className="text-[10px] font-mono uppercase text-mri-muted px-2 py-1 border-b border-mri-border/60 mb-1 font-bold">
+            <div className="absolute right-0 bottom-full mb-2 w-52 max-w-[calc(100vw-3rem)] bg-[#151E2B] border border-[#243348] rounded-xl shadow-clinical-lg p-1.5 z-40 backdrop-blur-md">
+              <div className="text-[10px] font-mono uppercase text-[#8496AC] px-2 py-1 border-b border-[#1C2636] mb-1 font-bold">
                 Anatomical View
               </div>
               <button
                 onClick={() => handleViewAngle('default')}
-                className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-mri-text hover:bg-mri-bg transition-colors flex items-center justify-between"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-left text-[#F4F7FC] hover:bg-[#101722] transition-colors flex items-center justify-between cursor-pointer"
               >
                 <span>Default Anterior</span>
-                <span className="text-[10px] text-mri-muted font-mono">Front</span>
+                <span className="text-[10px] text-[#8496AC] font-mono">Front</span>
               </button>
               <button
                 onClick={() => handleViewAngle('inferior')}
-                className="w-full px-2.5 py-1.5 rounded text-xs font-semibold text-left text-emerald-300 hover:bg-emerald-950/40 border border-emerald-500/20 transition-colors flex items-center justify-between my-0.5"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold text-left text-[#35B982] hover:bg-[#35B982]/10 border border-[#35B982]/20 transition-colors flex items-center justify-between my-0.5 cursor-pointer"
               >
                 <span className="flex items-center gap-1.5">
                   <Sun className="w-3 h-3 text-amber-400" />
                   Underside (Inferior)
                 </span>
-                <span className="text-[10px] text-emerald-400 font-mono">Bottom</span>
+                <span className="text-[10px] text-[#35B982] font-mono">Bottom</span>
               </button>
               <button
                 onClick={() => handleViewAngle('superior')}
-                className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-mri-text hover:bg-mri-bg transition-colors flex items-center justify-between"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-left text-[#F4F7FC] hover:bg-[#101722] transition-colors flex items-center justify-between cursor-pointer"
               >
                 <span>Superior View</span>
-                <span className="text-[10px] text-mri-muted font-mono">Top</span>
+                <span className="text-[10px] text-[#8496AC] font-mono">Top</span>
               </button>
               <button
                 onClick={() => handleViewAngle('lateral')}
-                className="w-full px-2.5 py-1.5 rounded text-xs font-medium text-left text-mri-text hover:bg-mri-bg transition-colors flex items-center justify-between"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-left text-[#F4F7FC] hover:bg-[#101722] transition-colors flex items-center justify-between cursor-pointer"
               >
                 <span>Lateral View</span>
-                <span className="text-[10px] text-mri-muted font-mono">Right</span>
+                <span className="text-[10px] text-[#8496AC] font-mono">Right</span>
               </button>
             </div>
           )}
@@ -1336,10 +1336,10 @@ export default function MedicalViewer({
                 setShowPaletteMenu(prev => !prev);
                 setShowAngleMenu(false);
               }}
-              className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono ${
+              className={`p-1.5 rounded transition-colors flex items-center gap-1.5 text-xs font-mono cursor-pointer ${
                 showPaletteMenu
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-mri-bg text-mri-muted hover:text-white'
+                  ? 'bg-[#4C8DFF] text-white'
+                  : 'hover:bg-[#101722] text-[#8496AC] hover:text-white'
               }`}
               title="Brain Appearance Presets"
               aria-label="Brain Appearance Presets"
@@ -1358,10 +1358,10 @@ export default function MedicalViewer({
                 setShowAngleMenu(prev => !prev);
                 setShowPaletteMenu(false);
               }}
-              className={`p-1.5 rounded transition-colors flex items-center gap-1 text-xs font-mono ${
+              className={`p-1.5 rounded transition-colors flex items-center gap-1 text-xs font-mono cursor-pointer ${
                 showAngleMenu
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-mri-bg text-mri-muted hover:text-white'
+                  ? 'bg-[#4C8DFF] text-white'
+                  : 'hover:bg-[#101722] text-[#8496AC] hover:text-white'
               }`}
               title="Camera Orientations (Default, Underside/Inferior, Superior, Lateral)"
               aria-label="Camera Orientations"
@@ -1373,10 +1373,10 @@ export default function MedicalViewer({
           {viewMode === '3d' && (
             <button
               onClick={() => setAutoRotate(prev => !prev)}
-              className={`p-1.5 rounded transition-colors ${
+              className={`p-1.5 rounded transition-colors cursor-pointer ${
                 autoRotate 
-                  ? 'bg-blue-600 text-white' 
-                  : 'hover:bg-mri-bg text-mri-muted hover:text-white'
+                  ? 'bg-[#4C8DFF] text-white' 
+                  : 'hover:bg-[#101722] text-[#8496AC] hover:text-white'
               }`}
               title={autoRotate ? 'Pause Auto-Rotation' : 'Enable Auto-Rotation'}
               aria-label="Toggle Auto-Rotation"
@@ -1387,7 +1387,7 @@ export default function MedicalViewer({
 
           <button
             onClick={() => handleZoom(0.85)}
-            className="p-1.5 rounded hover:bg-mri-bg text-mri-muted hover:text-white transition-colors"
+            className="p-1.5 rounded hover:bg-[#101722] text-[#8496AC] hover:text-white transition-colors cursor-pointer"
             title="Zoom In"
             aria-label="Zoom In"
           >
@@ -1395,7 +1395,7 @@ export default function MedicalViewer({
           </button>
           <button
             onClick={() => handleZoom(1.15)}
-            className="p-1.5 rounded hover:bg-mri-bg text-mri-muted hover:text-white transition-colors"
+            className="p-1.5 rounded hover:bg-[#101722] text-[#8496AC] hover:text-white transition-colors cursor-pointer"
             title="Zoom Out"
             aria-label="Zoom Out"
           >
@@ -1403,7 +1403,7 @@ export default function MedicalViewer({
           </button>
           <button
             onClick={handleResetCamera}
-            className="p-1.5 rounded hover:bg-mri-bg text-mri-muted hover:text-white transition-colors"
+            className="p-1.5 rounded hover:bg-[#101722] text-[#8496AC] hover:text-white transition-colors cursor-pointer"
             title="Reset Camera View"
             aria-label="Reset Camera"
           >
@@ -1412,17 +1412,17 @@ export default function MedicalViewer({
         </div>
       </div>
 
-      {/* Bottom Viewer Footer Bar (Matches OrthogonalSliceViewer 24px footer) */}
-      <div className="h-6 px-2.5 bg-mri-surface/95 border-t border-mri-border/60 flex items-center justify-between text-[10px] font-mono text-mri-muted z-10 shrink-0 select-none">
+      {/* Bottom Viewer Footer Bar */}
+      <div className="h-6 px-2.5 bg-[#101722] border-t border-[#1C2636] flex items-center justify-between text-[10px] font-mono text-[#8496AC] z-10 shrink-0 select-none">
         <div className="flex items-center gap-1.5 min-w-0 truncate">
-          <span>MODEL: <strong className="text-mri-text uppercase">HUMAN BRAIN</strong></span>
-          <span className="text-mri-border/80 shrink-0">•</span>
-          <span className="text-cyan-400 truncate">{currentOption.name}</span>
+          <span>MODEL: <strong className="text-[#F4F7FC] uppercase">HUMAN BRAIN</strong></span>
+          <span className="text-[#1C2636] shrink-0">•</span>
+          <span className="text-[#4C8DFF] truncate">{currentOption.name}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
           <span className="font-tabular">{Math.round(opacity * 100)}%</span>
-          <span className="text-mri-border/80">•</span>
-          <span className="text-emerald-400 font-semibold font-tabular">{fps} FPS</span>
+          <span className="text-[#1C2636]">•</span>
+          <span className="text-[#35B982] font-semibold font-tabular">{fps} FPS</span>
         </div>
       </div>
     </div>

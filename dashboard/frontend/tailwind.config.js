@@ -8,72 +8,98 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary Medical Light Theme (Application Shell, Dashboard, Forms, Reports)
-        medical: {
-          bg: '#F7FAFC',
-          card: '#FFFFFF',
-          surface: '#EEF4F8',
-          surfaceHover: '#EAF2FF',
-          navActive: '#E3EEFF',
-          border: '#DCE6F0',
-          borderHover: '#CBD5E1',
-          text: '#16324F',
-          muted: '#64748B',
-          primary: '#2563EB',
-          primaryHover: '#1D4ED8',
-          secondary: '#06B6D4',
-          secondaryHover: '#0891B2',
-          success: '#16866A',
-          warning: '#B7791F',
-          error: '#C24141',
-
-          // Retain harmonized tokens for backward compatibility
-          darkest: '#F7FAFC',
-          base: '#FFFFFF',
-          cardHover: '#F1F5F9',
-          borderLight: '#E2E8F0',
-          teal: '#2563EB',
-          tealLight: '#3B82F6',
-          cyan: '#06B6D4',
-          cyanLight: '#0891B2',
-          blue: '#2563EB',
-          blueLight: '#60A5FA',
-          navy: '#16324F',
+        // Dark Premium + Clinical Hybrid Color System
+        clinical: {
+          bg: '#080B12',              // Primary background
+          surface: '#101722',         // Secondary background / sidebar / panels
+          card: '#151E2B',            // Surface base (cards, modals)
+          cardHover: '#1B2635',       // Elevated surface on hover
+          elevated: '#1B2635',        // Floating panels, popovers, dropdowns
+          active: '#223246',          // Active states & selections
+          border: '#243348',          // Standard borders
+          borderSubtle: '#1C2636',    // Subtle dividers
+          borderHover: '#324560',     // Interactive border hover
+          text: '#F4F7FC',            // Primary text (High contrast, passes AAA)
+          muted: '#9BA9BA',           // Secondary text (Passes AAA)
+          tertiary: '#8496AC',        // Tertiary captions & keyboard badges (WCAG AA compliant: > 6.5:1)
+          primary: '#4C8DFF',         // Primary accent (Radiology Blue)
+          primaryHover: '#3A7AEB',    // Primary hover
+          secondary: '#35C6B0',       // Secondary accent (Cyan / Sagittal)
+          secondaryHover: '#2BB09C',  // Secondary hover
+          success: '#35B982',         // Success / Ground truth
+          warning: '#F4B860',         // Warning / Review queue
+          error: '#F16C75',           // Error / Alerts
         },
 
-        // Dedicated Dark MRI Workstation Environment (Preserved for imaging contrast)
+        // Harmonized medical tokens (Full backward compatibility for existing components)
+        medical: {
+          bg: '#080B12',
+          card: '#151E2B',
+          surface: '#101722',
+          surfaceHover: '#1B2635',
+          navActive: '#223246',
+          border: '#243348',
+          borderHover: '#324560',
+          text: '#F4F7FC',
+          muted: '#9BA9BA',
+          primary: '#4C8DFF',
+          primaryHover: '#3A7AEB',
+          secondary: '#35C6B0',
+          secondaryHover: '#2BB09C',
+          success: '#35B982',
+          warning: '#F4B860',
+          error: '#F16C75',
+          darkest: '#080B12',
+          base: '#151E2B',
+          cardHover: '#1B2635',
+          borderLight: '#1C2636',
+          teal: '#35C6B0',
+          tealLight: '#4EE0CA',
+          cyan: '#38BDF8',
+          cyanLight: '#7DD3FC',
+          blue: '#4C8DFF',
+          blueLight: '#70A4FF',
+          navy: '#080B12',
+        },
+
+        // Dark MRI Workstation Environment (Preserved for imaging contrast)
         mri: {
-          bg: '#101B2D',
-          surface: '#18263B',
-          surfaceHover: '#22354D',
-          card: '#18263B',
-          border: '#30445E',
-          borderLight: '#3F5877',
-          text: '#F1F5F9',
-          muted: '#A7B5C8',
-          accent: '#7DD3FC',
-          accentHover: '#38BDF8',
+          bg: '#080B12',
+          surface: '#101722',
+          surfaceHover: '#1B2635',
+          card: '#151E2B',
+          border: '#243348',
+          borderLight: '#324560',
+          text: '#F4F7FC',
+          muted: '#9BA9BA',
+          accent: '#4C8DFF',
+          accentHover: '#3A7AEB',
         },
 
         // BraTS Tumor Compartment Segmentation Masks
         tumor: {
-          wt: '#10B981', // Whole Tumor (green/emerald)
-          tc: '#F59E0B', // Tumor Core (amber/orange)
-          et: '#EF4444', // Enhancing Tumor (red/coral)
-          ed: '#059669', // Peritumoral Edema
+          wt: '#EAB308', // Whole Tumor (Yellow / Edema infiltration)
+          tc: '#F43F5E', // Tumor Core (Coral / Necrotic)
+          et: '#06B6D4', // Enhancing Active Tumor (Cyan)
+          ed: '#10B981', // Peritumoral Edema (Emerald)
         }
       },
       fontFamily: {
-        sans: ['"Times New Roman"', 'Times', 'Georgia', 'serif', 'Inter', 'sans-serif'],
-        serif: ['"Times New Roman"', 'Times', 'Georgia', 'serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        'medical-sm': '0 1px 2px 0 rgba(22, 50, 79, 0.05)',
-        'medical-md': '0 4px 6px -1px rgba(22, 50, 79, 0.07), 0 2px 4px -2px rgba(22, 50, 79, 0.05)',
-        'medical-lg': '0 10px 15px -3px rgba(22, 50, 79, 0.08), 0 4px 6px -4px rgba(22, 50, 79, 0.04)',
-        'medical-card': '0 1px 3px 0 rgba(22, 50, 79, 0.04), 0 1px 2px -1px rgba(22, 50, 79, 0.04)',
-        'mri-viewer': '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+        // Preserved existing utilities (updated to dark clinical elevation values)
+        'medical-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.35)',
+        'medical-md': '0 4px 8px -2px rgba(0, 0, 0, 0.45), 0 2px 4px -2px rgba(0, 0, 0, 0.3)',
+        'medical-lg': '0 12px 24px -4px rgba(0, 0, 0, 0.55), 0 4px 8px -4px rgba(0, 0, 0, 0.3)',
+        'medical-card': '0 0 0 1px rgba(255, 255, 255, 0.04), 0 2px 4px rgba(0, 0, 0, 0.4)',
+        'mri-viewer': '0 12px 32px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        // New clinical tokens
+        'clinical-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.35)',
+        'clinical-md': '0 4px 8px -2px rgba(0, 0, 0, 0.45), 0 2px 4px -2px rgba(0, 0, 0, 0.3)',
+        'clinical-lg': '0 12px 24px -4px rgba(0, 0, 0, 0.55), 0 4px 8px -4px rgba(0, 0, 0, 0.3)',
+        'clinical-card': '0 0 0 1px rgba(255, 255, 255, 0.04), 0 2px 4px rgba(0, 0, 0, 0.4)',
       },
       animation: {
         'page-in': 'pageIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',

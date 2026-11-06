@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Brain, 
   LayoutDashboard, 
@@ -28,17 +28,33 @@ import VoiceButton from '../voice/VoiceButton';
 import { useVoice } from '../voice/VoiceContext';
 import { smoothScrollToTop } from '../utils/motion';
 
-const NAV_ITEMS = [
-  { id: 'overview', label: 'Home / Overview', icon: LayoutDashboard },
-  { id: 'viewer', label: '3D Workspace', icon: Box },
-  { id: 'upload', label: 'AI Segmentation', icon: UploadCloud },
-  { id: 'models', label: 'Model Lab', icon: Cpu },
-  { id: 'analytics', label: 'Analytics', icon: Activity },
-  { id: 'adaptive', label: 'Adaptive Learning', icon: RefreshCw },
-  { id: 'classify', label: '2D Pathology', icon: ImageIcon },
-  { id: 'reports', label: 'Reports', icon: FileText },
-  { id: 'settings', label: 'Settings', icon: Settings },
-  { id: 'about', label: 'About & Viva', icon: Info },
+const NAV_GROUPS = [
+  {
+    category: 'CLINICAL WORKSPACE',
+    items: [
+      { id: 'viewer', label: '3D Workspace', icon: Box },
+      { id: 'upload', label: 'AI Segmentation', icon: UploadCloud },
+      { id: 'results', label: 'Analysis Results', icon: CheckCircle2 },
+      { id: 'classify', label: '2D Pathology', icon: ImageIcon },
+      { id: 'reports', label: 'Clinical Reports', icon: FileText },
+    ],
+  },
+  {
+    category: 'RESEARCH & BENCHMARKS',
+    items: [
+      { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
+      { id: 'models', label: 'Model Lab', icon: Cpu },
+      { id: 'analytics', label: 'Training Dynamics', icon: Activity },
+      { id: 'adaptive', label: 'Adaptive Learning', icon: RefreshCw },
+    ],
+  },
+  {
+    category: 'SYSTEM & SPECIFICATIONS',
+    items: [
+      { id: 'settings', label: 'Workstation Settings', icon: Settings },
+      { id: 'about', label: 'Methodology & Viva', icon: Info },
+    ],
+  },
 ];
 
 const ROUTE_METADATA = {
@@ -98,6 +114,19 @@ const ROUTE_METADATA = {
     subtitle: 'MONAI UNETR ViT, EMA loss balancing & BraTS 2021 cohort',
   },
 };
+
+function isEditableElement(target) {
+  if (!target) return false;
+  const tagName = target.tagName ? target.tagName.toUpperCase() : '';
+  if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
+    return true;
+  }
+  if (target.isContentEditable) return true;
+  if (typeof target.closest === 'function') {
+    return !!target.closest('[contenteditable="true"], [contenteditable=""], [role="textbox"]');
+  }
+  return false;
+}
 
 export default function AppLayout({ activeTab, onTabChange, onPlayIntro, children }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -159,7 +188,7 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
     return unregister;
   }, [registerLayoutHandler]);
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setIsCollapsed((prev) => {
       const next = !prev;
       if (typeof window !== 'undefined') {
@@ -167,7 +196,30 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
       }
       return next;
     });
-  };
+  }, []);
+
+  // Global Ctrl+\ / Cmd+\ Keyboard Shortcut for Sidebar Collapse / Expansion
+  // Preserves form typing inside input fields, textareas, selects, and contenteditable elements
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.repeat) return;
+
+      const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+      const isBackslash = e.key === '\\' || e.code === 'Backslash';
+
+      if (isCtrlOrMeta && isBackslash && !e.altKey) {
+        if (isEditableElement(e.target)) return;
+
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [toggleSidebar]);
 
   const handleNavClick = (id) => {
     onTabChange(id);
@@ -177,34 +229,34 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
   const isViewerTab = activeTab === 'viewer';
 
   return (
-    <div className="flex h-screen bg-[#F7FAFC] text-[#16324F] overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#080B12] text-[#F4F7FC] overflow-hidden font-sans">
       {/* MOBILE DRAWER BACKDROP (SMOOTH FADE) */}
       <div 
-        className={`fixed inset-0 bg-[#16324F]/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ease-in-out ${
+        className={`fixed inset-0 bg-black/75 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ease-in-out ${
           mobileDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileDrawerOpen(false)}
         aria-hidden="true"
       />
 
-      {/* REFINED MEDICAL SAAS SIDEBAR (FLUID CONTINUOUS COLLAPSE & EXPANSION) */}
+      {/* REFINED CLINICAL WORKSTATION SIDEBAR */}
       <aside
-        className={`fixed lg:static top-0 bottom-0 left-0 z-50 bg-white border-r border-[#DCE6F0] shadow-sm flex flex-col justify-between transition-all duration-300 ease-in-out select-none ${
+        className={`fixed lg:static top-0 bottom-0 left-0 z-50 bg-[#101722] border-r border-[#1C2636] shadow-clinical-md flex flex-col justify-between transition-all duration-300 ease-in-out select-none ${
           mobileDrawerOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         } ${
-          isCollapsed ? 'lg:w-[72px]' : 'lg:w-64'
+          isCollapsed ? 'lg:w-[68px]' : 'lg:w-64'
         }`}
       >
         {/* TOP SECTION: BRANDING & NAVIGATION */}
         <div className="flex flex-col min-h-0">
           {/* Header Bar */}
-          <div className="h-16 border-b border-[#DCE6F0] flex items-center shrink-0 px-3.5 bg-white justify-between transition-all duration-300">
-            {/* Logo + Product Name (Continuous slide & fade without unmounting) */}
+          <div className="h-14 border-b border-[#1C2636] flex items-center shrink-0 px-3.5 bg-[#101722] justify-between transition-all duration-300">
+            {/* Logo + Product Name */}
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               <button
                 type="button"
                 onClick={isCollapsed ? toggleSidebar : undefined}
-                className={`p-0.5 rounded-full ring-1 ring-[#2563EB]/30 hover:scale-105 transition-transform shrink-0 ${
+                className={`p-0.5 rounded-full ring-1 ring-[#4C8DFF]/30 hover:scale-105 transition-transform shrink-0 ${
                   isCollapsed ? 'cursor-pointer' : 'cursor-default'
                 }`}
                 title={isCollapsed ? "Expand sidebar • NeuroVision AI" : "NeuroVision AI Logo"}
@@ -212,18 +264,18 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
                 <img 
                   src="/logo-circle.png" 
                   alt="NeuroVision AI Logo" 
-                  className="w-9 h-9 rounded-full object-cover shrink-0 shadow-sm" 
+                  className="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" 
                 />
               </button>
               
               <div className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap min-w-0 ${
                 isCollapsed ? 'max-w-0 opacity-0 -translate-x-2 pointer-events-none' : 'max-w-[150px] opacity-100 translate-x-0'
               }`}>
-                <div className="font-bold text-base tracking-tight text-[#16324F] flex items-center gap-1 leading-tight truncate">
+                <div className="font-semibold text-sm tracking-tight text-[#F4F7FC] flex items-center gap-1 leading-tight truncate">
                   <span>NeuroVision</span>
-                  <span className="text-[#2563EB]">AI</span>
+                  <span className="text-[#4C8DFF]">AI</span>
                 </div>
-                <span className="text-[10px] uppercase tracking-wider text-[#64748B] font-mono block -mt-0.5 truncate font-medium">
+                <span className="text-[10px] uppercase tracking-wider text-[#8496AC] font-mono block -mt-0.5 truncate font-medium">
                   Clinical AI Platform
                 </span>
               </div>
@@ -233,19 +285,19 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
             <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={toggleSidebar}
-                className="hidden lg:flex p-1.5 rounded-lg text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8] transition-colors active:scale-95"
+                className="hidden lg:flex p-1.5 rounded-lg text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors active:scale-95"
                 title={isCollapsed ? "Expand sidebar (Ctrl+\\)" : "Collapse sidebar (Ctrl+\\)"}
                 aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {isCollapsed ? (
-                  <PanelLeftOpen className="w-4 h-4 text-[#2563EB]" />
+                  <PanelLeftOpen className="w-4 h-4 text-[#4C8DFF]" />
                 ) : (
                   <PanelLeftClose className="w-4 h-4" />
                 )}
               </button>
 
               <button 
-                className="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8] active:scale-95 transition-transform"
+                className="lg:hidden p-1.5 rounded-lg text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] active:scale-95 transition-transform"
                 onClick={() => setMobileDrawerOpen(false)}
                 aria-label="Close menu"
               >
@@ -254,12 +306,12 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
             </div>
           </div>
 
-          {/* QUICK-ACTION BUTTON (SMOOTH MORPH) */}
+          {/* QUICK-ACTION BUTTON */}
           <div className="p-3 shrink-0 flex justify-center">
             <div className="relative group w-full flex justify-center">
               <button
                 onClick={() => handleNavClick('upload')}
-                className={`flex items-center rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-all duration-300 shadow-sm active:scale-[0.98] group overflow-hidden ${
+                className={`flex items-center rounded-xl bg-[#4C8DFF] hover:bg-[#3A7AEB] text-white text-xs font-semibold transition-all duration-300 shadow-clinical-sm active:scale-[0.98] group overflow-hidden ${
                   isCollapsed ? 'w-10 h-10 p-0 justify-center' : 'w-full px-3 py-2.5 gap-2.5 justify-start'
                 }`}
                 title={isCollapsed ? undefined : "Start a new MRI scan analysis"}
@@ -275,128 +327,130 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
 
               {/* Collapsed Tooltip */}
               {isCollapsed && (
-                <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-[#16324F] text-xs text-white shadow-xl z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2">
+                <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-[#151E2B] border border-[#243348] text-xs text-[#F4F7FC] shadow-clinical-lg z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2">
                   <span className="font-semibold">New Scan Analysis</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* MAIN NAVIGATION LIST (UNIFIED TRANSITIONS, ZERO LAYOUT JUMPS) */}
-          <nav className="space-y-0.5 px-3 overflow-y-auto">
-            <div className={`px-2 text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] font-mono transition-all duration-300 overflow-hidden whitespace-nowrap ${
-              isCollapsed ? 'max-h-0 opacity-0 py-0' : 'max-h-8 opacity-100 py-1.5'
-            }`}>
-              Workspace
-            </div>
-
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-
-              return (
-                <div key={item.id} className="relative group flex justify-center my-0.5">
-                  <button
-                    onClick={() => handleNavClick(item.id)}
-                    className={`flex items-center rounded-xl text-xs font-medium transition-all duration-200 relative group overflow-hidden active:scale-[0.98] ${
-                      isCollapsed
-                        ? 'w-10 h-10 p-0 justify-center'
-                        : 'w-full px-3 py-2 gap-3 justify-start'
-                    } ${
-                      isActive
-                        ? 'bg-[#E3EEFF] text-[#2563EB] font-semibold shadow-xs'
-                        : 'text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8]'
-                    }`}
-                    aria-label={item.label}
-                  >
-                    {isActive && (
-                      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-[#2563EB]" />
-                    )}
-                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? 'text-[#2563EB]' : 'text-[#64748B] group-hover:text-[#16324F]'
-                    }`} />
-                    <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap text-left ${
-                      isCollapsed ? 'max-w-0 opacity-0 -translate-x-2 pointer-events-none' : 'max-w-[170px] opacity-100 translate-x-0'
-                    }`}>
-                      {item.label}
-                    </span>
-                  </button>
-
-                  {/* Collapsed Tooltip */}
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-[#16324F] text-xs text-white shadow-xl z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                      <span>{item.label}</span>
-                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />}
-                    </div>
-                  )}
+          {/* MAIN NAVIGATION LIST (GROUPED HIERARCHY FOR ALL 11 APPLICATION VIEWS) */}
+          <nav className="space-y-3 px-3 overflow-y-auto no-scrollbar pb-3">
+            {NAV_GROUPS.map((group, gIdx) => (
+              <div key={group.category} className="space-y-0.5">
+                <div className={`px-2 text-[10px] font-bold uppercase tracking-wider text-[#8496AC] font-mono transition-all duration-300 overflow-hidden whitespace-nowrap ${
+                  isCollapsed ? 'max-h-0 opacity-0 py-0' : 'max-h-6 opacity-100 py-1'
+                } ${gIdx > 0 ? 'mt-2' : ''}`}>
+                  {group.category}
                 </div>
-              );
-            })}
+
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+
+                  return (
+                    <div key={item.id} className="relative group flex justify-center my-0.5">
+                      <button
+                        onClick={() => handleNavClick(item.id)}
+                        data-nav-id={item.id}
+                        className={`flex items-center rounded-xl text-xs font-medium transition-all duration-200 relative group overflow-hidden active:scale-[0.98] ${
+                          isCollapsed
+                            ? 'w-10 h-10 p-0 justify-center'
+                            : 'w-full px-3 py-2 gap-3 justify-start'
+                        } ${
+                          isActive
+                            ? 'bg-[#151E2B] text-[#F4F7FC] font-semibold border-l-2 border-[#4C8DFF] shadow-xs'
+                            : 'text-[#9BA9BA] hover:text-[#F4F7FC] hover:bg-[#151E2B]/70'
+                        }`}
+                        aria-label={item.label}
+                      >
+                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive ? 'text-[#4C8DFF]' : 'text-[#8496AC] group-hover:text-[#F4F7FC]'
+                        }`} />
+                        <span className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap text-left ${
+                          isCollapsed ? 'max-w-0 opacity-0 -translate-x-2 pointer-events-none' : 'max-w-[170px] opacity-100 translate-x-0'
+                        }`}>
+                          {item.label}
+                        </span>
+                      </button>
+
+                      {/* Collapsed Tooltip */}
+                      {isCollapsed && (
+                        <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-[#151E2B] border border-[#243348] text-xs text-[#F4F7FC] shadow-clinical-lg z-50 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                          <span>{item.label}</span>
+                          {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#4C8DFF]" />}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
         </div>
 
         {/* BOTTOM SECTION: SYSTEM TELEMETRY */}
-        <div className="border-t border-[#DCE6F0] shrink-0 bg-[#F7FAFC] p-3 flex justify-center transition-all duration-300">
+        <div className="border-t border-[#1C2636] shrink-0 bg-[#101722] p-3 flex justify-center transition-all duration-300">
           {isCollapsed ? (
             <div className="relative group flex justify-center">
               <button
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#DCE6F0] hover:border-[#2563EB]/40 transition-colors shadow-2xs relative active:scale-95"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#151E2B] border border-[#243348] hover:border-[#4C8DFF]/40 transition-colors shadow-clinical-sm relative active:scale-95"
                 aria-label="Engine Status"
               >
-                <Cpu className="w-4 h-4 text-[#2563EB]" />
+                <Cpu className="w-4 h-4 text-[#4C8DFF]" />
                 <span 
-                  className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-white ${
-                    serverStatus === 'ready' ? 'bg-[#16866A]' : 'bg-[#B7791F]'
+                  className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-[#101722] ${
+                    serverStatus === 'ready' ? 'bg-[#35B982]' : 'bg-[#F4B860]'
                   }`}
                 />
               </button>
 
-              <div className="absolute left-full bottom-0 ml-3 w-56 p-3 rounded-xl bg-[#16324F] text-xs text-white shadow-2xl z-50 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 space-y-2">
-                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
-                  <span className="font-semibold text-white">Adaptive UNETR</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-[#7DD3FC]">
+              <div className="absolute left-full bottom-0 ml-3 w-56 p-3 rounded-xl bg-[#151E2B] border border-[#243348] text-xs text-[#F4F7FC] shadow-clinical-lg z-50 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 space-y-2">
+                <div className="flex items-center justify-between border-b border-[#243348] pb-1.5">
+                  <span className="font-semibold text-[#F4F7FC]">Adaptive UNETR</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#101722] text-[#4C8DFF] border border-[#243348]">
                     GPU FP16
                   </span>
                 </div>
-                <div className="text-[11px] text-[#A7B5C8] font-mono space-y-0.5">
+                <div className="text-[11px] text-[#8496AC] font-mono space-y-0.5">
                   <div>Framework: MONAI 1.6</div>
                   <div>Backend: PyTorch 2.11 + CUDA</div>
                 </div>
-                <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-[11px]">
-                  <span className="text-[#A7B5C8]">Engine:</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    {serverStatus === 'ready' ? 'Ready (Active)' : 'Offline / Demo'}
+                <div className="pt-1.5 border-t border-[#243348] flex items-center justify-between text-[11px]">
+                  <span className="text-[#8496AC]">Engine:</span>
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-[#35B982]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#35B982]" />
+                    {serverStatus === 'ready' ? 'Ready (Active)' : serverStatus === 'checking' ? 'Connecting...' : 'UI Demo'}
                   </span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="w-full p-3 rounded-xl bg-white border border-[#DCE6F0] shadow-2xs text-xs space-y-1.5 transition-all duration-300">
+            <div className="w-full p-3 rounded-xl bg-[#151E2B] border border-[#243348] shadow-clinical-sm text-xs space-y-1.5 transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] font-semibold">Engine</span>
-                <Cpu className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#8496AC] font-semibold">Engine</span>
+                <Cpu className="w-3.5 h-3.5 text-[#4C8DFF] shrink-0" />
               </div>
-              <div className="font-semibold text-[#16324F] text-xs truncate">
+              <div className="font-semibold text-[#F4F7FC] text-xs truncate">
                 Adaptive Self-Distillation
               </div>
-              <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-[#EEF4F8]">
-                <span className="text-[10px] text-[#64748B] font-mono">UNETR + MONAI</span>
+              <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-[#243348]/60">
+                <span className="text-[10px] text-[#8496AC] font-mono">UNETR + MONAI</span>
                 <span className="inline-flex items-center gap-1.5 shrink-0 font-medium text-[10px]">
                   {serverStatus === 'ready' ? (
                     <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#16866A]" />
-                      <span className="text-[#16866A] font-semibold">Ready</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#35B982]" />
+                      <span className="text-[#35B982] font-semibold">Ready</span>
                     </>
                   ) : serverStatus === 'checking' ? (
                     <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#B7791F] animate-pulse" />
-                      <span className="text-[#B7791F]">Connecting...</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F4B860] animate-pulse" />
+                      <span className="text-[#F4B860]">Connecting...</span>
                     </>
                   ) : (
                     <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#B7791F]" />
-                      <span className="text-[#B7791F]">UI Demo</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F4B860]" />
+                      <span className="text-[#F4B860]">UI Demo</span>
                     </>
                   )}
                 </span>
@@ -408,17 +462,13 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 ease-in-out">
-        {/* Dynamic Sticky Top Header (Compact Scroll Transition) */}
-        <header className={`sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between shrink-0 transition-all duration-250 ease-out border-b border-[#DCE6F0] ${
-          isScrolled 
-            ? 'h-14 bg-white/95 backdrop-blur-md shadow-sm' 
-            : 'h-16 bg-white shadow-2xs'
-        }`}>
+        {/* Top Header (Consistent Fixed Height: 56px / h-14) */}
+        <header className="h-14 bg-[#101722]/95 backdrop-blur-md border-b border-[#1C2636] px-4 lg:px-6 flex items-center justify-between shrink-0 z-30">
           <div className="flex items-center gap-3 min-w-0">
             {/* Mobile Hamburger */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-[#64748B] hover:text-[#16324F] hover:bg-[#EEF4F8] active:scale-95 transition-transform"
+              className="lg:hidden p-2 rounded-lg text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] active:scale-95 transition-transform"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
@@ -426,14 +476,14 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
 
             <div key={activeTab} className="min-w-0 animate-fadeIn">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#2563EB] px-2 py-0.5 rounded-md bg-[#E3EEFF] border border-[#BFDBFE]">
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#4C8DFF] px-2 py-0.5 rounded-md bg-[#151E2B] border border-[#243348]">
                   {currentMeta.section}
                 </span>
-                <h1 className="text-sm lg:text-base font-bold text-[#16324F] tracking-tight truncate">
+                <h1 className="text-sm lg:text-base font-semibold text-[#F4F7FC] tracking-tight truncate">
                   {currentMeta.title}
                 </h1>
               </div>
-              <p className="text-xs text-[#64748B] mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#8496AC] mt-0.5 truncate hidden sm:block">
                 {currentMeta.subtitle}
               </p>
             </div>
@@ -448,33 +498,33 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
               <button
                 onClick={onPlayIntro}
                 type="button"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#EEF4F8] border border-[#DCE6F0] text-[#64748B] hover:text-[#16324F] text-[11px] font-mono transition-all duration-150 shadow-2xs active:scale-95"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#151E2B] hover:bg-[#1B2635] border border-[#243348] text-[#9BA9BA] hover:text-[#F4F7FC] text-[11px] font-mono transition-all duration-150 shadow-clinical-sm active:scale-95"
                 title="Play 4K Cinematic Intro Video"
               >
-                <Film className="w-3.5 h-3.5 text-[#2563EB]" />
+                <Film className="w-3.5 h-3.5 text-[#4C8DFF]" />
                 <span className="hidden sm:inline font-medium">Intro</span>
               </button>
             )}
 
-            {/* Study Cohort Tag */}
-            <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#EEF4F8] border border-[#DCE6F0] text-[11px] font-mono text-[#64748B] transition-opacity">
-              <span className="text-[#16324F] font-semibold">BraTS2021</span>
-              <span className="text-[#CBD5E1]">•</span>
-              <span className="text-[#06B6D4] font-medium">1.0mm³ Iso</span>
+            {/* Study Cohort Tag (Preserved Dynamic Metadata Structure) */}
+            <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#151E2B] border border-[#243348] text-[11px] font-mono text-[#9BA9BA]">
+              <span className="text-[#F4F7FC] font-semibold">BraTS2021</span>
+              <span className="text-[#243348]">•</span>
+              <span className="text-[#35C6B0] font-medium">1.0mm³ Iso</span>
             </div>
 
-            {/* Engine Status Badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#DCE6F0] text-xs shadow-2xs transition-all">
+            {/* Engine Status Badge (Connected to dynamic useServerStatus hook) */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#151E2B] border border-[#243348] text-xs shadow-clinical-sm transition-all">
               <span className={`w-2 h-2 rounded-full ${
-                serverStatus === 'ready' ? 'bg-[#16866A]' : 'bg-[#B7791F]'
+                serverStatus === 'ready' ? 'bg-[#35B982]' : 'bg-[#F4B860]'
               }`} />
               <span className={`font-semibold text-[11px] ${
-                serverStatus === 'ready' ? 'text-[#16866A]' : 'text-[#B7791F]'
+                serverStatus === 'ready' ? 'text-[#35B982]' : 'text-[#F4B860]'
               }`}>
-                {serverStatus === 'ready' ? 'Engine Ready' : 'Connecting...'}
+                {serverStatus === 'ready' ? 'Engine Ready' : serverStatus === 'checking' ? 'Connecting...' : 'UI Demo'}
               </span>
               {serverStatus === 'offline' && (
-                <span className="text-[10px] text-[#B7791F] font-mono border-l border-[#DCE6F0] pl-2">
+                <span className="text-[10px] text-[#8496AC] font-mono border-l border-[#243348] pl-2">
                   (Demo)
                 </span>
               )}
@@ -482,9 +532,9 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
           </div>
         </header>
 
-        {/* Dynamic Page Content (Light SaaS background or Dark MRI Viewing Environment) */}
-        <main id="neurovision-main-scroll" className={`flex-1 overflow-y-auto ${
-          isViewerTab ? 'bg-[#101B2D] text-[#F1F5F9] mri-viewport' : 'bg-[#F7FAFC] text-[#16324F]'
+        {/* Dynamic Page Content (Unified Dark Clinical Canvas) */}
+        <main id="neurovision-main-scroll" className={`flex-1 overflow-y-auto bg-[#080B12] text-[#F4F7FC] ${
+          isViewerTab ? 'mri-viewport' : ''
         }`}>
           <div className="h-full">
             {children}
@@ -495,11 +545,11 @@ export default function AppLayout({ activeTab, onTabChange, onPlayIntro, childre
             <button
               onClick={() => smoothScrollToTop()}
               type="button"
-              className="fixed bottom-6 right-6 z-40 px-3 py-2 rounded-xl bg-white/95 hover:bg-white text-[#16324F] hover:text-[#2563EB] border border-[#DCE6F0] shadow-medical-md hover:shadow-medical-lg transition-all duration-200 active:scale-95 group flex items-center gap-1.5 text-xs font-mono animate-fadeIn backdrop-blur-sm"
+              className="fixed bottom-6 right-6 z-40 px-3 py-2 rounded-xl bg-[#151E2B]/95 hover:bg-[#1B2635] text-[#F4F7FC] hover:text-[#4C8DFF] border border-[#243348] shadow-clinical-md transition-all duration-200 active:scale-95 group flex items-center gap-1.5 text-xs font-mono animate-fadeIn backdrop-blur-sm"
               title="Smooth scroll to top"
               aria-label="Scroll to top"
             >
-              <ArrowUp className="w-3.5 h-3.5 text-[#2563EB] group-hover:-translate-y-0.5 transition-transform" />
+              <ArrowUp className="w-3.5 h-3.5 text-[#4C8DFF] group-hover:-translate-y-0.5 transition-transform" />
               <span className="font-semibold">Top</span>
             </button>
           )}

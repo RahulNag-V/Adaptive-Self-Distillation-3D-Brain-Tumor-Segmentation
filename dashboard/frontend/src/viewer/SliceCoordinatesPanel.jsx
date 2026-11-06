@@ -3,8 +3,8 @@ import { Sliders } from 'lucide-react';
 
 /**
  * SliceCoordinatesPanel
- * Precision multi-planar slice coordinate navigation rail.
- * Styled for the dedicated dark MRI workstation environment (#101B2D / #18263B / #30445E).
+ * Precision multi-planar slice coordinate navigation panel.
+ * Styled for the unified clinical dark workstation palette (#080B12 / #101722 / #151E2B / #1C2636).
  */
 export default function SliceCoordinatesPanel({
   axialSlice = 75,
@@ -30,9 +30,9 @@ export default function SliceCoordinatesPanel({
       label: 'Axial (Z)',
       value: safeAxial,
       total: totalAxial,
-      dotColor: 'bg-[#7DD3FC]',
-      textAccent: 'text-[#7DD3FC]',
-      accentClass: 'accent-[#7DD3FC]',
+      dotColor: 'bg-[#35B982]',
+      textAccent: 'text-[#35B982]',
+      accentClass: 'accent-[#35B982]',
       onChange: onAxialChange,
     },
     {
@@ -40,9 +40,9 @@ export default function SliceCoordinatesPanel({
       label: 'Coronal (Y)',
       value: safeCoronal,
       total: totalCoronal,
-      dotColor: 'bg-[#06B6D4]',
-      textAccent: 'text-[#22D3EE]',
-      accentClass: 'accent-[#06B6D4]',
+      dotColor: 'bg-[#35C6B0]',
+      textAccent: 'text-[#35C6B0]',
+      accentClass: 'accent-[#35C6B0]',
       onChange: onCoronalChange,
     },
     {
@@ -50,35 +50,35 @@ export default function SliceCoordinatesPanel({
       label: 'Sagittal (X)',
       value: safeSagittal,
       total: totalSagittal,
-      dotColor: 'bg-[#38BDF8]',
-      textAccent: 'text-[#38BDF8]',
-      accentClass: 'accent-[#38BDF8]',
+      dotColor: 'bg-[#4C8DFF]',
+      textAccent: 'text-[#4C8DFF]',
+      accentClass: 'accent-[#4C8DFF]',
       onChange: onSagittalChange,
     },
   ];
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex items-center justify-between pb-1.5 border-b border-[#30445E]">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-[#A7B5C8] font-bold">
-          Slice Coordinates
+    <div className="space-y-2">
+      <div className="flex items-center justify-between pb-1.5 border-b border-[#1C2636]">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-[#8496AC] font-semibold">
+          Spatial Coordinates
         </span>
-        <Sliders className="w-3.5 h-3.5 text-[#7DD3FC]" />
+        <Sliders className="w-3.5 h-3.5 text-[#4C8DFF]" />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {planes.map(({ id, label, value, total, dotColor, textAccent, accentClass, onChange }) => (
           <div
             key={id}
-            className="p-2.5 rounded-xl bg-[#101B2D] border border-[#30445E] hover:border-[#3F5877] transition-colors space-y-1.5 shadow-2xs"
+            className="p-2 rounded-lg bg-[#151E2B] border border-[#1C2636] hover:border-[#243348] transition-colors space-y-1 shadow-clinical-sm"
           >
             <div className="flex items-center justify-between text-xs">
-              <span className="text-[#F1F5F9] font-medium flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+              <span className="text-[#F4F7FC] font-medium flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
                 <span className="text-[11px] font-sans">{label}</span>
               </span>
-              <span className={`font-mono font-tabular text-[11px] font-bold ${textAccent}`}>
-                {value + 1} <span className="text-[#A7B5C8]/60 font-normal">/ {total}</span>
+              <span className={`font-mono tabular-nums text-[11px] font-bold ${textAccent}`}>
+                {value + 1} <span className="text-[#8496AC]/70 font-normal">/ {total}</span>
               </span>
             </div>
             <input
@@ -88,7 +88,7 @@ export default function SliceCoordinatesPanel({
               value={value}
               disabled={disabled}
               onChange={(e) => onChange && onChange(parseInt(e.target.value, 10))}
-              className={`w-full ${accentClass} cursor-pointer h-1.5 bg-[#18263B] rounded-lg disabled:opacity-40 disabled:cursor-not-allowed`}
+              className={`w-full ${accentClass} cursor-pointer h-1.5 bg-[#101722] rounded-lg disabled:opacity-40 disabled:cursor-not-allowed`}
               aria-label={`${label} Coordinate`}
             />
           </div>

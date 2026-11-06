@@ -36,7 +36,11 @@ import {
   Tag,
   ChevronDown,
   Check,
-  Search
+  Search,
+  Compass,
+  Crosshair,
+  SlidersHorizontal,
+  ChevronRight
 } from 'lucide-react';
 import MedicalViewer, { BRAIN_APPEARANCE_OPTIONS, ANATOMICAL_REGIONS_LEGEND } from '../viewer/MedicalViewer';
 import OrthogonalSliceViewer from '../viewer/OrthogonalSliceViewer';
@@ -75,6 +79,9 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   // Full-Screen Maximized Mode: null | '3d' | 'axial' | 'coronal' | 'sagittal'
   const [maximizedViewer, setMaximizedViewer] = useState(null);
 
+  // Inspector Sidebar Toggle (Allows true 100% canvas view when collapsed)
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+
   // Shared 3D Voxel Coordinate State (Single Source of Truth)
   const [axialSlice, setAxialSlice] = useState(78);
   const [coronalSlice, setCoronalSlice] = useState(120);
@@ -84,6 +91,11 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   const [activeMriModality, setActiveMriModality] = useState(
     currentResult?.is_ct ? 'ct' : 'flair'
   );
+
+  // Available modalities: standard BraTS 4 sequences, plus CT if currentResult has CT flag
+  const availableModalities = currentResult?.is_ct 
+    ? ['flair', 't1', 't1ce', 't2', 'ct'] 
+    : ['flair', 't1', 't1ce', 't2'];
 
   // Segmentation Source: 'prediction' | 'corrected' | 'ground_truth' | 'none'
   const [segSource, setSegSource] = useState(
@@ -210,7 +222,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
     et: true,
   });
 
-  // Active right sidebar tab: 'burden' | 'layers'
+  // Active right sidebar tab: 'burden' | 'coords' | 'layers'
   const [activeRightTab, setActiveRightTab] = useState('burden');
 
   // Voice Controlled Display Layer Adjustments
@@ -333,6 +345,12 @@ export default function ViewerPage({ currentResult, onNavigate }) {
     setCoronalSlice(Math.floor(dimensions.coronal / 2));
     setSagittalSlice(Math.floor(dimensions.sagittal / 2));
     setOpacity(0.75);
+    setSliceRotation(0);
+    setSliceBrightness(100);
+    setSliceContrast(100);
+    setSliceZoom(1.0);
+    setSlicePan({ x: 0, y: 0 });
+    setThreeCommand({ type: 'RESET_VIEW', id: Date.now() });
   };
 
   const handleCoordinateClick = useCallback((newCoords) => {
@@ -486,7 +504,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       if (type === 'SET_MODALITY') {
         setActiveMriModality(action.value);
       } else if (type === 'CYCLE_MODALITY') {
-        const MODALITIES = ['flair', 't1ce', 't1', 't2', 'ct'];
+        const MODALITIES = availableModalities;
         const nextMod = MODALITIES[(MODALITIES.indexOf(activeMriModality) + 1) % MODALITIES.length];
         setActiveMriModality(nextMod);
       }
@@ -497,7 +515,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         if (maximizedViewer) setMaximizedViewer(null);
       }
 
-      // 3. Multi-Axis and Single-Axis Coordinate Controls (Sections 4 & 5)
+      // 3. Multi-Axis and Single-Axis Coordinate Controls
       else if (type === 'SET_COORDINATES') {
         let hasInvalid = false;
         let invalidMsg = '';
@@ -557,7 +575,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         }
       }
 
-      // 4. Case Selection & Patient Dataset Controls (Section 6)
+      // 4. Case Selection & Patient Dataset Controls
       else if (type === 'SELECT_CASE') {
         if (action.direction === 'next') {
           const curIdx = patients.findIndex((p) => p.id === selectedPatientId);
@@ -638,15 +656,13 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         handleReset();
       }
 
-      // 6. Rotation Controls - One-Shot vs Continuous (Section 9)
+      // 6. Rotation Controls
       else if (type === 'ROTATE' || type === 'ROTATE_ONCE') {
-        // Apply 2D Slice rotation (90° increments) once
         setSliceRotation((prev) => {
           if (action.direction === '180') return (prev + 180) % 360;
           if (action.direction === 'left') return (prev - (action.degrees || 90) + 360) % 360;
           return (prev + (action.degrees || 90)) % 360;
         });
-        // Dispatch to 3D Three.js camera (one-shot action)
         setThreeCommand({
           type: 'ROTATE_ONCE',
           direction: action.direction,
@@ -665,7 +681,6 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       }
 
       else if (type === 'START_CONTINUOUS_ROTATION') {
-        // Continuous rotation on 3D view
         setThreeCommand({
           type: 'START_CONTINUOUS_ROTATION',
           direction: action.direction || 'right',
@@ -674,7 +689,6 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       }
 
       else if (type === 'STOP_ROTATION') {
-        // Halts all continuous movement
         setThreeCommand({
           type: 'STOP_ROTATION',
           id: Date.now(),
@@ -690,7 +704,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
         setThreeCommand({ type: 'SET_CAMERA_ANGLE', angle: action.angle, id: Date.now() });
       }
 
-      // 7. 3D Mesh, Layers & Appearance (Section 3)
+      // 7. 3D Mesh, Layers & Appearance
       else if (type === 'TOGGLE_MESH') {
         setLayers((prev) => ({ ...prev, mri: action.visible }));
       }
@@ -711,6 +725,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       else if (type === 'SHOW_LAYERS_PANEL') {
         setActiveRightTab('layers');
+        setInspectorOpen(true);
       }
 
       else if (type === 'HIDE_LAYERS_PANEL') {
@@ -719,10 +734,12 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       else if (type === 'SHOW_VOLUMETRICS_PANEL') {
         setActiveRightTab('burden');
+        setInspectorOpen(true);
       }
 
       else if (type === 'SHOW_LAYERS_AND_VOLUMETRICS') {
         setActiveRightTab('layers');
+        setInspectorOpen(true);
       }
 
       else if (type === 'LIST_PATIENTS') {
@@ -763,12 +780,6 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       else if (type === 'RESET_VIEW') {
         handleReset();
-        setSliceRotation(0);
-        setSliceBrightness(100);
-        setSliceContrast(100);
-        setSliceZoom(1.0);
-        setSlicePan({ x: 0, y: 0 });
-        setThreeCommand({ type: 'RESET_VIEW', id: Date.now() });
       }
 
       // Fullscreen Maximize / Minimize
@@ -835,6 +846,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       }
 
       else if (type === 'SHOW_COORDINATES') {
+        setActiveRightTab('coords');
+        setInspectorOpen(true);
         if (updateViewerStatus) {
           updateViewerStatus({
             lastFeedback: `Voxel Coordinates: X=${sagittalSlice}, Y=${coronalSlice}, Z=${axialSlice}`,
@@ -856,102 +869,97 @@ export default function ViewerPage({ currentResult, onNavigate }) {
     selectedPatientId,
     patients,
     activeMriModality,
+    availableModalities,
     toggleSubregion,
     handleOpenCompare,
   ]);
 
   const dimensionsStr = `${dimensions.sagittal} × ${dimensions.coronal} × ${dimensions.axial} voxels`;
 
-  // Color mappings for Annotation State
+  // Color mappings for Annotation State using calibrated tokens
   const stateBadgeStyle = (status) => {
     switch (status) {
       case 'Prediction Generated':
-        return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
+        return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
       case 'Correction In Progress':
-        return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+        return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
       case 'Draft Saved':
-        return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+        return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
       case 'Submitted for Review':
-        return 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40';
+        return 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
       case 'Approved for Training':
-        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
       case 'Rejected':
-        return 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+        return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
       case 'Included in Training Dataset':
-        return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+        return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
       default:
-        return 'bg-mri-bg text-mri-muted border-mri-border';
+        return 'bg-[#151E2B] text-[#8496AC] border-[#1C2636]';
     }
   };
 
   return (
-    <div className="h-full flex flex-col p-3 lg:p-4 space-y-2.5 overflow-hidden">
-      {/* 1. TOP TOOLBAR: THREE LOGICAL GROUPS + PERSISTENT COMPACT LEGEND */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-mri-surface border border-mri-border px-3.5 py-2 rounded-xl shadow-md shrink-0">
-        {/* Left: Group 1 (Case) & Group 2 (Mask Source) */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* GROUP 1: CASE */}
+    <div className="h-full flex flex-col p-2.5 sm:p-3 lg:p-3.5 space-y-2 overflow-hidden bg-[#080B12]">
+      {/* 1. TOP CLINICAL WORKSTATION COMMAND STRIP (Single Unified 44px Ribbon) */}
+      <header className="flex flex-wrap items-center justify-between gap-2 bg-[#101722] border border-[#1C2636] px-3 py-1.5 rounded-xl shadow-medical-sm shrink-0">
+        
+        {/* Left Section: Case Selector, Split Badge, Mask Source */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* CASE SELECTOR */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="text-xs text-mri-muted uppercase font-mono font-semibold">Case:</span>
-            </div>
+            <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse shrink-0" />
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8496AC] hidden sm:inline">
+              Case:
+            </span>
 
-            {/* Custom Animated Patient Selector Dropdown */}
+            {/* Custom Clinical Patient Dropdown */}
             <div className="relative" ref={caseDropdownRef}>
               <button
                 type="button"
                 onClick={toggleCaseDropdown}
-                style={{ backgroundColor: '#101B2D' }}
-                className="flex items-center gap-2 bg-[#101B2D] hover:bg-[#18263B] border border-[#30445E] hover:border-cyan-400/60 text-slate-100 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer shadow-xs transition-all"
+                className="flex items-center gap-2 bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] hover:border-[#4C8DFF]/60 text-[#F4F7FC] text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#4C8DFF] cursor-pointer shadow-xs transition-colors"
                 aria-haspopup="listbox"
                 aria-expanded={caseDropdownState === 'open'}
               >
-                <span className="truncate max-w-[140px] sm:max-w-[180px]">
+                <span className="truncate max-w-[130px] sm:max-w-[170px]">
                   {currentResult && selectedPatientId === currentResult.session_id
                     ? `Live: ${currentResult.session_id.substring(0, 12)}...`
                     : selectedPatientId}
                 </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-950/40 text-cyan-300 border border-cyan-500/30">
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30 font-medium">
                   {patients.find(p => p.id === selectedPatientId)?.is_validation ? 'Val' : 'Train'}
                 </span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                    caseDropdownState === 'open' ? 'rotate-180 text-cyan-400' : ''
+                  className={`w-3.5 h-3.5 text-[#8496AC] transition-transform duration-200 ${
+                    caseDropdownState === 'open' ? 'rotate-180 text-[#4C8DFF]' : ''
                   }`}
                 />
               </button>
 
-              {/* Animated Popover */}
+              {/* Animated Clinical Popover */}
               {caseDropdownState !== 'closed' && (
                 <div 
-                  style={{ backgroundColor: '#18263B' }}
-                  className={`absolute top-full left-0 mt-2 z-[100] w-72 max-h-80 flex flex-col bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-cyan-500/30 text-xs font-mono ${
+                  className={`absolute top-full left-0 mt-2 z-[100] w-72 max-h-80 flex flex-col bg-[#151E2B] border border-[#1C2636] rounded-xl shadow-medical-lg p-2 ring-1 ring-[#4C8DFF]/30 text-xs font-mono ${
                     caseDropdownState === 'closing' ? 'animate-dropdown-exit' : 'animate-dropdown-down'
                   }`}
                 >
-                  {/* Popover Header */}
-                  <div 
-                    style={{ backgroundColor: '#101B2D' }}
-                    className="px-2.5 py-1.5 rounded-lg border border-[#30445E]/80 flex items-center justify-between text-[11px] font-bold text-slate-300 mb-1.5 shrink-0"
-                  >
+                  <div className="px-2.5 py-1.5 rounded-lg bg-[#101722] border border-[#1C2636] flex items-center justify-between text-[11px] font-bold text-[#F4F7FC] mb-1.5 shrink-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse" />
                       <span>Select BraTS Case</span>
                     </div>
-                    <span className="text-cyan-400 text-[10px]">{patients.length || 1} available</span>
+                    <span className="text-[#4C8DFF] text-[10px]">{patients.length || 1} available</span>
                   </div>
 
                   {/* Filter Search Input */}
                   <div className="relative mb-2 shrink-0">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Search className="w-3.5 h-3.5 text-[#8496AC] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       value={caseSearch}
                       onChange={(e) => setCaseSearch(e.target.value)}
                       placeholder="Filter case ID..."
-                      style={{ backgroundColor: '#101B2D' }}
-                      className="w-full bg-[#101B2D] border border-[#30445E] focus:border-cyan-400 rounded-lg pl-7 pr-2.5 py-1 text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none transition-colors"
+                      className="w-full bg-[#101722] border border-[#1C2636] focus:border-[#4C8DFF] rounded-lg pl-7 pr-2.5 py-1 text-[11px] text-[#F4F7FC] placeholder-[#8496AC] focus:outline-none transition-colors"
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                     />
@@ -966,21 +974,18 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                           setSelectedPatientId(currentResult.session_id);
                           closeCaseDropdown();
                         }}
-                        style={{
-                          backgroundColor: selectedPatientId === currentResult.session_id ? 'rgba(6, 182, 212, 0.15)' : '#18263B'
-                        }}
                         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
                           selectedPatientId === currentResult.session_id
-                            ? 'text-cyan-300 font-bold border border-cyan-500/40'
-                            : 'text-slate-200 hover:bg-[#22354D] hover:text-cyan-200 border border-transparent'
+                            ? 'bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40'
+                            : 'text-[#F4F7FC] hover:bg-[#1C2636] border border-transparent'
                         }`}
                       >
                         <div className="truncate min-w-0">
                           <span className="block truncate font-semibold">Live: {currentResult.session_id.substring(0, 14)}...</span>
-                          <span className="text-[10px] text-slate-400">Prospective Upload</span>
+                          <span className="text-[10px] text-[#8496AC]">Prospective Upload</span>
                         </div>
                         {selectedPatientId === currentResult.session_id && (
-                          <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0 ml-1.5" />
+                          <Check className="w-3.5 h-3.5 text-[#4C8DFF] shrink-0 ml-1.5" />
                         )}
                       </button>
                     )}
@@ -998,13 +1003,10 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                                 setSelectedPatientId(p.id);
                                 closeCaseDropdown();
                               }}
-                              style={{
-                                backgroundColor: isSelected ? 'rgba(6, 182, 212, 0.15)' : '#18263B'
-                              }}
                               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
                                 isSelected
-                                  ? 'text-cyan-300 font-bold border border-cyan-500/40'
-                                  : 'text-slate-200 hover:bg-[#22354D] hover:text-cyan-200 border border-transparent'
+                                  ? 'bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40'
+                                  : 'text-[#F4F7FC] hover:bg-[#1C2636] border border-transparent'
                               }`}
                             >
                               <span className="truncate">{p.id}</span>
@@ -1016,7 +1018,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                                 }`}>
                                   {p.is_validation ? 'Val' : 'Train'}
                                 </span>
-                                {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                                {isSelected && <Check className="w-3.5 h-3.5 text-[#4C8DFF]" />}
                               </div>
                             </button>
                           );
@@ -1028,8 +1030,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                           setSelectedPatientId('BraTS2021_01017');
                           closeCaseDropdown();
                         }}
-                        style={{ backgroundColor: 'rgba(6, 182, 212, 0.15)' }}
-                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-cyan-300 font-bold border border-cyan-500/40"
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40"
                       >
                         <span>BraTS2021_01017</span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950/40 text-blue-300 border border-blue-500/30">Train</span>
@@ -1037,7 +1038,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                     )}
 
                     {patients.length > 0 && patients.filter((p) => p.id.toLowerCase().includes(caseSearch.toLowerCase())).length === 0 && (
-                      <div className="px-3 py-3 text-center text-slate-400 text-[11px]">
+                      <div className="px-3 py-3 text-center text-[#8496AC] text-[11px]">
                         No matching BraTS cases
                       </div>
                     )}
@@ -1047,35 +1048,35 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             </div>
 
             {/* Dataset split badge */}
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-mri-bg border border-mri-border text-mri-muted hidden sm:inline">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#151E2B] border border-[#1C2636] text-[#8496AC] hidden md:inline">
               BraTS 2021
             </span>
 
             {/* Annotation Lifecycle State Badge */}
             {annotationRecord && (
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${stateBadgeStyle(annotationRecord.status)} hidden md:inline`}>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${stateBadgeStyle(annotationRecord.status)} hidden lg:inline`}>
                 {annotationRecord.status} (v{annotationRecord.version || 1})
               </span>
             )}
           </div>
 
-          <div className="h-4 w-px bg-mri-border/80 hidden sm:block" />
+          <div className="h-4 w-px bg-[#1C2636] hidden sm:block" />
 
-          {/* GROUP 2: MASK SOURCE */}
-          <div className="flex items-center gap-1 bg-mri-bg border border-mri-border p-0.5 rounded-lg text-xs font-mono">
-            <span className="text-[10px] text-mri-muted px-1.5">Mask:</span>
+          {/* MASK SOURCE SELECTOR */}
+          <div className="flex items-center gap-0.5 bg-[#080B12] border border-[#1C2636] p-0.5 rounded-lg text-xs font-mono">
+            <span className="text-[10px] text-[#8496AC] px-1.5 hidden xl:inline">Mask:</span>
             {[
-              { id: 'prediction', label: 'AI Prediction' },
-              { id: 'corrected', label: 'Human Corrected' },
+              { id: 'prediction', label: 'AI Pred' },
+              { id: 'corrected', label: 'Corrected' },
               { id: 'ground_truth', label: 'Ground Truth' },
             ].map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => setSegSource(id)}
-                className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
+                className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
                   segSource === id
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-mri-muted hover:text-white'
+                    ? 'bg-[#4C8DFF] text-white shadow-xs'
+                    : 'text-[#8496AC] hover:text-[#F4F7FC]'
                 }`}
               >
                 {label}
@@ -1084,84 +1085,132 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           </div>
         </div>
 
-        {/* Right: Persistent Compact Legend & Group 3 (Image & Editing) */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* PERSISTENT COMPACT SEGMENTATION LEGEND */}
-          <div className="hidden lg:flex items-center gap-2.5 px-2.5 py-1 rounded-lg bg-mri-bg/80 border border-mri-border text-[11px] font-mono shadow-sm">
-            <span className="text-mri-muted uppercase text-[9px] font-bold tracking-wider">Legend:</span>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-slate-400" />
-              <span className="text-slate-300">MRI</span>
+        {/* Right Section: Modalities, Layout Modes, Legend, HITL Toggle, Inspector Toggle */}
+        <div className="flex flex-wrap items-center gap-2">
+          
+          {/* MRI MODALITY SELECTOR */}
+          <div className="flex items-center gap-0.5 bg-[#080B12] border border-[#1C2636] p-0.5 rounded-lg text-xs font-mono">
+            {availableModalities.map((mod) => (
+              <button
+                key={mod}
+                onClick={() => setActiveMriModality(mod)}
+                className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold transition-colors ${
+                  activeMriModality === mod
+                    ? 'bg-[#4C8DFF] text-white shadow-xs'
+                    : 'text-[#8496AC] hover:text-[#F4F7FC]'
+                }`}
+              >
+                {mod}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-4 w-px bg-[#1C2636] hidden md:block" />
+
+          {/* VIEW LAYOUT SELECTOR */}
+          <div className="flex items-center gap-0.5 bg-[#080B12] border border-[#1C2636] p-0.5 rounded-lg text-xs font-mono">
+            {[
+              { id: 'quad', label: 'Quad', icon: Grid },
+              { id: '3d', label: '3D', icon: Box },
+              { id: 'axial', label: 'Axial (Z)' },
+              { id: 'coronal', label: 'Coronal (Y)' },
+              { id: 'sagittal', label: 'Sagittal (X)' },
+            ].map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => {
+                  setViewLayout(id);
+                  if (maximizedViewer) setMaximizedViewer(null);
+                }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
+                  viewLayout === id
+                    ? 'bg-[#4C8DFF] text-white shadow-xs'
+                    : 'text-[#8496AC] hover:text-[#F4F7FC]'
+                }`}
+                title={`Switch layout to ${label}`}
+              >
+                {Icon && <Icon className="w-3 h-3" />}
+                <span className={id === 'quad' || id === '3d' ? '' : 'hidden xl:inline'}>
+                  {id === 'quad' || id === '3d' ? label : label.split(' ')[0]}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="h-4 w-px bg-[#1C2636] hidden lg:block" />
+
+          {/* PERSISTENT BRA-TS COMPACT LEGEND */}
+          <div className="hidden xl:flex items-center gap-2 px-2 py-0.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-[10px] font-mono">
+            <div className="flex items-center gap-1" title="Whole Tumor (Edema + Core + Enhancing)">
+              <span className="w-2 h-2 rounded-xs bg-[#EAB308]" />
+              <span className="text-[#EAB308] font-semibold">WT</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-[#EAB308]" />
-              <span className="text-yellow-400 font-medium">WT</span>
+            <div className="flex items-center gap-1" title="Tumor Core (Necrotic + Enhancing)">
+              <span className="w-2 h-2 rounded-xs bg-[#F43F5E]" />
+              <span className="text-[#F43F5E] font-semibold">TC</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-[#F43F5E]" />
-              <span className="text-rose-400 font-medium">TC</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-[#06B6D4]" />
-              <span className="text-cyan-400 font-medium">ET</span>
+            <div className="flex items-center gap-1" title="Enhancing Tumor">
+              <span className="w-2 h-2 rounded-xs bg-[#06B6D4]" />
+              <span className="text-[#06B6D4] font-semibold">ET</span>
             </div>
           </div>
 
-          <div className="h-4 w-px bg-mri-border/80 hidden lg:block" />
+          {/* HITL ANNOTATION / CORRECTION TOGGLE BUTTON */}
+          <button
+            onClick={() => setIsEditing(prev => !prev)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs ${
+              isEditing
+                ? 'bg-amber-400 text-slate-950 border-amber-300'
+                : 'bg-[#151E2B] text-amber-300 border-amber-400/40 hover:bg-amber-400/10'
+            }`}
+            title="Toggle Human-In-The-Loop Contour Correction Mode"
+          >
+            <Paintbrush className="w-3.5 h-3.5" />
+            <span>{isEditing ? 'Exit Editor' : 'Correct'}</span>
+          </button>
 
-          {/* GROUP 3: IMAGE & EDITING */}
-          <div className="flex items-center gap-2">
-            {/* Modality Selector Buttons */}
-            <div className="flex items-center gap-1 bg-mri-bg border border-mri-border p-0.5 rounded-lg text-xs font-mono">
-              {['flair', 't1', 't1ce', 't2'].map((mod) => (
-                <button
-                  key={mod}
-                  onClick={() => setActiveMriModality(mod)}
-                  className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold transition-all ${
-                    activeMriModality === mod
-                      ? 'bg-blue-600 text-white'
-                      : 'text-mri-muted hover:text-white'
-                  }`}
-                >
-                  {mod}
-                </button>
-              ))}
-            </div>
+          {/* RESET VIEW BUTTON */}
+          <button
+            onClick={handleReset}
+            className="p-1 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#8496AC] hover:text-[#F4F7FC] transition-colors"
+            title="Reset Pan, Zoom, Rotation and Coordinates"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
 
-            {/* Correction Mode Button */}
-            <button
-              onClick={() => setIsEditing(prev => !prev)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-colors shadow-sm ${
-                isEditing
-                  ? 'bg-amber-400 text-slate-900 border-amber-300'
-                  : 'bg-mri-bg text-amber-300 border-amber-400/50 hover:bg-amber-400/10'
-              }`}
-            >
-              <Paintbrush className="w-3.5 h-3.5" />
-              <span>{isEditing ? 'Exit Editor' : 'Correct'}</span>
-            </button>
-          </div>
+          {/* TOGGLE INSPECTOR SIDEBAR BUTTON */}
+          <button
+            onClick={() => setInspectorOpen(prev => !prev)}
+            className={`p-1 rounded-lg border text-xs font-mono transition-colors ${
+              inspectorOpen 
+                ? 'bg-[#151E2B] text-[#4C8DFF] border-[#4C8DFF]/40' 
+                : 'bg-[#151E2B] text-[#8496AC] border-[#1C2636] hover:text-[#F4F7FC]'
+            }`}
+            title={inspectorOpen ? 'Collapse Diagnostic Inspector for maximum canvas' : 'Expand Diagnostic Inspector'}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* 2. INTERACTIVE CORRECTION TOOLBAR RIBBON (VISIBLE WHEN isEditing IS TRUE) */}
+      {/* 2. DOCKED HITL CORRECTION RIBBON (VISIBLE WHEN isEditing IS TRUE) */}
       {isEditing && (
-        <div className="bg-mri-surface border border-amber-400/40 rounded-xl px-4 py-2 flex flex-wrap items-center justify-between gap-3 shadow-lg animate-fadeIn">
-          {/* Left: Mode (Paint vs Erase) & Label Selection */}
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="bg-[#101722] border border-amber-400/40 rounded-xl px-3.5 py-1.5 flex flex-wrap items-center justify-between gap-2.5 shadow-medical-md animate-fadeIn shrink-0">
+          {/* Mode (Paint vs Erase) & Label Selection */}
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
               <Paintbrush className="w-3.5 h-3.5" />
               HITL Editor:
             </span>
 
             {/* Brush vs Eraser Toggle */}
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-mri-bg border border-mri-border">
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-[#080B12] border border-[#1C2636]">
               <button
                 onClick={() => setBrushMode('paint')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold transition-colors ${
                   brushMode === 'paint'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-mri-muted hover:text-white'
+                    ? 'bg-[#4C8DFF] text-white shadow-xs'
+                    : 'text-[#8496AC] hover:text-white'
                 }`}
               >
                 <Paintbrush className="w-3 h-3" />
@@ -1169,10 +1218,10 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               </button>
               <button
                 onClick={() => setBrushMode('erase')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold transition-colors ${
                   brushMode === 'erase'
-                    ? 'bg-red-500 text-white shadow-sm'
-                    : 'text-mri-muted hover:text-white'
+                    ? 'bg-rose-500 text-white shadow-xs'
+                    : 'text-[#8496AC] hover:text-white'
                 }`}
               >
                 <Eraser className="w-3 h-3" />
@@ -1180,10 +1229,10 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               </button>
             </div>
 
-            {/* Subregion Label Selection (only active when paint mode is on) */}
+            {/* Subregion Label Selection */}
             {brushMode === 'paint' && (
-              <div className="flex items-center gap-1.5 text-xs font-mono">
-                <span className="text-[11px] text-mri-muted">Label:</span>
+              <div className="flex items-center gap-1 text-xs font-mono">
+                <span className="text-[10px] text-[#8496AC] hidden sm:inline">Label:</span>
                 {[
                   { id: 1, name: 'TC (Core)', color: '#F43F5E', desc: 'Tumor Core / Necrotic' },
                   { id: 2, name: 'WT (Edema)', color: '#EAB308', desc: 'Peritumoral Edema' },
@@ -1192,44 +1241,43 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   <button
                     key={id}
                     onClick={() => setActiveLabel(id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded border transition-all ${
+                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-colors ${
                       activeLabel === id
-                        ? 'border-white text-white font-bold shadow-md'
-                        : 'border-transparent text-mri-muted hover:text-white bg-mri-bg'
+                        ? 'border-white text-slate-950 font-bold shadow-xs'
+                        : 'border-transparent text-[#8496AC] hover:text-white bg-[#080B12]'
                     }`}
                     style={{
                       backgroundColor: activeLabel === id ? color : undefined,
-                      color: activeLabel === id ? '#000' : undefined
                     }}
                     title={desc}
                   >
                     <span 
-                      className="w-2 h-2 rounded-full inline-block"
-                      style={{ backgroundColor: color }}
+                      className="w-1.5 h-1.5 rounded-full inline-block"
+                      style={{ backgroundColor: activeLabel === id ? '#000' : color }}
                     />
-                    <span>{name}</span>
+                    <span className="text-[11px]">{name}</span>
                   </button>
                 ))}
               </div>
             )}
 
             {/* Brush Radius Slider & Presets */}
-            <div className="flex items-center gap-2 pl-2 border-l border-mri-border text-xs font-mono">
-              <span className="text-mri-muted text-[11px]">Radius: {brushRadius}px</span>
+            <div className="flex items-center gap-2 pl-2 border-l border-[#1C2636] text-xs font-mono">
+              <span className="text-[#8496AC] text-[10px]">Radius: {brushRadius}px</span>
               <input
                 type="range"
                 min="1"
                 max="25"
                 value={brushRadius}
                 onChange={(e) => setBrushRadius(Number(e.target.value))}
-                className="w-20 accent-blue-500 cursor-pointer"
+                className="w-16 accent-[#4C8DFF] cursor-pointer"
               />
               <div className="flex items-center gap-0.5">
                 {[2, 4, 8, 16].map((r) => (
                   <button
                     key={r}
                     onClick={() => setBrushRadius(r)}
-                    className={`px-1.5 py-0.5 rounded text-[10px] ${brushRadius === r ? 'bg-blue-600 text-white font-bold' : 'text-mri-muted hover:text-white bg-mri-bg'}`}
+                    className={`px-1.5 py-0.2 rounded text-[10px] ${brushRadius === r ? 'bg-[#4C8DFF] text-white font-bold' : 'text-[#8496AC] hover:text-white bg-[#080B12]'}`}
                   >
                     {r}
                   </button>
@@ -1244,7 +1292,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <button
               onClick={handleUndo}
               disabled={!annotationRecord?.edit_history?.length}
-              className="p-1.5 rounded bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text disabled:opacity-40 transition-colors"
+              className="p-1 rounded bg-[#080B12] hover:bg-[#151E2B] border border-[#1C2636] text-[#F4F7FC] disabled:opacity-30 transition-colors"
               title="Undo Last Stroke (Ctrl+Z)"
             >
               <Undo2 className="w-3.5 h-3.5" />
@@ -1253,7 +1301,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {/* Redo */}
             <button
               onClick={handleRedo}
-              className="p-1.5 rounded bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text transition-colors"
+              className="p-1 rounded bg-[#080B12] hover:bg-[#151E2B] border border-[#1C2636] text-[#F4F7FC] transition-colors"
               title="Redo Stroke (Ctrl+Y)"
             >
               <Redo2 className="w-3.5 h-3.5" />
@@ -1263,7 +1311,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <button
               onClick={handleClearEdits}
               disabled={!annotationRecord?.edit_history?.length}
-              className="px-2 py-1 rounded bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 text-[11px] disabled:opacity-40 transition-colors"
+              className="px-2 py-0.5 rounded bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 text-[10px] disabled:opacity-30 transition-colors"
               title="Reset all edits"
             >
               Clear
@@ -1272,17 +1320,17 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {/* Compare Masks */}
             <button
               onClick={handleOpenCompare}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-mri-bg hover:bg-mri-surface border border-cyan-400/40 text-cyan-300 text-[11px] transition-colors"
+              className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#080B12] hover:bg-[#151E2B] border border-[#4C8DFF]/40 text-[#4C8DFF] text-[10px] transition-colors"
               title="Compare Original AI vs Corrected Mask"
             >
-              <GitCompare className="w-3 h-3 text-cyan-400" />
+              <GitCompare className="w-3 h-3 text-[#4C8DFF]" />
               <span>Compare</span>
             </button>
 
             {/* Save Draft */}
             <button
               onClick={() => setShowDraftModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-purple-900/30 hover:bg-purple-800/40 border border-purple-500/40 text-purple-300 text-[11px] transition-colors"
+              className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-950/40 hover:bg-purple-900/50 border border-purple-500/40 text-purple-300 text-[10px] transition-colors"
             >
               <Save className="w-3 h-3" />
               <span>Save Draft</span>
@@ -1291,92 +1339,22 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             {/* Confirm & Submit for Review */}
             <button
               onClick={() => setShowSubmitModal(true)}
-              className="flex items-center gap-1 px-3 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] shadow-sm transition-all"
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[10px] shadow-xs transition-colors"
             >
               <Send className="w-3 h-3" />
-              <span>Submit for Review</span>
+              <span>Submit Review</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* 3. CLINICAL WORKSPACE: LEFT RAIL (PROJECTIONS) | CENTER (VIEWPORTS) | RIGHT (INSPECTOR) */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
+      {/* 3. CLINICAL WORKSPACE: MAXIMIZED 4-UP MPR VIEWPORTS (CENTER) + COMPACT RIGHT INSPECTOR */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-2.5 min-h-0 overflow-hidden">
         
-        {/* LEFT RAIL: Navigation, Projection Modes & Slice Coordinates */}
-        <div className="w-full lg:w-[210px] xl:w-[220px] shrink-0 bg-mri-surface border border-mri-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto">
-          <div className="space-y-3">
-            {/* Projection / Layout Mode Selector */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono uppercase tracking-wider text-mri-muted font-semibold block">
-                Projection Mode
-              </label>
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-mri-bg border border-mri-border">
-                {[
-                  { id: 'quad', label: 'Quad MPR (4-up)', icon: Grid },
-                  { id: '3d', label: '3D Volume', icon: Box },
-                  { id: 'axial', label: 'Axial (Z)', icon: null },
-                  { id: 'coronal', label: 'Coronal (Y)', icon: null },
-                  { id: 'sagittal', label: 'Sagittal (X)', icon: null },
-                ].map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setViewLayout(id)}
-                    className={`py-1.5 px-2 rounded text-xs font-medium transition-all flex items-center justify-center gap-1 ${
-                      id === 'quad' ? 'col-span-2' : ''
-                    } ${
-                      viewLayout === id
-                        ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                        : 'text-mri-muted hover:text-white hover:bg-mri-surface'
-                    }`}
-                  >
-                    {Icon && <Icon className="w-3 h-3" />}
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* SLICE COORDINATES PANEL */}
-            <SliceCoordinatesPanel
-              axialSlice={axialSlice}
-              coronalSlice={coronalSlice}
-              sagittalSlice={sagittalSlice}
-              dimensions={dimensions}
-              onAxialChange={setAxialSlice}
-              onCoronalChange={setCoronalSlice}
-              onSagittalChange={setSagittalSlice}
-            />
-          </div>
-
-          {/* Quick Actions */}
-          <div className="pt-2 border-t border-mri-border/70 space-y-2">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-mri-muted block">
-              Quick Actions
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                onClick={handleReset}
-                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text transition-all shadow-sm"
-              >
-                <RotateCcw className="w-3 h-3 text-mri-muted" />
-                <span>Reset View</span>
-              </button>
-              <button
-                onClick={() => setViewLayout('quad')}
-                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text transition-all shadow-sm"
-              >
-                <Grid className="w-3 h-3 text-cyan-400" />
-                <span>Quad MPR</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* CENTER COLUMN: Interactive 3D & 2D Multi-Planar Reconstruction (Takes majority of space) */}
+        {/* CENTER VIEWPORT CANVAS (Fills maximum space) */}
         <div className="flex-1 min-w-0 min-h-0 h-full flex flex-col overflow-hidden">
           {viewLayout === 'quad' ? (
-            /* QUAD MPR VIEW: 2x2 Synchronized Grid (3D + Axial + Coronal + Sagittal) */
+            /* QUAD MPR VIEW: 2x2 Synchronized Workstation Grid (3D + Axial + Coronal + Sagittal) */
             <div className="grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-2 h-full min-h-0">
               {/* Viewport 1: 3D Anatomical Brain & Segmented Tumor */}
               <div className="h-full min-h-0 overflow-hidden">
@@ -1623,226 +1601,244 @@ export default function ViewerPage({ currentResult, onNavigate }) {
           )}
         </div>
 
-        {/* RIGHT INSPECTOR: Volumetrics & Layers (Predictable readable width, no text clipping) */}
-        <div className="w-full lg:w-[290px] xl:w-[315px] 2xl:w-[330px] shrink-0 bg-mri-surface border border-mri-border rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto overflow-x-hidden">
-          <div className="space-y-3">
-            {/* Header Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-mri-bg rounded-lg border border-mri-border text-xs">
-              <button
-                onClick={() => setActiveRightTab('burden')}
-                className={`flex-1 py-1 rounded text-center font-medium transition-all ${
-                  activeRightTab === 'burden'
-                    ? 'bg-blue-600 text-white font-semibold'
-                    : 'text-mri-muted hover:text-white'
-                }`}
-              >
-                Volumetrics
-              </button>
-              <button
-                onClick={() => setActiveRightTab('layers')}
-                className={`flex-1 py-1 rounded text-center font-medium transition-all ${
-                  activeRightTab === 'layers'
-                    ? 'bg-blue-600 text-white font-semibold'
-                    : 'text-mri-muted hover:text-white'
-                }`}
-              >
-                Layers
-              </button>
-            </div>
+        {/* RIGHT CLINICAL DIAGNOSTIC INSPECTOR (Toggleable, Compact, 3-Tab Architecture) */}
+        {inspectorOpen && (
+          <aside className="w-full lg:w-[310px] xl:w-[330px] shrink-0 bg-[#101722] border border-[#1C2636] rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto overflow-x-hidden shadow-medical-sm animate-fadeIn">
+            <div className="space-y-3">
+              {/* Header Tabs: Volumetrics | Coordinates | Display Layers */}
+              <div className="flex items-center gap-0.5 p-0.5 bg-[#080B12] rounded-lg border border-[#1C2636] text-xs">
+                <button
+                  onClick={() => setActiveRightTab('burden')}
+                  className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
+                    activeRightTab === 'burden'
+                      ? 'bg-[#4C8DFF] text-white font-semibold shadow-xs'
+                      : 'text-[#8496AC] hover:text-[#F4F7FC]'
+                  }`}
+                >
+                  Volumetrics
+                </button>
+                <button
+                  onClick={() => setActiveRightTab('coords')}
+                  className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
+                    activeRightTab === 'coords'
+                      ? 'bg-[#4C8DFF] text-white font-semibold shadow-xs'
+                      : 'text-[#8496AC] hover:text-[#F4F7FC]'
+                  }`}
+                >
+                  Coords
+                </button>
+                <button
+                  onClick={() => setActiveRightTab('layers')}
+                  className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
+                    activeRightTab === 'layers'
+                      ? 'bg-[#4C8DFF] text-white font-semibold shadow-xs'
+                      : 'text-[#8496AC] hover:text-[#F4F7FC]'
+                  }`}
+                >
+                  Layers
+                </button>
+              </div>
 
-            {/* TAB 1: Volumetric Analysis Panel */}
-            {activeRightTab === 'burden' ? (
-              <TumorBurdenPanel
-                patientId={selectedPatientId}
-                segSource={segSource}
-                onSliceSelect={(sliceIdx) => setAxialSlice(sliceIdx)}
-              />
-            ) : (
-              /* TAB 2: Layers & Opacity Control */
-              <div className="space-y-3.5">
-                {/* Segmentation Overlays */}
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-mri-muted font-semibold block">
-                    Segmentation Layers
-                  </span>
-                  {[
-                    { key: 'wt', label: 'Whole Tumor (WT)', color: '#EAB308', desc: 'Labels {1, 2, 3}' },
-                    { key: 'tc', label: 'Tumor Core (TC)', color: '#F43F5E', desc: 'Labels {1, 3}' },
-                    { key: 'et', label: 'Enhancing Tumor (ET)', color: '#06B6D4', desc: 'Label {3}' },
-                  ].map(({ key, label, color, desc }) => (
-                    <label key={key} className="flex items-center justify-between p-2 rounded-lg bg-mri-bg border border-mri-border text-xs cursor-pointer hover:bg-mri-surface transition-colors">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2.5 h-2.5 rounded shrink-0 shadow-sm" style={{ backgroundColor: color }} />
-                        <div className="min-w-0">
-                          <span className="text-mri-text font-medium block truncate">{label}</span>
-                          <span className="text-[10px] text-mri-muted font-mono">{desc}</span>
+              {/* TAB 1: Volumetric Analysis Panel */}
+              {activeRightTab === 'burden' && (
+                <TumorBurdenPanel
+                  patientId={selectedPatientId}
+                  segSource={segSource}
+                  onSliceSelect={(sliceIdx) => setAxialSlice(sliceIdx)}
+                />
+              )}
+
+              {/* TAB 2: Slice Coordinates Stepper & Tumor Focus */}
+              {activeRightTab === 'coords' && (
+                <SliceCoordinatesPanel
+                  axialSlice={axialSlice}
+                  coronalSlice={coronalSlice}
+                  sagittalSlice={sagittalSlice}
+                  dimensions={dimensions}
+                  onAxialChange={setAxialSlice}
+                  onCoronalChange={setCoronalSlice}
+                  onSagittalChange={setSagittalSlice}
+                />
+              )}
+
+              {/* TAB 3: Layers, Opacity & 3D Shading Controls */}
+              {activeRightTab === 'layers' && (
+                <div className="space-y-3 text-xs">
+                  {/* Segmentation Overlays */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#8496AC] font-semibold block">
+                      Segmentation Layers
+                    </span>
+                    {[
+                      { key: 'wt', label: 'Whole Tumor (WT)', color: '#EAB308', desc: 'Labels {1, 2, 3}' },
+                      { key: 'tc', label: 'Tumor Core (TC)', color: '#F43F5E', desc: 'Labels {1, 3}' },
+                      { key: 'et', label: 'Enhancing Tumor (ET)', color: '#06B6D4', desc: 'Label {3}' },
+                    ].map(({ key, label, color, desc }) => (
+                      <label key={key} className="flex items-center justify-between p-2 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs cursor-pointer hover:bg-[#151E2B] transition-colors">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded shrink-0 shadow-xs" style={{ backgroundColor: color }} />
+                          <div className="min-w-0">
+                            <span className="text-[#F4F7FC] font-medium block truncate">{label}</span>
+                            <span className="text-[10px] text-[#8496AC] font-mono">{desc}</span>
+                          </div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={subregions[key]}
+                          onChange={() => toggleSubregion(key)}
+                          className="accent-[#4C8DFF] rounded cursor-pointer shrink-0"
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* MRI Background Toggle */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#8496AC] font-semibold block">
+                      Anatomy Background
+                    </span>
+                    <label className="flex items-center justify-between p-2 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs cursor-pointer hover:bg-[#151E2B] transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded bg-slate-400 shrink-0" />
+                        <div>
+                          <span className="text-[#F4F7FC] font-medium block">MRI Anatomy</span>
+                          <span className="text-[10px] text-[#8496AC] font-mono">Atlas & Scan Background</span>
                         </div>
                       </div>
                       <input
                         type="checkbox"
-                        checked={subregions[key]}
-                        onChange={() => toggleSubregion(key)}
-                        className="accent-blue-500 rounded cursor-pointer shrink-0"
+                        checked={layers.mri}
+                        onChange={() => setLayers(prev => ({ ...prev, mri: !prev.mri }))}
+                        className="accent-[#4C8DFF] rounded cursor-pointer shrink-0"
                       />
                     </label>
-                  ))}
-                </div>
+                  </div>
 
-                {/* MRI Background Toggle */}
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-mri-muted font-semibold block">
-                    Anatomy Background
-                  </span>
-                  <label className="flex items-center justify-between p-2 rounded-lg bg-mri-bg border border-mri-border text-xs cursor-pointer hover:bg-mri-surface transition-colors">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded bg-slate-400 shrink-0" />
-                      <div>
-                        <span className="text-mri-text font-medium block">MRI Anatomy</span>
-                        <span className="text-[10px] text-mri-muted font-mono">Atlas & Scan Background</span>
-                      </div>
+                  {/* Opacity Slider */}
+                  <div className="space-y-1.5 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs">
+                    <div className="flex items-center justify-between text-[#8496AC] font-mono">
+                      <span>Segmentation Opacity</span>
+                      <span className="text-[#F4F7FC] font-bold">{Math.round(opacity * 100)}%</span>
                     </div>
                     <input
-                      type="checkbox"
-                      checked={layers.mri}
-                      onChange={() => setLayers(prev => ({ ...prev, mri: !prev.mri }))}
-                      className="accent-blue-500 rounded cursor-pointer shrink-0"
+                      type="range"
+                      min="0.1"
+                      max="1.0"
+                      step="0.05"
+                      value={opacity}
+                      onChange={(e) => setOpacity(parseFloat(e.target.value))}
+                      className="w-full accent-[#4C8DFF] cursor-pointer"
                     />
-                  </label>
-                </div>
-
-                {/* Opacity Slider */}
-                <div className="space-y-1.5 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-xs">
-                  <div className="flex items-center justify-between text-mri-muted font-mono">
-                    <span>Segmentation Opacity</span>
-                    <span className="text-mri-text font-bold">{Math.round(opacity * 100)}%</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1.0"
-                    step="0.05"
-                    value={opacity}
-                    onChange={(e) => setOpacity(parseFloat(e.target.value))}
-                    className="w-full accent-blue-500 cursor-pointer"
-                  />
-                </div>
 
-                {/* Brain Appearance Selector */}
-                <div className="space-y-1.5 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-xs relative" ref={appearanceDropdownRef}>
-                  <span className="text-[11px] text-mri-muted font-mono block">3D Brain Appearance:</span>
-                  
-                  {/* Custom Animated Appearance Dropdown Trigger */}
-                  <button
-                    type="button"
-                    onClick={toggleAppearanceDropdown}
-                    style={{ backgroundColor: '#101B2D' }}
-                    className="w-full flex items-center justify-between gap-2 bg-[#101B2D] hover:bg-[#18263B] border border-[#30445E] hover:border-blue-400 text-slate-100 text-xs font-mono rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-xs"
-                    aria-haspopup="listbox"
-                    aria-expanded={appearanceDropdownState === 'open'}
-                  >
-                    {(() => {
-                      const curOpt = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === brainAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
-                      return (
-                        <div className="flex items-center gap-1.5 truncate min-w-0">
-                          <span className="font-semibold truncate">{curOpt.name}</span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950/50 text-blue-300 border border-blue-500/30 shrink-0">
-                            {curOpt.badge}
-                          </span>
-                        </div>
-                      );
-                    })()}
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
-                        appearanceDropdownState === 'open' ? 'rotate-180 text-blue-400' : ''
-                      }`}
-                    />
-                  </button>
-
-                  {/* Animated Popover Dropdown (Opens upward with 100% solid background so it never clips or bleeds) */}
-                  {appearanceDropdownState !== 'closed' && (
-                    <div 
-                      style={{ backgroundColor: '#18263B' }}
-                      className={`absolute bottom-full left-0 mb-2 z-[100] w-full bg-[#18263B] border border-[#30445E] rounded-xl shadow-2xl p-2 ring-1 ring-blue-500/30 text-xs font-mono space-y-1 ${
-                        appearanceDropdownState === 'closing' ? 'animate-dropdown-exit' : 'animate-dropdown-up'
-                      }`}
+                  {/* Brain Appearance Selector */}
+                  <div className="space-y-1.5 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs relative" ref={appearanceDropdownRef}>
+                    <span className="text-[11px] text-[#8496AC] font-mono block">3D Brain Appearance:</span>
+                    
+                    <button
+                      type="button"
+                      onClick={toggleAppearanceDropdown}
+                      className="w-full flex items-center justify-between gap-2 bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] hover:border-[#4C8DFF] text-[#F4F7FC] text-xs font-mono rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#4C8DFF] transition-colors shadow-xs"
+                      aria-haspopup="listbox"
+                      aria-expanded={appearanceDropdownState === 'open'}
                     >
-                      <div 
-                        style={{ backgroundColor: '#101B2D' }}
-                        className="px-2.5 py-1.5 rounded-lg border border-[#30445E]/80 flex items-center justify-between text-[11px] font-bold text-slate-300 mb-1"
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                          <span>3D Shading Mode</span>
-                        </div>
-                        <span className="text-blue-400 text-[10px]">{BRAIN_APPEARANCE_OPTIONS.length} modes</span>
-                      </div>
-
-                      {BRAIN_APPEARANCE_OPTIONS.map((opt) => {
-                        const isSelected = brainAppearance === opt.id;
+                      {(() => {
+                        const curOpt = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === brainAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
                         return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => {
-                              setBrainAppearance(opt.id);
-                              closeAppearanceDropdown();
-                            }}
-                            style={{
-                              backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.2)' : '#18263B'
-                            }}
-                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
-                              isSelected
-                                ? 'text-blue-300 font-bold border border-blue-500/40'
-                                : 'text-slate-200 hover:bg-[#22354D] hover:text-white border border-transparent'
-                            }`}
-                          >
-                            <div className="min-w-0">
-                              <span className="block font-semibold truncate text-xs">{opt.name}</span>
-                              <span className="text-[10px] text-slate-400 block">{opt.badge}</span>
-                            </div>
-                            {isSelected && (
-                              <Check className="w-4 h-4 text-blue-400 shrink-0 ml-1.5" />
-                            )}
-                          </button>
+                          <div className="flex items-center gap-1.5 truncate min-w-0">
+                            <span className="font-semibold truncate">{curOpt.name}</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30 shrink-0">
+                              {curOpt.badge}
+                            </span>
+                          </div>
                         );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+                      })()}
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 text-[#8496AC] transition-transform duration-200 shrink-0 ${
+                          appearanceDropdownState === 'open' ? 'rotate-180 text-[#4C8DFF]' : ''
+                        }`}
+                      />
+                    </button>
 
-          {/* Bottom Run Prediction / Pipeline Trigger */}
-          <div className="pt-2 border-t border-mri-border/70">
-            <button
-              onClick={handleRunPrediction}
-              disabled={predicting}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md disabled:opacity-50"
-            >
-              {predicting ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Segmenting...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Re-run UNETR Model</span>
-                </>
+                    {/* Popover Dropdown */}
+                    {appearanceDropdownState !== 'closed' && (
+                      <div 
+                        className={`absolute bottom-full left-0 mb-2 z-[100] w-full bg-[#151E2B] border border-[#1C2636] rounded-xl shadow-medical-lg p-2 ring-1 ring-[#4C8DFF]/30 text-xs font-mono space-y-1 ${
+                          appearanceDropdownState === 'closing' ? 'animate-dropdown-exit' : 'animate-dropdown-up'
+                        }`}
+                      >
+                        <div className="px-2.5 py-1.5 rounded-lg bg-[#101722] border border-[#1C2636] flex items-center justify-between text-[11px] font-bold text-[#F4F7FC] mb-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse" />
+                            <span>3D Shading Mode</span>
+                          </div>
+                          <span className="text-[#4C8DFF] text-[10px]">{BRAIN_APPEARANCE_OPTIONS.length} modes</span>
+                        </div>
+
+                        {BRAIN_APPEARANCE_OPTIONS.map((opt) => {
+                          const isSelected = brainAppearance === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setBrainAppearance(opt.id);
+                                closeAppearanceDropdown();
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40'
+                                  : 'text-[#F4F7FC] hover:bg-[#1C2636] border border-transparent'
+                              }`}
+                            >
+                              <div className="min-w-0">
+                                <span className="block font-semibold truncate text-xs">{opt.name}</span>
+                                <span className="text-[10px] text-[#8496AC] block">{opt.badge}</span>
+                              </div>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-[#4C8DFF] shrink-0 ml-1.5" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-            </button>
-          </div>
-        </div>
+            </div>
+
+            {/* Bottom Run Prediction / Pipeline Trigger */}
+            <div className="pt-2 border-t border-[#1C2636]">
+              <button
+                onClick={handleRunPrediction}
+                disabled={predicting}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[#4C8DFF] hover:bg-[#3B7BE8] text-white font-semibold text-xs transition-colors shadow-medical-sm disabled:opacity-50 cursor-pointer"
+              >
+                {predicting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Segmenting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Re-run UNETR Model</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </aside>
+        )}
       </div>
 
       {/* FULLSCREEN MAXIMIZED MODAL OVERLAY */}
       {maximizedViewer && (
-        <div className="fixed inset-0 z-50 bg-[#070b13] flex flex-col p-2.5 sm:p-3 overflow-hidden select-none animate-fadeIn">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-mri-surface/95 border border-mri-border/80 px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md mb-2 shrink-0">
+        <div className="fixed inset-0 z-50 bg-[#080B12] flex flex-col p-2.5 sm:p-3 overflow-hidden select-none animate-fadeIn">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#101722]/95 border border-[#1C2636] px-4 py-2 rounded-xl shadow-medical-lg backdrop-blur-md mb-2 shrink-0">
             <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-mri-text">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#4C8DFF] animate-pulse" />
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#F4F7FC]">
                 {maximizedViewer.toUpperCase()} VIEW • CASE: {selectedPatientId}
               </span>
             </div>
@@ -1850,15 +1846,15 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setMaximizedViewer(null)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-mri-bg hover:bg-mri-surface border border-mri-border text-mri-text text-xs font-mono font-semibold"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono font-semibold transition-colors"
               >
-                <Minimize2 className="w-3.5 h-3.5 text-cyan-400" />
+                <Minimize2 className="w-3.5 h-3.5 text-[#4C8DFF]" />
                 <span>Exit Fullscreen (Esc)</span>
               </button>
             </div>
           </div>
 
-          <div className="flex-1 w-full h-full min-h-0 relative rounded-xl overflow-hidden border border-mri-border shadow-2xl bg-mri-bg">
+          <div className="flex-1 w-full h-full min-h-0 relative rounded-xl overflow-hidden border border-[#1C2636] shadow-medical-lg bg-[#080B12]">
             {maximizedViewer === '3d' && (
               <MedicalViewer
                 viewMode="3d"
@@ -1980,58 +1976,58 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 1: MASK COMPARISON MODAL (AI Prediction vs Corrected) */}
       {showCompareModal && compareData && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-mri-surface border border-cyan-400/50 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4 animate-modal-enter">
-            <div className="flex items-center justify-between border-b border-mri-border pb-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[#101722] border border-[#1C2636] rounded-2xl p-6 max-w-xl w-full shadow-medical-lg space-y-4 animate-modal-enter">
+            <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
               <div className="flex items-center gap-2">
-                <GitCompare className="w-5 h-5 text-cyan-400" />
-                <h3 className="font-bold text-mri-text text-base">Mask Comparison Analysis</h3>
+                <GitCompare className="w-5 h-5 text-[#4C8DFF]" />
+                <h3 className="font-bold text-[#F4F7FC] text-base">Mask Comparison Analysis</h3>
               </div>
               <button 
                 onClick={() => setShowCompareModal(false)}
-                className="text-mri-muted hover:text-white"
+                className="text-[#8496AC] hover:text-[#F4F7FC]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-mri-muted">
+              <p className="text-[#8496AC]">
                 Quantifying agreement between original UNETR model prediction and human clinical correction:
               </p>
 
               <div className="grid grid-cols-2 gap-3 font-mono">
-                <div className="p-3 rounded-lg bg-mri-bg border border-mri-border">
-                  <span className="text-mri-muted block text-[10px]">Overall Dice Agreement</span>
-                  <span className="text-lg font-bold text-cyan-400">
+                <div className="p-3 rounded-lg bg-[#080B12] border border-[#1C2636]">
+                  <span className="text-[#8496AC] block text-[10px]">Overall Dice Agreement</span>
+                  <span className="text-lg font-bold text-[#4C8DFF]">
                     {compareData.dice_agreement !== undefined ? (compareData.dice_agreement * 100).toFixed(1) + '%' : 'N/A'}
                   </span>
                 </div>
-                <div className="p-3 rounded-lg bg-mri-bg border border-mri-border">
-                  <span className="text-mri-muted block text-[10px]">Modified Voxels</span>
-                  <span className="text-lg font-bold text-mri-text">
+                <div className="p-3 rounded-lg bg-[#080B12] border border-[#1C2636]">
+                  <span className="text-[#8496AC] block text-[10px]">Modified Voxels</span>
+                  <span className="text-lg font-bold text-[#F4F7FC]">
                     {compareData.voxels_changed || 0}
                   </span>
                 </div>
               </div>
 
               {compareData.volume_comparison && (
-                <div className="p-3 rounded-lg bg-mri-bg border border-mri-border space-y-2">
-                  <span className="font-semibold text-mri-text block">Volume Deltas:</span>
+                <div className="p-3 rounded-lg bg-[#080B12] border border-[#1C2636] space-y-2">
+                  <span className="font-semibold text-[#F4F7FC] block">Volume Deltas:</span>
                   <div className="grid grid-cols-3 gap-2 font-mono text-[11px]">
                     <div>
-                      <span className="text-emerald-400 block font-bold">WT (Whole Tumor)</span>
-                      <span>Pred: {compareData.volume_comparison.WT?.original_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#EAB308] block font-bold">WT (Whole Tumor)</span>
+                      <span className="text-[#8496AC]">Pred: {compareData.volume_comparison.WT?.original_cm3?.toFixed(1) || 0} cm³</span>
                       <span className="text-white block font-semibold">Corr: {compareData.volume_comparison.WT?.corrected_cm3?.toFixed(1) || 0} cm³</span>
                     </div>
                     <div>
-                      <span className="text-amber-400 block font-bold">TC (Core)</span>
-                      <span>Pred: {compareData.volume_comparison.TC?.original_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#F43F5E] block font-bold">TC (Core)</span>
+                      <span className="text-[#8496AC]">Pred: {compareData.volume_comparison.TC?.original_cm3?.toFixed(1) || 0} cm³</span>
                       <span className="text-white block font-semibold">Corr: {compareData.volume_comparison.TC?.corrected_cm3?.toFixed(1) || 0} cm³</span>
                     </div>
                     <div>
-                      <span className="text-red-400 block font-bold">ET (Enhancing)</span>
-                      <span>Pred: {compareData.volume_comparison.ET?.original_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#06B6D4] block font-bold">ET (Enhancing)</span>
+                      <span className="text-[#8496AC]">Pred: {compareData.volume_comparison.ET?.original_cm3?.toFixed(1) || 0} cm³</span>
                       <span className="text-white block font-semibold">Corr: {compareData.volume_comparison.ET?.corrected_cm3?.toFixed(1) || 0} cm³</span>
                     </div>
                   </div>
@@ -2042,7 +2038,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setShowCompareModal(false)}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md"
+                className="px-4 py-2 rounded-lg bg-[#4C8DFF] hover:bg-[#3B7BE8] text-white font-semibold text-xs shadow-medical-sm"
               >
                 Close Comparison
               </button>
@@ -2053,29 +2049,29 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 2: SAVE DRAFT MODAL */}
       {showDraftModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-mri-surface border border-purple-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-modal-enter">
-            <div className="flex items-center justify-between border-b border-mri-border pb-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[#101722] border border-purple-500/30 rounded-2xl p-6 max-w-md w-full shadow-medical-lg space-y-4 animate-modal-enter">
+            <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
               <div className="flex items-center gap-2">
                 <Save className="w-5 h-5 text-purple-400" />
-                <h3 className="font-bold text-mri-text text-base">Save Annotation Draft</h3>
+                <h3 className="font-bold text-[#F4F7FC] text-base">Save Annotation Draft</h3>
               </div>
-              <button onClick={() => setShowDraftModal(false)} className="text-mri-muted hover:text-white">
+              <button onClick={() => setShowDraftModal(false)} className="text-[#8496AC] hover:text-[#F4F7FC]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-mri-muted">
+              <p className="text-[#8496AC]">
                 Save your in-progress voxel corrections without submitting to the training queue. You can resume editing later.
               </p>
               <div>
-                <label className="text-mri-text font-semibold block mb-1">Clinical Notes (Optional):</label>
+                <label className="text-[#F4F7FC] font-semibold block mb-1">Clinical Notes (Optional):</label>
                 <textarea
                   value={draftNotes}
                   onChange={(e) => setDraftNotes(e.target.value)}
                   placeholder="e.g., Extended enhancing tumor margin on axial slices 72-80..."
-                  className="w-full h-24 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-mri-text text-xs font-mono focus:outline-none focus:border-purple-400"
+                  className="w-full h-24 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono focus:outline-none focus:border-purple-400"
                 />
               </div>
             </div>
@@ -2083,14 +2079,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowDraftModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-mri-border text-mri-muted text-xs hover:text-white"
+                className="px-3 py-1.5 rounded-lg border border-[#1C2636] text-[#8496AC] text-xs hover:text-[#F4F7FC]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExecuteSaveDraft}
                 disabled={draftSaving}
-                className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-md"
+                className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-medical-sm"
               >
                 {draftSaving ? 'Saving...' : 'Confirm Save Draft'}
               </button>
@@ -2101,14 +2097,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 3: SUBMIT FOR REVIEW MODAL */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-mri-surface border border-emerald-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-modal-enter">
-            <div className="flex items-center justify-between border-b border-mri-border pb-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[#101722] border border-emerald-500/30 rounded-2xl p-6 max-w-md w-full shadow-medical-lg space-y-4 animate-modal-enter">
+            <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
               <div className="flex items-center gap-2">
                 <Send className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-bold text-mri-text text-base">Submit for Clinical Review</h3>
+                <h3 className="font-bold text-[#F4F7FC] text-base">Submit for Clinical Review</h3>
               </div>
-              <button onClick={() => setShowSubmitModal(false)} className="text-mri-muted hover:text-white">
+              <button onClick={() => setShowSubmitModal(false)} className="text-[#8496AC] hover:text-[#F4F7FC]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -2122,12 +2118,12 @@ export default function ViewerPage({ currentResult, onNavigate }) {
               </div>
 
               <div>
-                <label className="text-mri-text font-semibold block mb-1">Radiologist Review Notes:</label>
+                <label className="text-[#F4F7FC] font-semibold block mb-1">Radiologist Review Notes:</label>
                 <textarea
                   value={submitNotes}
                   onChange={(e) => setSubmitNotes(e.target.value)}
                   placeholder="e.g., Confirmed enhancing tumor boundary on T1ce; reduced necrotic over-segmentation on coronal views."
-                  className="w-full h-24 p-2.5 rounded-lg bg-mri-bg border border-mri-border text-mri-text text-xs font-mono focus:outline-none focus:border-emerald-400"
+                  className="w-full h-24 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono focus:outline-none focus:border-emerald-400"
                 />
               </div>
             </div>
@@ -2135,14 +2131,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowSubmitModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-mri-border text-mri-muted text-xs hover:text-white"
+                className="px-3 py-1.5 rounded-lg border border-[#1C2636] text-[#8496AC] text-xs hover:text-[#F4F7FC]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExecuteSubmitReview}
                 disabled={submitting}
-                className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md"
+                className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-medical-sm"
               >
                 {submitting ? 'Submitting...' : 'Confirm Submission'}
               </button>
