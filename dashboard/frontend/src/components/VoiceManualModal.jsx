@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   Search, 
@@ -78,20 +79,32 @@ export default function VoiceManualModal({ isOpen, onClose }) {
     });
   }, [searchQuery, selectedSection]);
 
-  if (!isRendered) return null;
+  // Prevent background body scrolling while modal is open
+  useEffect(() => {
+    if (isRendered && typeof document !== 'undefined') {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isRendered]);
 
-  return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 transition-opacity duration-200 ${isClosing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+  if (!isRendered) return null;
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className={`fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center p-3 sm:p-6 transition-opacity duration-200 overflow-hidden ${isClosing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 bg-[#16324F]/70 backdrop-blur-sm transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`} 
+        className={`fixed inset-0 bg-[#080B12]/80 backdrop-blur-sm transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`} 
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Dialog Box */}
       <div 
-        className={`relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-[#DCE6F0] flex flex-col overflow-hidden text-[#16324F] z-10 ${
+        className={`relative w-full max-w-4xl max-h-[88vh] my-auto bg-white rounded-2xl shadow-2xl border border-[#DCE6F0] flex flex-col overflow-hidden text-[#16324F] z-10 ${
           isClosing ? 'animate-modal-exit' : 'animate-modal-enter'
         }`}
         role="dialog"
@@ -312,7 +325,8 @@ export default function VoiceManualModal({ isOpen, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
