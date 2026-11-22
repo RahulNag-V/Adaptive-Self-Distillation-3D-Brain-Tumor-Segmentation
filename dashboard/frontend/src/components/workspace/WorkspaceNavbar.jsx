@@ -67,6 +67,16 @@ const PAGE_CONFIG = {
     description: 'Clinical Workflow, Architecture & Research Answers',
     badge: 'Documentation',
   },
+  security: {
+    title: 'Privacy & Clinical Security',
+    description: 'Data Protection, Zero-Cloud PHI & Governance Policy',
+    badge: 'Security',
+  },
+  privacy: {
+    title: 'Privacy & Clinical Security',
+    description: 'Data Protection, Zero-Cloud PHI & Governance Policy',
+    badge: 'Security',
+  },
 };
 
 export default function WorkspaceNavbar({ activeTab = 'viewer', onNavigate }) {

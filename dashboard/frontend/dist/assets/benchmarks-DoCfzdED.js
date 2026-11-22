@@ -1,0 +1,1 @@
+import{k as t}from"./index-BhTEUcTU.js";async function o(){try{return(await t.get("/api/models/comparison")).data}catch(r){throw console.error("Failed to fetch model comparison:",r),r}}async function e(){try{return(await t.get("/api/analytics/history")).data}catch(r){throw console.error("Failed to fetch training analytics:",r),r}}export{e as a,o as f};
