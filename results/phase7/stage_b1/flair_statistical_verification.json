@@ -1,0 +1,106 @@
+{
+  "finding": "Audited statistical claims regarding elevated normalized FLAIR intensity in false-positive edema regions.",
+  "normalization_method": "MONAI NormalizeIntensityd(nonzero=True, channel_wise=True) -> per-patient z-score normalization over intracranial voxels.",
+  "patient_cohort_size": 10,
+  "cohort_measurements": {
+    "normal_brain_FLAIR_mean": -0.2037,
+    "normal_brain_FLAIR_std": 0.0725,
+    "WT_FP_FLAIR_mean": 0.4579,
+    "WT_FP_FLAIR_std": 0.1396,
+    "GT_tumor_FLAIR_mean": 2.1295,
+    "GT_tumor_FLAIR_std": 0.2501,
+    "paired_difference_mean": 0.6616,
+    "paired_difference_std": 0.0984
+  },
+  "statistical_tests": {
+    "patient_level_paired_ttest": {
+      "t_statistic": 21.2591,
+      "degrees_of_freedom": 9,
+      "p_value": 5.295824967025095e-09,
+      "significant_at_alpha_0_001": true
+    },
+    "patient_level_wilcoxon_signed_rank": {
+      "w_statistic": 0.0,
+      "p_value": 0.001953125,
+      "significant_at_alpha_0_01": true
+    },
+    "effect_size": {
+      "metric": "Cohen's d (paired)",
+      "value": 6.7227,
+      "interpretation": "Extremely large effect size (d > 2.0 indicates massive separation)"
+    }
+  },
+  "scientific_critique": "The Stage B report claimed p < 10^-6. Our independent patient-level paired t-test yields t = 21.26, p = 5.30e-09, and Wilcoxon p = 0.00195 (the theoretical minimum p-value for N=10 signed-rank test). Thus, the statistical claim of elevated FLAIR signal in false-positive regions is fully validated even without voxel-level pseudo-replication. However, association is not causation: elevated FLAIR is a characteristic of normal periventricular white matter and subcortical pathways; the ViT patch tokens misattribute these subtle hyperintensities to diffuse edema.",
+  "per_patient_data": [
+    {
+      "patient_id": "BraTS2021_01024",
+      "mean_flair_normal_brain": -0.0794,
+      "mean_flair_gt_tumor": 2.1559,
+      "mean_flair_wt_fp": 0.5322,
+      "fp_voxels": 405261
+    },
+    {
+      "patient_id": "BraTS2021_01026",
+      "mean_flair_normal_brain": -0.2069,
+      "mean_flair_gt_tumor": 1.6262,
+      "mean_flair_wt_fp": 0.4868,
+      "fp_voxels": 230312
+    },
+    {
+      "patient_id": "BraTS2021_01045",
+      "mean_flair_normal_brain": -0.2854,
+      "mean_flair_gt_tumor": 1.9241,
+      "mean_flair_wt_fp": 0.2091,
+      "fp_voxels": 219881
+    },
+    {
+      "patient_id": "BraTS2021_01046",
+      "mean_flair_normal_brain": -0.1544,
+      "mean_flair_gt_tumor": 2.3707,
+      "mean_flair_wt_fp": 0.5296,
+      "fp_voxels": 344610
+    },
+    {
+      "patient_id": "BraTS2021_01047",
+      "mean_flair_normal_brain": -0.2614,
+      "mean_flair_gt_tumor": 2.4186,
+      "mean_flair_wt_fp": 0.4503,
+      "fp_voxels": 137853
+    },
+    {
+      "patient_id": "BraTS2021_01052",
+      "mean_flair_normal_brain": -0.1657,
+      "mean_flair_gt_tumor": 2.3048,
+      "mean_flair_wt_fp": 0.3993,
+      "fp_voxels": 267300
+    },
+    {
+      "patient_id": "BraTS2021_01058",
+      "mean_flair_normal_brain": -0.1525,
+      "mean_flair_gt_tumor": 2.1137,
+      "mean_flair_wt_fp": 0.6213,
+      "fp_voxels": 245897
+    },
+    {
+      "patient_id": "BraTS2021_01063",
+      "mean_flair_normal_brain": -0.3256,
+      "mean_flair_gt_tumor": 2.1967,
+      "mean_flair_wt_fp": 0.2327,
+      "fp_voxels": 114245
+    },
+    {
+      "patient_id": "BraTS2021_01069",
+      "mean_flair_normal_brain": -0.2188,
+      "mean_flair_gt_tumor": 2.3003,
+      "mean_flair_wt_fp": 0.5401,
+      "fp_voxels": 213595
+    },
+    {
+      "patient_id": "BraTS2021_01072",
+      "mean_flair_normal_brain": -0.1873,
+      "mean_flair_gt_tumor": 1.8842,
+      "mean_flair_wt_fp": 0.5775,
+      "fp_voxels": 229216
+    }
+  ]
+}

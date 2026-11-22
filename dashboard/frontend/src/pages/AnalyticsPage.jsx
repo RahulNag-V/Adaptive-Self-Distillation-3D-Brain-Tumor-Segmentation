@@ -9,7 +9,6 @@ import {
   Zap, 
   Download, 
   CheckCircle2, 
-  BarChart3, 
   Sliders,
   Sparkles,
   ArrowRight,
@@ -17,6 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import { fetchTrainingAnalytics } from '../api/benchmarks';
+import PeakChart from '../components/ui/peak-chart';
 
 // Canonical fallback data directly from results/adaptive/training_history.csv & validation_history.csv
 const FALLBACK_TRAINING_HISTORY = [
@@ -33,16 +33,16 @@ const FALLBACK_TRAINING_HISTORY = [
 ];
 
 const FALLBACK_VALIDATION_HISTORY = [
-  { epoch: 1, WT_Dice: 0.1640, TC_Dice: 0.2177, ET_Dice: 0.2377, Mean_Dice: 0.2065, Mean_HD95: 92.5644 },
-  { epoch: 2, WT_Dice: 0.2081, TC_Dice: 0.3705, ET_Dice: 0.3983, Mean_Dice: 0.3256, Mean_HD95: 91.1455 },
-  { epoch: 3, WT_Dice: 0.2518, TC_Dice: 0.4402, ET_Dice: 0.4527, Mean_Dice: 0.3816, Mean_HD95: 90.0729 },
-  { epoch: 4, WT_Dice: 0.2997, TC_Dice: 0.4776, ET_Dice: 0.5172, Mean_Dice: 0.4315, Mean_HD95: 88.2939 },
-  { epoch: 5, WT_Dice: 0.3445, TC_Dice: 0.5293, ET_Dice: 0.5675, Mean_Dice: 0.4804, Mean_HD95: 87.4939 },
-  { epoch: 6, WT_Dice: 0.3950, TC_Dice: 0.5818, ET_Dice: 0.6240, Mean_Dice: 0.5336, Mean_HD95: 86.0264 },
-  { epoch: 7, WT_Dice: 0.4146, TC_Dice: 0.5848, ET_Dice: 0.6041, Mean_Dice: 0.5345, Mean_HD95: 85.8381 },
-  { epoch: 8, WT_Dice: 0.4626, TC_Dice: 0.6230, ET_Dice: 0.6321, Mean_Dice: 0.5726, Mean_HD95: 83.7823 },
-  { epoch: 9, WT_Dice: 0.5065, TC_Dice: 0.6692, ET_Dice: 0.6844, Mean_Dice: 0.6200, Mean_HD95: 81.6775 },
-  { epoch: 10, WT_Dice: 0.5139, TC_Dice: 0.6690, ET_Dice: 0.6808, Mean_Dice: 0.6212, Mean_HD95: 80.4477 },
+  { epoch: 1, WT_Dice: 0.1640, TC_Dice: 0.2177, ET_Dice: 0.2377, Mean_Dice: 0.2065, WT_HD95: 89.8592, TC_HD95: 93.9099, ET_HD95: 93.9242, Mean_HD95: 92.5644 },
+  { epoch: 2, WT_Dice: 0.2081, TC_Dice: 0.3705, ET_Dice: 0.3983, Mean_Dice: 0.3256, WT_HD95: 84.1404, TC_HD95: 94.6419, ET_HD95: 94.6541, Mean_HD95: 91.1455 },
+  { epoch: 3, WT_Dice: 0.2518, TC_Dice: 0.4402, ET_Dice: 0.4527, Mean_Dice: 0.3816, WT_HD95: 82.2564, TC_HD95: 93.9673, ET_HD95: 93.9950, Mean_HD95: 90.0729 },
+  { epoch: 4, WT_Dice: 0.2997, TC_Dice: 0.4776, ET_Dice: 0.5172, Mean_Dice: 0.4315, WT_HD95: 77.8219, TC_HD95: 93.5184, ET_HD95: 93.5413, Mean_HD95: 88.2939 },
+  { epoch: 5, WT_Dice: 0.3445, TC_Dice: 0.5293, ET_Dice: 0.5675, Mean_Dice: 0.4804, WT_HD95: 77.1162, TC_HD95: 92.6158, ET_HD95: 92.7497, Mean_HD95: 87.4939 },
+  { epoch: 6, WT_Dice: 0.3950, TC_Dice: 0.5818, ET_Dice: 0.6240, Mean_Dice: 0.5336, WT_HD95: 77.2293, TC_HD95: 90.2201, ET_HD95: 90.6299, Mean_HD95: 86.0264 },
+  { epoch: 7, WT_Dice: 0.4146, TC_Dice: 0.5848, ET_Dice: 0.6041, Mean_Dice: 0.5345, WT_HD95: 77.6895, TC_HD95: 89.5562, ET_HD95: 90.2686, Mean_HD95: 85.8381 },
+  { epoch: 8, WT_Dice: 0.4626, TC_Dice: 0.6230, ET_Dice: 0.6321, Mean_Dice: 0.5726, WT_HD95: 76.8182, TC_HD95: 86.8596, ET_HD95: 87.6691, Mean_HD95: 83.7823 },
+  { epoch: 9, WT_Dice: 0.5065, TC_Dice: 0.6692, ET_Dice: 0.6844, Mean_Dice: 0.6200, WT_HD95: 76.1740, TC_HD95: 83.6934, ET_HD95: 85.1652, Mean_HD95: 81.6775 },
+  { epoch: 10, WT_Dice: 0.5139, TC_Dice: 0.6690, ET_Dice: 0.6808, Mean_Dice: 0.6212, WT_HD95: 74.9400, TC_HD95: 82.4485, ET_HD95: 83.9547, Mean_HD95: 80.4477 },
 ];
 
 export default function AnalyticsPage({ onNavigate }) {
@@ -78,7 +78,10 @@ export default function AnalyticsPage({ onNavigate }) {
             WT_Dice: Number(r.WT_Dice) || 0,
             TC_Dice: Number(r.TC_Dice) || 0,
             ET_Dice: Number(r.ET_Dice) || 0,
-            Mean_Dice: Number(r.Mean_Dice) || 0,
+            Mean_Dice: Number(r.Mean_Dice) || (Number(r.WT_Dice) + Number(r.TC_Dice) + Number(r.ET_Dice)) / 3,
+            WT_HD95: Number(r.WT_HD95) || 0,
+            TC_HD95: Number(r.TC_HD95) || 0,
+            ET_HD95: Number(r.ET_HD95) || 0,
             Mean_HD95: Number(r.Mean_HD95) || 0,
           })));
         }
@@ -98,16 +101,17 @@ export default function AnalyticsPage({ onNavigate }) {
   // Dynamic Chart Range & Scaling
   const SVG_WIDTH = 760;
   const SVG_HEIGHT = 280;
-  const PAD_X = 55;
-  const PAD_Y = 32;
+  const CHART_PADDING = { top: 32, right: 45, bottom: 42, left: 55 };
 
   const getPoints = (data, accessor, yMin, yMax) => {
+    const plotWidth = SVG_WIDTH - CHART_PADDING.left - CHART_PADDING.right;
+    const plotHeight = SVG_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
     return data.map((d, i) => {
-      const x = PAD_X + (i / Math.max(1, data.length - 1)) * (SVG_WIDTH - 2 * PAD_X);
+      const x = CHART_PADDING.left + (i / Math.max(1, data.length - 1)) * plotWidth;
       const val = accessor(d);
       const clampedVal = Math.max(yMin, Math.min(yMax, val));
       const normY = (clampedVal - yMin) / (yMax - yMin || 1);
-      const y = (SVG_HEIGHT - PAD_Y) - normY * (SVG_HEIGHT - 2 * PAD_Y);
+      const y = (SVG_HEIGHT - CHART_PADDING.bottom) - normY * plotHeight;
       return { x, y, val, epoch: d.epoch };
     });
   };
@@ -124,56 +128,64 @@ export default function AnalyticsPage({ onNavigate }) {
       {
         id: 'seg',
         label: 'Segmentation Loss (DiceCE)',
-        color: '#38BDF8',
+        shortLabel: 'Segmentation',
+        color: '#103B5C',
         points: getPoints(trainingData, d => d.segmentation_loss, yMin, yMax),
         strokeWidth: 2.5
       },
       {
         id: 'ot',
         label: 'Online Tokenizer Loss',
-        color: '#10B981',
+        shortLabel: 'Tokenizer',
+        color: '#059669',
         points: getPoints(trainingData, d => d.online_tokenizer_loss, yMin, yMax),
         strokeWidth: 2.5
       },
       {
         id: 'dp',
         label: 'Dense Predictor Loss',
-        color: '#A855F7',
+        shortLabel: 'Dense',
+        color: '#7C3AED',
         points: getPoints(trainingData, d => d.dense_predictor_loss, yMin, yMax),
         strokeWidth: 2,
         dash: '4 4'
       }
     ];
   } else if (activeCurveTab === 'dice') {
-    const yMin = 0.1;
+    // Mathematically exact alignment with 5 equidistant grid lines covering 15% to 75%
+    const yMin = 0.15;
     const yMax = 0.75;
     yAxisLabels = ['75%', '60%', '45%', '30%', '15%'];
     chartConfigs = [
       {
         id: 'mean',
         label: 'Mean Dice',
-        color: '#10B981',
+        shortLabel: 'Mean',
+        color: '#103B5C',
         points: getPoints(validationData, d => d.Mean_Dice, yMin, yMax),
         strokeWidth: 3
       },
       {
         id: 'et',
         label: 'Enhancing Tumor (ET)',
-        color: '#06B6D4',
+        shortLabel: 'Enhancing (ET)',
+        color: '#0891B2',
         points: getPoints(validationData, d => d.ET_Dice, yMin, yMax),
         strokeWidth: 2
       },
       {
         id: 'tc',
         label: 'Tumor Core (TC)',
-        color: '#F59E0B',
+        shortLabel: 'Tumor Core (TC)',
+        color: '#DC2626',
         points: getPoints(validationData, d => d.TC_Dice, yMin, yMax),
         strokeWidth: 2
       },
       {
         id: 'wt',
         label: 'Whole Tumor (WT)',
-        color: '#EC4899',
+        shortLabel: 'Whole Tumor (WT)',
+        color: '#B45309',
         points: getPoints(validationData, d => d.WT_Dice, yMin, yMax),
         strokeWidth: 2
       }
@@ -186,14 +198,16 @@ export default function AnalyticsPage({ onNavigate }) {
       {
         id: 'lot',
         label: '\u03BB_ot (Token Alignment Weight)',
-        color: '#38BDF8',
+        shortLabel: '\u03BB_ot',
+        color: '#103B5C',
         points: getPoints(trainingData, d => d.lambda_ot, yMin, yMax),
         strokeWidth: 2.5
       },
       {
         id: 'ldp',
         label: '\u03BB_dp (Dense Predictor Weight)',
-        color: '#F59E0B',
+        shortLabel: '\u03BB_dp',
+        color: '#399DBA',
         points: getPoints(trainingData, d => d.lambda_dp, yMin, yMax),
         strokeWidth: 2.5,
         dash: '4 2'
@@ -207,7 +221,8 @@ export default function AnalyticsPage({ onNavigate }) {
       {
         id: 'hd95',
         label: 'Boundary Error (Mean HD95)',
-        color: '#EF4444',
+        shortLabel: 'Mean HD95',
+        color: '#DC2626',
         points: getPoints(validationData, d => d.Mean_HD95, yMin, yMax),
         strokeWidth: 3
       }
@@ -220,12 +235,13 @@ export default function AnalyticsPage({ onNavigate }) {
     const rect = svgRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const svgX = (mouseX / rect.width) * SVG_WIDTH;
+    const plotWidth = SVG_WIDTH - CHART_PADDING.left - CHART_PADDING.right;
     
     // Find closest epoch
     let closestEp = 1;
     let minDiff = Infinity;
     trainingData.forEach((d, i) => {
-      const x = PAD_X + (i / Math.max(1, trainingData.length - 1)) * (SVG_WIDTH - 2 * PAD_X);
+      const x = CHART_PADDING.left + (i / Math.max(1, trainingData.length - 1)) * plotWidth;
       const diff = Math.abs(x - svgX);
       if (diff < minDiff) {
         minDiff = diff;
@@ -236,43 +252,34 @@ export default function AnalyticsPage({ onNavigate }) {
   };
 
   const activeIndex = (inspectedEpoch - 1);
-  const activeX = PAD_X + (activeIndex / Math.max(1, trainingData.length - 1)) * (SVG_WIDTH - 2 * PAD_X);
+  const activeX = CHART_PADDING.left + (activeIndex / Math.max(1, trainingData.length - 1)) * (SVG_WIDTH - CHART_PADDING.left - CHART_PADDING.right);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="w-full min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 text-[#111827]">
       {/* 1. HEADER & TRAINING DYNAMICS OVERVIEW */}
-      <section className="rounded-xl bg-[#101722] border border-[#1C2636] p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1C2636] pb-5">
+      <section className="card-transparent rounded-xl p-6 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#111111]/20 pb-5">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-[#4C8DFF] text-[11px] font-mono font-semibold uppercase tracking-wider">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded bg-white/30 border border-[#111111]/30 text-[#103B5C] text-[10px] font-mono font-bold uppercase tracking-wider">
                 Training Analytics &amp; Loss Dynamics
               </span>
-              <span className="text-[11px] font-mono text-[#64748B]">
+              <span className="text-[11px] font-mono text-[#25313D] font-bold">
                 10 Epochs &bull; AdamW (lr=1e-4) &bull; FP16 Mixed Precision
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-[#F4F7FC] tracking-tight">
+            <h1 className="text-2xl font-bold text-[#103B5C] tracking-tight">
               Adaptive Multi-Objective Convergence History
             </h1>
-            <p className="text-xs text-[#94A3B8]">
+            <p className="text-xs text-[#25313D]">
               Continuous tracking of auxiliary distillation gradients, exponential dynamic weights, and validation metric trajectory.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => onNavigate && onNavigate('models')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono font-medium transition-colors"
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-[#4C8DFF]" />
-              <span>Model Comparison</span>
-            </button>
+          <div className="flex items-center shrink-0">
             <button
               onClick={() => onNavigate && onNavigate('reports')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#399DBA] hover:bg-[#103B5C] border border-[#111111] text-white text-xs font-bold transition-all duration-250 shadow-sm cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export PDF Report</span>
@@ -282,44 +289,52 @@ export default function AnalyticsPage({ onNavigate }) {
 
         {/* Highlight KPI Matrix */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 text-xs font-mono">
-          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] uppercase font-semibold">Mean Dice (Ep {inspectedEpoch})</span>
-            <div className="text-xl font-bold text-[#F4F7FC]">
+          <div className="p-3.5 rounded-lg bg-white/20 border border-[#111111]/30 space-y-1">
+            <span className="text-[10px] text-[#25313D] uppercase font-bold">Mean Dice (Ep {inspectedEpoch})</span>
+            <div className="text-xl font-bold text-[#103B5C]">
               {(currentVal.Mean_Dice * 100).toFixed(2)}%
             </div>
-            <div className="text-[10px] text-emerald-400 font-sans flex items-center gap-1 font-medium">
+            <div className="text-[10px] text-[#059669] font-sans flex items-center gap-1 font-bold">
               <TrendingUp className="w-3 h-3" />
-              <span>+41.5% from Epoch 1</span>
+              <span>
+                {currentVal.epoch === 1
+                  ? 'Baseline Epoch 1'
+                  : `+${((currentVal.Mean_Dice - validationData[0].Mean_Dice) * 100).toFixed(1)}% vs Epoch 1`}
+              </span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] uppercase font-semibold">Boundary Error (HD95)</span>
-            <div className="text-xl font-bold text-[#38BDF8]">
+          <div className="p-3.5 rounded-lg bg-white/20 border border-[#111111]/30 space-y-1">
+            <span className="text-[10px] text-[#25313D] uppercase font-bold">Boundary Error (HD95)</span>
+            <div className="text-xl font-bold text-[#103B5C]">
               {currentVal.Mean_HD95?.toFixed(2)} mm
             </div>
-            <div className="text-[10px] text-emerald-400 font-sans flex items-center gap-1 font-medium">
+            <div className="text-[10px] text-[#059669] font-sans flex items-center gap-1 font-bold">
               <TrendingDown className="w-3 h-3" />
-              <span>-12.1 mm boundary tightening</span>
+              <span>
+                {currentVal.epoch === 1
+                  ? 'Initial Boundary Error'
+                  : `${(currentVal.Mean_HD95 - validationData[0].Mean_HD95).toFixed(1)} mm vs Epoch 1`}
+              </span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] uppercase font-semibold">Tokenizer Loss Drop</span>
-            <div className="text-xl font-bold text-emerald-400">
-              {currentTrain.online_tokenizer_loss?.toFixed(4)} (-81%)
+          <div className="p-3.5 rounded-lg bg-white/20 border border-[#111111]/30 space-y-1">
+            <span className="text-[10px] text-[#25313D] uppercase font-bold">Tokenizer Loss Drop</span>
+            <div className="text-xl font-bold text-[#103B5C]">
+              {currentTrain.online_tokenizer_loss?.toFixed(4)}
             </div>
-            <div className="text-[10px] text-[#94A3B8] font-sans">
+            <div className="text-[10px] text-[#25313D] font-sans">
               Cosine feature alignment stabilized
             </div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
-            <span className="text-[10px] text-[#94A3B8] uppercase font-semibold">Dynamic Weights (&lambda;)</span>
-            <div className="text-xl font-bold text-amber-400">
+          <div className="p-3.5 rounded-lg bg-white/20 border border-[#111111]/30 space-y-1">
+            <span className="text-[10px] text-[#25313D] uppercase font-bold">Dynamic Weights (&lambda;)</span>
+            <div className="text-xl font-bold text-[#103B5C]">
               {currentTrain.lambda_ot?.toFixed(2)} / {currentTrain.lambda_dp?.toFixed(2)}
             </div>
-            <div className="text-[10px] text-[#94A3B8] font-sans">
+            <div className="text-[10px] text-[#25313D] font-sans">
               &lambda;_ot saturated at max bound 2.0
             </div>
           </div>
@@ -327,21 +342,21 @@ export default function AnalyticsPage({ onNavigate }) {
       </section>
 
       {/* 2. INTERACTIVE CURVE SELECTOR & NORMALIZED SVG CHART */}
-      <section className="p-6 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C2636] pb-4">
+      <section className="card-transparent p-5 sm:p-6 rounded-xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#111111]/20 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-[#F4F7FC]">Convergence Trajectory &amp; Loss Dynamics</h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-[#4C8DFF] border border-blue-500/20">
+              <h2 className="text-sm font-bold text-[#103B5C]">Convergence Trajectory &amp; Loss Dynamics</h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/30 text-[#103B5C] border border-[#111111]/30 font-bold">
                 Interactive Scrubber Active
               </span>
             </div>
-            <p className="text-xs text-[#94A3B8]">
+            <p className="text-xs text-[#25313D]">
               Hover across the chart or click epoch nodes to scrub exact gradient and validation metrics.
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#151E2B] border border-[#1C2636] text-xs font-mono">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-lg bg-white/20 border border-[#111111] text-xs font-mono max-w-full">
             {[
               { id: 'loss', label: 'Loss Components' },
               { id: 'dice', label: 'Validation Dice' },
@@ -352,10 +367,10 @@ export default function AnalyticsPage({ onNavigate }) {
                 key={tab.id}
                 data-tab-id={tab.id}
                 onClick={() => setActiveCurveTab(tab.id)}
-                className={`px-3 py-1.5 rounded-md transition-all ${
+                className={`px-3 py-1.5 rounded-md transition-all cursor-pointer font-bold ${
                   activeCurveTab === tab.id
-                    ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                    : 'text-[#94A3B8] hover:text-[#F4F7FC] hover:bg-[#1C2636]'
+                    ? 'bg-[#103B5C] text-white shadow-xs'
+                    : 'text-[#25313D] hover:text-[#103B5C]'
                 }`}
               >
                 {tab.label}
@@ -364,106 +379,26 @@ export default function AnalyticsPage({ onNavigate }) {
           </div>
         </div>
 
-        {/* PURE SVG RESPONSIVE CLINICAL DARK CHART */}
-        <div className="p-4 rounded-xl bg-[#080B12] border border-[#1C2636] relative shadow-2xl">
+        {/* PEAKCHART ANIMATED TIME-SERIES VISUALIZATION */}
+        <div className="p-4 rounded-xl bg-white/20 border border-[#111111]/30 relative shadow-inner">
           <div className="h-64 sm:h-80 w-full relative">
-            <svg 
-              ref={svgRef}
-              className="w-full h-full overflow-visible select-none cursor-crosshair" 
-              viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} 
-              preserveAspectRatio="none"
-              onMouseMove={handleSvgMouseMove}
-              onMouseLeave={() => setHoveredEpoch(null)}
-              onClick={() => hoveredEpoch && setSelectedEpoch(hoveredEpoch)}
-            >
-              {/* Horizontal Grid & Axis Values */}
-              {[0, 1, 2, 3, 4].map((step, idx) => {
-                const y = PAD_Y + (step / 4) * (SVG_HEIGHT - 2 * PAD_Y);
-                return (
-                  <g key={step}>
-                    <line x1={PAD_X} y1={y} x2={SVG_WIDTH - PAD_X} y2={y} stroke="#1C2636" strokeDasharray="3 3" />
-                    <text x={PAD_X - 10} y={y + 4} textAnchor="end" fill="#64748B" fontSize="10" fontFamily="monospace">
-                      {yAxisLabels[idx]}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Render Tab Curves */}
-              {chartConfigs.map(cfg => (
-                <polyline
-                  key={cfg.id}
-                  fill="none"
-                  stroke={cfg.color}
-                  strokeWidth={cfg.strokeWidth}
-                  strokeDasharray={cfg.dash || 'none'}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={cfg.points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}
-                />
-              ))}
-
-              {/* Epoch Column Markers & Interactive Scrubber */}
-              {trainingData.map((d, i) => {
-                const x = PAD_X + (i / Math.max(1, trainingData.length - 1)) * (SVG_WIDTH - 2 * PAD_X);
-                const isSelected = selectedEpoch === d.epoch;
-                const isHovered = inspectedEpoch === d.epoch;
-
-                return (
-                  <g key={d.epoch} className="cursor-pointer">
-                    <line 
-                      x1={x} 
-                      y1={PAD_Y} 
-                      x2={x} 
-                      y2={SVG_HEIGHT - PAD_Y + 5} 
-                      stroke={isHovered ? '#4C8DFF' : isSelected ? '#1E293B' : 'transparent'} 
-                      strokeWidth={isHovered ? 1.5 : 1} 
-                      strokeDasharray={isHovered ? '2 2' : 'none'} 
-                    />
-                    <circle
-                      cx={x}
-                      cy={SVG_HEIGHT - PAD_Y + 12}
-                      r={isHovered ? 4.5 : isSelected ? 3.5 : 2.5}
-                      fill={isHovered ? '#4C8DFF' : isSelected ? '#38BDF8' : '#334155'}
-                      className="transition-all"
-                    />
-                    <text 
-                      x={x} 
-                      y={SVG_HEIGHT - PAD_Y + 28} 
-                      textAnchor="middle" 
-                      fill={isHovered ? '#F4F7FC' : isSelected ? '#38BDF8' : '#64748B'} 
-                      fontSize="10" 
-                      fontWeight={isHovered || isSelected ? '600' : '400'}
-                      fontFamily="monospace"
-                    >
-                      E{d.epoch}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Active Intersection Dots for Inspected Epoch */}
-              {chartConfigs.map(cfg => {
-                const pt = cfg.points.find(p => p.epoch === inspectedEpoch);
-                if (!pt) return null;
-                return (
-                  <circle
-                    key={`dot-${cfg.id}`}
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={5}
-                    fill={cfg.color}
-                    stroke="#080B12"
-                    strokeWidth={2}
-                    className="transition-all duration-75"
-                  />
-                );
-              })}
-            </svg>
+            <PeakChart
+              series={chartConfigs.map((cfg, idx) => ({ ...cfg, isArea: idx === 0 }))}
+              yAxisLabels={yAxisLabels}
+              xAxisLabels={trainingData.map(d => `E${d.epoch}`)}
+              padding={CHART_PADDING}
+              selectedIndex={selectedEpoch - 1}
+              hoveredIndex={inspectedEpoch - 1}
+              onHoverIndex={(idx) => setHoveredEpoch(idx !== null ? trainingData[idx]?.epoch : null)}
+              onSelectIndex={(idx) => setSelectedEpoch(trainingData[idx]?.epoch)}
+              unit={activeCurveTab === 'dice' ? '%' : activeCurveTab === 'hd95' ? 'mm' : ''}
+              formatValue={(val) => activeCurveTab === 'dice' ? (val * 100).toFixed(1) : activeCurveTab === 'hd95' ? val.toFixed(2) : val.toFixed(4)}
+              className="h-full"
+            />
           </div>
 
           {/* Floating Live Scrubber Value Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mt-3 pt-3 border-t border-[#1C2636] text-xs font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-3 pt-3 border-t border-[#111111]/20 text-xs font-mono">
             <div className="flex flex-wrap items-center gap-4">
               {chartConfigs.map(cfg => {
                 const pt = cfg.points.find(p => p.epoch === inspectedEpoch);
@@ -473,8 +408,8 @@ export default function AnalyticsPage({ onNavigate }) {
                       className="w-2.5 h-2.5 rounded-full" 
                       style={{ backgroundColor: cfg.color }} 
                     />
-                    <span className="text-[#94A3B8]">{cfg.label}:</span>
-                    <span className="font-bold text-[#F4F7FC]">
+                    <span className="text-[#25313D] font-bold">{cfg.label}:</span>
+                    <span className="font-bold text-[#103B5C]">
                       {activeCurveTab === 'dice' 
                         ? `${(pt?.val * 100).toFixed(1)}%` 
                         : activeCurveTab === 'hd95' 
@@ -486,9 +421,9 @@ export default function AnalyticsPage({ onNavigate }) {
               })}
             </div>
 
-            <div className="text-[11px] text-[#94A3B8] flex items-center gap-2">
+            <div className="text-[11px] text-[#25313D] flex items-center gap-2 font-bold">
               <span>Inspecting:</span>
-              <span className="px-2 py-0.5 rounded bg-blue-500/10 text-[#4C8DFF] font-bold border border-blue-500/20">
+              <span className="px-2 py-0.5 rounded bg-white/40 text-[#103B5C] font-bold border border-[#111111]/30">
                 Epoch {inspectedEpoch} / 10
               </span>
             </div>
@@ -497,23 +432,23 @@ export default function AnalyticsPage({ onNavigate }) {
       </section>
 
       {/* 3. PER-EPOCH DATA INSPECTOR & GROUND TRUTH LOGS TABLE */}
-      <section className="p-6 rounded-xl bg-[#101722] border border-[#1C2636] shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
+      <section className="card-transparent p-5 sm:p-6 rounded-xl space-y-4 max-w-full overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[#111111]/20 pb-3">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#4C8DFF]" />
-            <h3 className="text-sm font-semibold text-[#F4F7FC]">
+            <Clock className="w-4 h-4 text-[#103B5C]" />
+            <h3 className="text-sm font-bold text-[#103B5C]">
               Full Training &amp; Validation Epoch History
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-[#94A3B8]">
+          <span className="text-[11px] font-mono text-[#25313D] font-bold">
             Click row to lock inspector &bull; 10 Verified Epochs
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-left text-xs font-mono border-collapse">
             <thead>
-              <tr className="border-b border-[#1C2636] text-[#94A3B8] uppercase text-[10px] tracking-wider">
+              <tr className="border-b border-[#111111]/30 text-[#25313D] uppercase text-[10px] tracking-wider font-bold">
                 <th className="py-2.5 px-3">Epoch</th>
                 <th className="py-2.5 px-3">Seg Loss</th>
                 <th className="py-2.5 px-3">OT Loss</th>
@@ -527,41 +462,44 @@ export default function AnalyticsPage({ onNavigate }) {
                 <th className="py-2.5 px-3">Step Time</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1C2636]">
+            <tbody className="divide-y divide-[#111111]/15">
               {trainingData.map((tRow) => {
                 const vRow = validationData.find(v => v.epoch === tRow.epoch) || {};
                 const isSelected = selectedEpoch === tRow.epoch;
+                const isInspected = inspectedEpoch === tRow.epoch;
                 return (
                   <tr
                     key={tRow.epoch}
                     onClick={() => setSelectedEpoch(tRow.epoch)}
+                    onMouseEnter={() => setHoveredEpoch(tRow.epoch)}
+                    onMouseLeave={() => setHoveredEpoch(null)}
                     className={`cursor-pointer transition-colors ${
-                      isSelected 
-                        ? 'bg-blue-600/15 text-[#F4F7FC] font-semibold border-l-2 border-blue-500' 
-                        : 'hover:bg-[#151E2B] text-[#94A3B8]'
+                      isInspected 
+                        ? 'bg-[rgba(226,247,242,0.85)] text-[#103B5C] font-bold border-l-4 border-[#399DBA]' 
+                        : 'hover:bg-white/20 text-[#25313D]'
                     }`}
                   >
-                    <td className="py-2.5 px-3 font-bold text-[#F4F7FC]">Ep {tRow.epoch}</td>
-                    <td className="py-2.5 px-3 text-[#38BDF8]">{tRow.segmentation_loss.toFixed(4)}</td>
-                    <td className="py-2.5 px-3 text-emerald-400">{tRow.online_tokenizer_loss.toFixed(4)}</td>
-                    <td className="py-2.5 px-3 text-purple-400">{tRow.dense_predictor_loss.toFixed(4)}</td>
-                    <td className="py-2.5 px-3 text-amber-400">{tRow.lambda_ot.toFixed(2)} / {tRow.lambda_dp.toFixed(2)}</td>
-                    <td className="py-2.5 px-3 font-semibold text-emerald-400">
+                    <td className="py-2.5 px-3 font-bold text-[#103B5C]">Ep {tRow.epoch}</td>
+                    <td className="py-2.5 px-3 text-[#103B5C] font-bold">{tRow.segmentation_loss.toFixed(4)}</td>
+                    <td className="py-2.5 px-3 text-[#059669] font-bold">{tRow.online_tokenizer_loss.toFixed(4)}</td>
+                    <td className="py-2.5 px-3 text-purple-700 font-bold">{tRow.dense_predictor_loss.toFixed(4)}</td>
+                    <td className="py-2.5 px-3 text-amber-700 font-bold">{tRow.lambda_ot.toFixed(2)} / {tRow.lambda_dp.toFixed(2)}</td>
+                    <td className="py-2.5 px-3 font-bold text-[#103B5C]">
                       {vRow.Mean_Dice ? `${(vRow.Mean_Dice * 100).toFixed(1)}%` : '-'}
                     </td>
-                    <td className="py-2.5 px-3 text-[#06B6D4]">
+                    <td className="py-2.5 px-3 text-[#0891B2] font-bold">
                       {vRow.ET_Dice ? `${(vRow.ET_Dice * 100).toFixed(1)}%` : '-'}
                     </td>
-                    <td className="py-2.5 px-3 text-amber-400">
+                    <td className="py-2.5 px-3 text-[#DC2626] font-bold">
                       {vRow.TC_Dice ? `${(vRow.TC_Dice * 100).toFixed(1)}%` : '-'}
                     </td>
-                    <td className="py-2.5 px-3 text-pink-400">
+                    <td className="py-2.5 px-3 text-[#B45309] font-bold">
                       {vRow.WT_Dice ? `${(vRow.WT_Dice * 100).toFixed(1)}%` : '-'}
                     </td>
-                    <td className="py-2.5 px-3 text-red-400">
+                    <td className="py-2.5 px-3 text-rose-700 font-bold">
                       {vRow.Mean_HD95 ? `${vRow.Mean_HD95.toFixed(2)} mm` : '-'}
                     </td>
-                    <td className="py-2.5 px-3 text-[#64748B]">{tRow.time_sec}s</td>
+                    <td className="py-2.5 px-3 text-[#25313D] font-bold">{tRow.time_sec}s</td>
                   </tr>
                 );
               })}

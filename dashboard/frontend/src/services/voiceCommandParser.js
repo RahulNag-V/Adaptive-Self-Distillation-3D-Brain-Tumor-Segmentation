@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Intelligent Voice Command Parser Service
+ * Neuro Resonence AI - Intelligent Voice Command Parser Service
  *
  * Implements deterministic allowlisted pipeline:
  * Speech recognition -> normalization -> negation/stop check -> filler stripping

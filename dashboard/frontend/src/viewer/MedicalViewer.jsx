@@ -22,6 +22,7 @@ import {
   Sun
 } from 'lucide-react';
 import { getPatientTumorMesh } from '../api/segmentation';
+import { cn } from '../lib/utils';
 
 /**
  * Anatomical Regions Color Legend & Specifications
@@ -197,6 +198,7 @@ export default function MedicalViewer({
   viewMode = '3d', // '3d' | 'axial' | 'coronal' | 'sagittal'
   patientId = 'BraTS2021_01017',
   segSource = 'ground_truth',
+  confidenceThreshold = 0.90,
   axialSlice = 75,
   coronalSlice = 120,
   sagittalSlice = 120,
@@ -209,6 +211,7 @@ export default function MedicalViewer({
   isMaximized = false,
   onToggleMaximize,
   viewerCommand = null,
+  isCompactPreview = false,
 }) {
   const containerRef = useRef(null);
   const threeMountRef = useRef(null);
@@ -225,6 +228,23 @@ export default function MedicalViewer({
   const [showPaletteMenu, setShowPaletteMenu] = useState(false);
   const [showAngleMenu, setShowAngleMenu] = useState(false);
   const controlsRef = useRef(null);
+
+  const isCompactPreviewRef = useRef(isCompactPreview);
+  isCompactPreviewRef.current = isCompactPreview;
+  const isMaximizedRef = useRef(isMaximized);
+  isMaximizedRef.current = isMaximized;
+
+  // Re-frame camera automatically when switching between compact preview, main viewer, and fullscreen
+  useEffect(() => {
+    isCompactPreviewRef.current = isCompactPreview;
+    isMaximizedRef.current = isMaximized;
+    const timer = setTimeout(() => {
+      if (typeof threeStateRef.current?.fitCamera === 'function') {
+        threeStateRef.current.fitCamera();
+      }
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [isCompactPreview, isMaximized]);
 
   useEffect(() => {
     setActiveAppearance(brainAppearance);
@@ -257,7 +277,8 @@ export default function MedicalViewer({
   // Fetch authentic patient tumor mesh extracted via Marching Cubes from NIfTI mask
   useEffect(() => {
     if (!patientId) return;
-    const cacheKey = `${patientId}_${segSource}`;
+    const thresholdParam = segSource === 'prediction' ? confidenceThreshold : null;
+    const cacheKey = `${patientId}_${segSource}_${thresholdParam ?? 'raw'}`;
     if (meshCacheRef.current[cacheKey]) {
       setMeshData(meshCacheRef.current[cacheKey]);
       setMeshLoading(false);
@@ -268,7 +289,7 @@ export default function MedicalViewer({
     setMeshLoading(true);
     setMeshError(null);
 
-    getPatientTumorMesh(patientId, segSource)
+    getPatientTumorMesh(patientId, segSource, thresholdParam)
       .then((data) => {
         if (!isCancelled) {
           meshCacheRef.current[cacheKey] = data;
@@ -287,7 +308,7 @@ export default function MedicalViewer({
     return () => {
       isCancelled = true;
     };
-  }, [patientId, segSource]);
+  }, [patientId, segSource, confidenceThreshold]);
 
   // Textures ref to cache all high-resolution texture maps
   const texturesRef = useRef({
@@ -338,13 +359,15 @@ export default function MedicalViewer({
     const width = mountEl.clientWidth || 700;
     const height = mountEl.clientHeight || 550;
 
-    // 1. Scene
+    // 1. Scene (Transparent background so the underlying scientific medical grid is visible)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060A12); // Deep medical-darkest navy
+    scene.background = null;
 
     // 2. Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     camera.position.set(0, 0.6, 3.8);
+    camera.up.set(0, 1, 0);
+    camera.lookAt(0, 0, 0);
 
     // 3. Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -352,6 +375,7 @@ export default function MedicalViewer({
       alpha: true,
       powerPreference: 'high-performance',
     });
+    renderer.setClearColor(0x000000, 0); // Transparent clear color for grid background
     renderer.setSize(width, height, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -379,6 +403,8 @@ export default function MedicalViewer({
     controls.minDistance = 1.2;
     controls.maxDistance = 8.0;
     controls.target.set(0, 0, 0);
+    controls.update();
+    controls.saveState(); // Cache canonical default transformation state for reliable reset
 
     // Dedicated high-precision wheel navigation:
     // • Wheel Up / Down: Smooth Zoom / Dolly In / Out
@@ -466,13 +492,14 @@ export default function MedicalViewer({
     );
     scene.add(bottomBounceLight);
 
-    const tumorGlowLight = new THREE.PointLight(0xf59e0b, 1.2, 3.0);
+    const tumorGlowLight = new THREE.PointLight(0xf59e0b, 1.4, 3.5);
     tumorGlowLight.position.set(0, 0, 0);
     scene.add(tumorGlowLight);
 
     // 6. Tumor 3D Segmented Geometry Group (Centered to MRI Volume Coordinates)
     const tumorGroup = new THREE.Group();
     tumorGroup.position.set(0, 0, 0);
+    tumorGroup.renderOrder = 1; // Render tumor prior to outer brain shell
     scene.add(tumorGroup);
 
     // 7. Texture Loading: Anatomical Regions, Natural, Contrast, Normal, and Roughness
@@ -502,6 +529,7 @@ export default function MedicalViewer({
     };
 
     const brainGroup = new THREE.Group();
+    brainGroup.renderOrder = 10; // Renders after tumor so translucent shell overlays cleanly from all 360 deg
     scene.add(brainGroup);
     const brainMaterials = [];
 
@@ -521,6 +549,7 @@ export default function MedicalViewer({
 
         model.scale.setScalar(scale);
         model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+        model.renderOrder = 10;
 
         const currentPreset = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === activeAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
         const activeDiffuse = currentPreset.textureKey === 'regions' 
@@ -550,19 +579,22 @@ export default function MedicalViewer({
               clearcoatRoughness: currentPreset.clearcoatRoughness,
               sheen: 0.25,
               sheenColor: new THREE.Color(currentPreset.sheenColor),
-              transparent: opacity < 0.99,
+              transparent: true,
               opacity: layers.mri ? opacity : 0.0,
-              depthWrite: opacity > 0.82,
-              side: THREE.FrontSide,
+              depthWrite: false, // Ensures internal tumor mass is never clipped or occluded
+              depthTest: true,
+              side: THREE.FrontSide, // Culls back faces to eliminate concave mesh geometry inversion
             });
 
             child.material = mat;
+            child.renderOrder = 10;
             brainMaterials.push(mat);
           }
         });
 
         brainGroup.add(model);
         setModelLoading(false);
+        fitCameraToModel();
       },
       undefined,
       (err) => {
@@ -571,6 +603,53 @@ export default function MedicalViewer({
         setModelLoading(false);
       }
     );
+
+    // Precise, responsive camera framing based on actual model bounding box
+    const fitCameraToModel = (customDist = null) => {
+      if (!camera || !controls || !brainGroup) return;
+      if (!mountEl) return;
+      const w = mountEl.clientWidth;
+      const h = mountEl.clientHeight;
+      if (w === 0 || h === 0) return;
+
+      const aspect = w / h;
+      camera.aspect = aspect;
+
+      // Compute combined bounding box containing brainGroup and tumorGroup
+      const box = new THREE.Box3().setFromObject(brainGroup);
+      if (tumorGroup && tumorGroup.children.length > 0) {
+        box.union(new THREE.Box3().setFromObject(tumorGroup));
+      }
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+
+      // Target occupancy of usable canvas height: 72% in preview, 70% in main/fullscreen (between 65-75%)
+      const targetOccupancy = isCompactPreviewRef.current ? 0.72 : 0.70;
+      const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+
+      // Calculate vertical and horizontal framing distances
+      const modelHeight = size.y > 0 ? size.y : 2.16;
+      const vDist = modelHeight / (2 * tanHalfFov * targetOccupancy);
+
+      const maxHoriz = Math.max(size.x || 1.92, size.z || 2.50);
+      const hDist = (maxHoriz * 0.95) / (2 * tanHalfFov * aspect * targetOccupancy);
+
+      const framingDist = customDist !== null ? customDist : Math.max(vDist, hDist);
+      threeStateRef.current.framingDistance = framingDist;
+
+      // Subtle vertical angle (0.10 * dist) to reveal gyri/sulci anatomical relief while keeping model centered
+      const camY = center.y + framingDist * 0.10;
+      const camZ = center.z + framingDist;
+
+      camera.position.set(center.x, camY, camZ);
+      camera.up.set(0, 1, 0);
+      camera.zoom = 1.0;
+      controls.target.copy(center);
+      camera.lookAt(center);
+      camera.updateProjectionMatrix();
+      controls.update();
+      controls.saveState();
+    };
 
     // Save Three.js instances to state ref
     threeStateRef.current = {
@@ -597,7 +676,10 @@ export default function MedicalViewer({
       etMesh: null,
       pulseTime: 0,
       animationFrameId: null,
+      fitCamera: fitCameraToModel,
+      framingDistance: 3.6,
     };
+    window.__threeViewer = threeStateRef.current;
 
     // 8. Animation & Render Loop
     let frameCount = 0;
@@ -614,14 +696,28 @@ export default function MedicalViewer({
         lastFpsUpdate = currentTime;
       }
 
-      // Smooth pulsing for 3D tumor segmentation
-      threeStateRef.current.pulseTime += 0.03;
-      const pulse = 1.0 + 0.018 * Math.sin(threeStateRef.current.pulseTime);
-      if (threeStateRef.current.wtMesh) {
-        threeStateRef.current.wtMesh.scale.setScalar(pulse);
+      // Subtle biological metabolic resonance animation for 3D tumor (~4.2s breathing cycle)
+      threeStateRef.current.pulseTime += 0.015;
+      const pTime = threeStateRef.current.pulseTime;
+      const pulseScale = 1.0 + 0.012 * Math.sin(pTime);
+      const pulseGlow = 0.5 + 0.5 * Math.sin(pTime * 1.2);
+
+      const { wtMesh, wtWireframe, tcMesh, etMesh, tumorGlowLight } = threeStateRef.current;
+      if (wtMesh) wtMesh.scale.setScalar(pulseScale);
+      if (wtWireframe) wtWireframe.scale.setScalar(pulseScale * 1.025);
+      if (tcMesh) tcMesh.scale.setScalar(1.0 + 0.008 * Math.sin(pTime + 0.4));
+      if (etMesh) etMesh.scale.setScalar(1.0 + 0.015 * Math.sin(pTime + 0.8));
+
+      // Soft internal luminosity modulation
+      if (tumorGlowLight) {
+        tumorGlowLight.intensity = 1.3 + 0.35 * pulseGlow;
       }
-      if (threeStateRef.current.wtWireframe) {
-        threeStateRef.current.wtWireframe.scale.setScalar(pulse * 1.015);
+      // Micro-surface metabolic shimmer
+      if (etMesh?.material) {
+        etMesh.material.emissiveIntensity = 0.55 + 0.18 * pulseGlow;
+      }
+      if (wtMesh?.material) {
+        wtMesh.material.emissiveIntensity = 0.32 + 0.08 * Math.cos(pTime);
       }
 
       controls.update();
@@ -632,13 +728,18 @@ export default function MedicalViewer({
 
     // 9. Resize Handling via ResizeObserver (pass false to preserve 100% CSS styling)
     const handleResize = () => {
-      if (!mountEl || !renderer || !camera) return;
+      if (!mountEl || !renderer || !camera || !controls) return;
       const w = mountEl.clientWidth;
       const h = mountEl.clientHeight;
       if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+
+      // In compact preview, continuously maintain the exact 65-75% framing when card size changes
+      if (isCompactPreviewRef.current) {
+        fitCameraToModel();
+      }
     };
 
     const resizeObserver = new ResizeObserver(handleResize);
@@ -724,77 +825,151 @@ export default function MedicalViewer({
       return geo;
     };
 
-    // 1. Whole Tumor (WT: Yellow #EAB308)
-    if (surfaces.wt) {
-      const wtGeo = buildGeometry(surfaces.wt);
-      if (wtGeo) {
-        const wtMat = new THREE.MeshStandardMaterial({
-          color: 0xEAB308,
-          transparent: true,
-          opacity: 0.65,
-          roughness: 0.32,
-          metalness: 0.08,
-          emissive: 0xCA8A04,
-          emissiveIntensity: 0.30,
-          depthWrite: false,
-          side: THREE.DoubleSide,
-        });
-        const wtMesh = new THREE.Mesh(wtGeo, wtMat);
-        tumorGroup.add(wtMesh);
-        threeStateRef.current.wtMesh = wtMesh;
+    // Generate organic micro-cellular texture for realistic biological lesion detail
+    const createOrganicTexture = () => {
+      const size = 128;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const imgData = ctx.createImageData(size, size);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const nx = (x / size) * 8;
+          const ny = (y / size) * 8;
+          const v1 = Math.sin(nx * 2.1 + Math.cos(ny * 2.3));
+          const v2 = Math.cos(nx * 4.1 - ny * 3.4);
+          const v3 = Math.sin(nx * 7.8 + ny * 6.9) * 0.45;
+          const val = Math.floor(Math.min(255, Math.max(0, ((v1 + v2 + v3 + 2.45) / 4.9) * 255)));
+          const idx = (y * size + x) * 4;
+          imgData.data[idx] = val;
+          imgData.data[idx + 1] = val;
+          imgData.data[idx + 2] = val;
+          imgData.data[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(2.5, 2.5);
+      return tex;
+    };
 
-        // WT Boundary Wireframe Cage
-        const wtWireGeo = new THREE.WireframeGeometry(wtGeo);
-        const wtWireMat = new THREE.LineBasicMaterial({
-          color: 0xFDE047,
-          transparent: true,
-          opacity: 0.40,
-        });
-        const wtWireframe = new THREE.LineSegments(wtWireGeo, wtWireMat);
-        tumorGroup.add(wtWireframe);
-        threeStateRef.current.wtWireframe = wtWireframe;
+    const organicBump = createOrganicTexture();
+
+    // Calculate Tumor Centroid to position internal glow light precisely inside lesion mass
+    const { tumorGlowLight } = threeStateRef.current;
+    if (surfaces.wt && surfaces.wt.positions && surfaces.wt.positions.length > 0) {
+      const pos = surfaces.wt.positions;
+      let minX = Infinity, maxX = -Infinity;
+      let minY = Infinity, maxY = -Infinity;
+      let minZ = Infinity, maxZ = -Infinity;
+      for (let i = 0; i < pos.length; i += 3) {
+        minX = Math.min(minX, pos[i]); maxX = Math.max(maxX, pos[i]);
+        minY = Math.min(minY, pos[i+1]); maxY = Math.max(maxY, pos[i+1]);
+        minZ = Math.min(minZ, pos[i+2]); maxZ = Math.max(maxZ, pos[i+2]);
+      }
+      const centroid = new THREE.Vector3((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      if (tumorGlowLight) {
+        tumorGlowLight.position.copy(centroid);
+        tumorGlowLight.distance = 3.2;
+        tumorGlowLight.intensity = 1.4;
+        tumorGlowLight.color.set(0xF59E0B);
       }
     }
 
-    // 2. Tumor Core (TC: Coral Red #F43F5E)
+    // 1. Tumor Core (TC: Deep Organic Flesh & Necrotic Center)
     if (surfaces.tc) {
       const tcGeo = buildGeometry(surfaces.tc);
       if (tcGeo) {
-        const tcMat = new THREE.MeshStandardMaterial({
-          color: 0xF43F5E,
+        const tcMat = new THREE.MeshPhysicalMaterial({
+          color: 0xDC2626,
+          roughness: 0.38,
+          metalness: 0.08,
+          bumpMap: organicBump,
+          bumpScale: 0.035,
+          emissive: 0x991B1B,
+          emissiveIntensity: 0.42,
           transparent: true,
-          opacity: 0.85,
-          roughness: 0.30,
-          metalness: 0.12,
-          emissive: 0xE11D48,
-          emissiveIntensity: 0.38,
-          depthWrite: false,
+          opacity: 0.92,
+          depthWrite: true,
+          depthTest: true,
           side: THREE.DoubleSide,
         });
         const tcMesh = new THREE.Mesh(tcGeo, tcMat);
+        tcMesh.renderOrder = 1; // Renders dense core
         tumorGroup.add(tcMesh);
         threeStateRef.current.tcMesh = tcMesh;
       }
     }
 
-    // 3. Enhancing Tumor (ET: Cyan #06B6D4)
+    // 2. Enhancing Tumor (ET: Active Angiogenic Cellular Rim)
     if (surfaces.et) {
       const etGeo = buildGeometry(surfaces.et);
       if (etGeo) {
-        const etMat = new THREE.MeshStandardMaterial({
+        const etMat = new THREE.MeshPhysicalMaterial({
           color: 0x06B6D4,
+          roughness: 0.26,
+          metalness: 0.12,
+          clearcoat: 0.25,
+          clearcoatRoughness: 0.3,
+          bumpMap: organicBump,
+          bumpScale: 0.02,
+          emissive: 0x0891B2,
+          emissiveIntensity: 0.65,
           transparent: true,
           opacity: 0.95,
-          roughness: 0.22,
-          metalness: 0.18,
-          emissive: 0x0891B2,
-          emissiveIntensity: 0.55,
           depthWrite: true,
+          depthTest: true,
           side: THREE.DoubleSide,
         });
         const etMesh = new THREE.Mesh(etGeo, etMat);
+        etMesh.renderOrder = 2; // Renders active vascular rim
         tumorGroup.add(etMesh);
         threeStateRef.current.etMesh = etMesh;
+      }
+    }
+
+    // 3. Whole Tumor (WT: Infiltrating Edema & Cellular Margin)
+    if (surfaces.wt) {
+      const wtGeo = buildGeometry(surfaces.wt);
+      if (wtGeo) {
+        const wtMat = new THREE.MeshPhysicalMaterial({
+          color: 0xD99B00,
+          roughness: 0.44,
+          metalness: 0.05,
+          transmission: 0.20,
+          thickness: 0.85,
+          bumpMap: organicBump,
+          bumpScale: 0.025,
+          emissive: 0x854D0E,
+          emissiveIntensity: 0.35,
+          transparent: true,
+          opacity: 0.78,
+          depthWrite: false, // Allows TC & ET inside to show through with volumetric realism
+          depthTest: true,
+          side: THREE.DoubleSide,
+        });
+        const wtMesh = new THREE.Mesh(wtGeo, wtMat);
+        wtMesh.renderOrder = 3;
+        tumorGroup.add(wtMesh);
+        threeStateRef.current.wtMesh = wtMesh;
+
+        // Elegant highlighted boundary rim (Inverted hull silhouette contour)
+        const wtRimMat = new THREE.MeshBasicMaterial({
+          color: 0xFBBF24,
+          transparent: true,
+          opacity: 0.35,
+          side: THREE.BackSide,
+          depthWrite: false,
+          depthTest: true,
+        });
+        const wtRimMesh = new THREE.Mesh(wtGeo, wtRimMat);
+        wtRimMesh.scale.setScalar(1.028);
+        wtRimMesh.renderOrder = 4;
+        tumorGroup.add(wtRimMesh);
+        threeStateRef.current.wtWireframe = wtRimMesh;
       }
     }
 
@@ -813,6 +988,7 @@ export default function MedicalViewer({
     if (threeStateRef.current.etMesh) {
       threeStateRef.current.etMesh.visible = tumorVisible && subregions.et;
     }
+    threeStateRef.current.fitCamera?.();
   }, [meshData]);
 
   // Update Brain Appearance Preset in Real-Time Without Reloading Model
@@ -911,8 +1087,10 @@ export default function MedicalViewer({
     }
     brainMaterials.forEach((mat) => {
       mat.opacity = layers.mri ? opacity : 0.0;
-      mat.transparent = opacity < 0.99;
-      mat.depthWrite = opacity > 0.82;
+      mat.transparent = true;
+      mat.depthWrite = false; // Ensures internal tumor mass is never blocked
+      mat.depthTest = true;
+      mat.side = THREE.FrontSide;
       mat.needsUpdate = true;
     });
   }, [layers.mri, opacity]);
@@ -950,11 +1128,61 @@ export default function MedicalViewer({
   };
 
   const handleResetCamera = useCallback(() => {
-    const { camera, controls } = threeStateRef.current;
+    const { camera, controls, brainGroup, tumorGroup, renderer, scene, brainMaterials, fitCamera } = threeStateRef.current;
     if (!camera || !controls) return;
-    camera.position.set(0, 0.6, 3.8);
+
+    // 1. Immediately cancel auto-rotation
+    setAutoRotate(false);
+    controls.autoRotate = false;
+
+    // 2. Restore camera position, up vector, lookAt target, and zoom via bounding-box framing
+    if (typeof fitCamera === 'function') {
+      fitCamera();
+    } else {
+      camera.position.set(0, 0.4, 3.6);
+      camera.up.set(0, 1, 0);
+      camera.zoom = 1.0;
+      camera.lookAt(0, 0, 0);
+      camera.updateProjectionMatrix();
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
+
+    // 3. Reset OrbitControls target and internal damping/rotation state
+    controls.target.set(0, 0, 0);
+    if (typeof controls.reset === 'function') {
+      controls.reset();
+    }
     controls.target.set(0, 0, 0);
     controls.update();
+
+    // 4. Ensure brainGroup and tumorGroup orientation, scale, and positions remain strictly aligned
+    if (brainGroup) {
+      brainGroup.position.set(0, 0, 0);
+      brainGroup.rotation.set(0, 0, 0);
+      brainGroup.scale.set(1, 1, 1);
+    }
+    if (tumorGroup) {
+      tumorGroup.position.set(0, 0, 0);
+      tumorGroup.rotation.set(0, 0, 0);
+      tumorGroup.scale.set(1, 1, 1);
+    }
+
+    // 5. Ensure depthWrite remains false on brain materials so tumor is visible from all angles
+    if (brainMaterials && brainMaterials.length > 0) {
+      brainMaterials.forEach((mat) => {
+        mat.depthWrite = false;
+        mat.depthTest = true;
+        mat.side = THREE.FrontSide;
+        mat.needsUpdate = true;
+      });
+    }
+
+    // 6. Force immediate render frame to eliminate any single-frame visual delay
+    if (renderer && scene) {
+      renderer.render(scene, camera);
+    }
+
     if (onResetView) onResetView();
   }, [onResetView]);
 
@@ -981,28 +1209,31 @@ export default function MedicalViewer({
   }, []);
 
   const handleViewAngle = useCallback((angle) => {
-    const { camera, controls } = threeStateRef.current;
+    const { camera, controls, framingDistance } = threeStateRef.current;
     if (!camera || !controls) return;
+    const dist = framingDistance || 3.6;
+
     if (angle === 'inferior') {
       // Bottom / Underside aspect looking up at the illuminated cerebellum, brainstem & inferior temporal lobes
-      camera.position.set(0, -3.2, 1.2);
+      camera.position.set(0, -dist * 0.85, dist * 0.35);
     } else if (angle === 'superior') {
       // Top / Superior aspect looking down
-      camera.position.set(0, 3.4, 0.4);
+      camera.position.set(0, dist * 0.95, dist * 0.12);
     } else if (angle === 'lateral') {
       // Lateral right aspect
-      camera.position.set(3.6, 0.2, 0);
+      camera.position.set(dist, dist * 0.08, 0);
     } else if (angle === 'anterior') {
       // Anterior front aspect
-      camera.position.set(0, 0.4, 3.8);
+      camera.position.set(0, dist * 0.10, dist);
     } else if (angle === 'posterior') {
       // Posterior back aspect
-      camera.position.set(0, 0.4, -3.8);
+      camera.position.set(0, dist * 0.10, -dist);
     } else {
       // Default isometric view
-      camera.position.set(0, 0.6, 3.8);
+      camera.position.set(0, dist * 0.10, dist);
     }
     controls.target.set(0, 0, 0);
+    camera.lookAt(0, 0, 0);
     controls.update();
     setShowAngleMenu(false);
   }, []);
@@ -1141,73 +1372,104 @@ export default function MedicalViewer({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full min-h-0 flex flex-col bg-[#05070B] rounded-xl overflow-hidden border border-[#1C2636] hover:border-[#243348] select-none group shadow-clinical-md"
+      className="relative w-full h-full min-h-0 flex flex-col bg-[#060A12] medical-viewer-grid overflow-hidden select-none group"
     >
-      {/* Top Floating Viewport HUD */}
-      <div className="absolute top-2.5 left-2.5 z-20 flex flex-wrap items-center gap-2 pointer-events-none">
-        <div className="px-2.5 py-1 rounded-md bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md text-[11px] font-mono text-[#F4F7FC] flex items-center gap-1.5 shadow-xs">
-          <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse shrink-0"></span>
-          <span className="font-semibold uppercase tracking-wider">
-            {viewMode === '3d' ? '3D Anatomy' : `${viewMode} Plane`}
-          </span>
-          <span className="text-[#8496AC] text-[10px] hidden sm:inline">
-            {viewMode === '3d' 
-              ? '• Atlas Reference' 
-              : `• Slice ${viewMode === 'axial' ? axialSlice : viewMode === 'coronal' ? coronalSlice : sagittalSlice}`}
-          </span>
-        </div>
-        {viewMode === '3d' && (
-          <div className="flex items-center gap-1.5">
-            {/* Atlas reference badge */}
-            <div className="px-2 py-1 rounded-md bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md text-[10px] font-mono text-[#8496AC] flex items-center gap-1.5 shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
-              <span className="hidden sm:inline">Normal Brain Atlas</span>
-            </div>
-
-            {/* Tumor mesh state badge */}
-            {meshLoading ? (
-              <div className="px-2 py-1 rounded-md bg-[#151E2B]/90 border border-[#4C8DFF]/40 backdrop-blur-md text-[10px] font-mono text-[#4C8DFF] flex items-center gap-1.5 shadow-xs animate-pulse">
-                <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-                <span>Extracting Tumor Mesh...</span>
-              </div>
-            ) : meshData?.has_mesh ? (
-              <div className="px-2 py-1 rounded-md bg-[#35B982]/15 border border-[#35B982]/30 backdrop-blur-md text-[10px] font-mono text-[#35B982] flex items-center gap-1.5 shadow-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#35B982] shrink-0"></span>
-                <span>Patient MRI Tumor ({meshData.surfaces?.wt?.vertex_count?.toLocaleString() || 0} verts)</span>
-              </div>
-            ) : (
-              <div className="px-2 py-1 rounded-md bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md text-[10px] font-mono text-[#8496AC] flex items-center gap-1.5 shadow-xs">
-                <span>No Tumor in Mask</span>
-              </div>
+      {/* Top Anatomical Information Sub-Strip — Clean horizontal layout, strictly below heading and above 3D canvas */}
+      <div className={cn(
+        "w-full shrink-0 flex items-center justify-between border-b select-none z-20 backdrop-blur-xs",
+        isCompactPreview 
+          ? "h-6 px-2 bg-[#090E17]/95 border-[#172233] text-[9.5px]" 
+          : "h-7 px-2.5 bg-[#090E17]/90 border-[#172233] text-[10.5px]"
+      )}>
+        <div className="flex items-center gap-1.5 min-w-0 overflow-hidden whitespace-nowrap">
+          {/* Badge 1: 3D Anatomy */}
+          <div 
+            className={cn(
+              "rounded bg-[#151E2B]/90 border border-[#243348] text-[#F4F7FC] flex items-center gap-1.5 font-mono shrink-0 shadow-xs",
+              isCompactPreview ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]"
+            )}
+            title={viewMode === '3d' ? '3D Anatomy • Atlas Reference' : `${viewMode} Plane`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4C8DFF] animate-pulse shrink-0" />
+            <span className="font-semibold uppercase tracking-wider">
+              {viewMode === '3d' ? '3D Anatomy' : `${viewMode} Plane`}
+            </span>
+            {!isCompactPreview && (
+              <span className="text-[#8496AC] text-[9.5px]">
+                {viewMode === '3d' 
+                  ? '• Atlas Reference' 
+                  : `• Slice ${viewMode === 'axial' ? axialSlice : viewMode === 'coronal' ? coronalSlice : sagittalSlice}`}
+              </span>
             )}
           </div>
-        )}
+
+          {viewMode === '3d' && (
+            <>
+              {/* Badge 2: Normal Brain Atlas */}
+              <div 
+                className={cn(
+                  "rounded bg-[#151E2B]/90 border border-[#243348] text-[#8496AC] flex items-center gap-1 font-mono shrink-0 shadow-xs",
+                  isCompactPreview ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]"
+                )}
+                title="Normal Brain Atlas Reference"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                <span>{isCompactPreview ? 'Atlas' : 'Normal Brain Atlas'}</span>
+              </div>
+
+              {/* Badge 3: Patient MRI Tumor */}
+              {meshLoading ? (
+                <div 
+                  className={cn(
+                    "rounded bg-[#151E2B]/90 border border-[#4C8DFF]/40 text-[#4C8DFF] flex items-center gap-1 font-mono shrink-0 shadow-xs animate-pulse",
+                    isCompactPreview ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]"
+                  )}
+                  title="Extracting Patient MRI Tumor Mesh from Volumetric NIfTI..."
+                >
+                  <Loader2 className="w-2.5 h-2.5 animate-spin shrink-0" />
+                  <span>{isCompactPreview ? 'Extracting...' : 'Extracting Tumor Mesh...'}</span>
+                </div>
+              ) : meshData?.has_mesh ? (
+                <div 
+                  className={cn(
+                    "rounded bg-[#35B982]/15 border border-[#35B982]/30 text-[#35B982] flex items-center gap-1 font-mono truncate shadow-xs",
+                    isCompactPreview ? "px-1.5 py-0.5 text-[9px] max-w-[190px]" : "px-2 py-0.5 text-[10px]"
+                  )}
+                  title={`Patient MRI Tumor (${meshData.surfaces?.wt?.vertex_count?.toLocaleString() || 0} verts)`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#35B982] shrink-0" />
+                  <span className="truncate">
+                    {isCompactPreview 
+                      ? (segSource === 'prediction' && confidenceThreshold
+                          ? `Tumor (${meshData.surfaces?.wt?.vertex_count?.toLocaleString() || 0} v · Major)`
+                          : `Tumor (${meshData.surfaces?.wt?.vertex_count?.toLocaleString() || 0} verts)`)
+                      : (segSource === 'prediction' && confidenceThreshold
+                          ? `Patient MRI Tumor (${meshData.surfaces?.wt?.vertex_count?.toLocaleString() || 0} verts · Major Region)`
+                          : `Patient MRI Tumor (${meshData.surfaces?.wt?.vertex_count?.toLocaleString() || 0} verts)`)}
+                  </span>
+                </div>
+              ) : (
+                <div 
+                  className={cn(
+                    "rounded bg-[#151E2B]/90 border border-[#243348] text-[#8496AC] flex items-center gap-1 font-mono shrink-0 shadow-xs",
+                    isCompactPreview ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]"
+                  )}
+                  title={meshData?.message || "No Tumor in Mask"}
+                >
+                  <span>{meshData?.message ? "No High-Conf Regions (≥90%)" : "No Tumor in Mask"}</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Top Right Maximize / Restore Action Button */}
-      {onToggleMaximize && (
-        <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1">
-          <button
-            onClick={onToggleMaximize}
-            className="p-1 rounded-md bg-[#151E2B]/90 border border-[#243348] text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#101722] transition-colors shadow-xs cursor-pointer"
-            title={isMaximized ? 'Restore View (Esc)' : 'Maximize Whole Screen'}
-            aria-label={isMaximized ? 'Restore View' : 'Maximize Whole Screen'}
-          >
-            {isMaximized ? (
-              <Minimize2 className="w-3.5 h-3.5 text-[#4C8DFF]" />
-            ) : (
-              <Maximize2 className="w-3.5 h-3.5" />
-            )}
-          </button>
-        </div>
-      )}
-
       {/* Main 3D / 2D Viewport Area */}
-      <div className="relative flex-1 w-full h-full overflow-hidden">
+      <div className="relative flex-1 w-full min-h-0 overflow-hidden medical-viewer-grid">
         {/* 3D WebGL Three.js Viewport (Visible in 3D Mode) */}
         <div
           ref={threeMountRef}
-          className={`w-full h-full relative cursor-grab active:cursor-grabbing touch-none select-none ${
+          className={`w-full h-full relative cursor-grab active:cursor-grabbing touch-none select-none medical-viewer-grid ${
             viewMode === '3d' ? 'block' : 'hidden'
           }`}
           style={{ touchAction: 'none' }}
@@ -1247,10 +1509,11 @@ export default function MedicalViewer({
         </div>
 
         {/* Floating Viewport Quick Controls Pill at Bottom Right */}
-        <div
-          ref={controlsRef}
-          className="absolute bottom-2 right-2 z-20 flex items-center gap-1 bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md p-1 rounded-lg shadow-clinical-md opacity-90 hover:opacity-100 transition-opacity"
-        >
+        {!isCompactPreview && (
+          <div
+            ref={controlsRef}
+            className="absolute bottom-2 right-2 z-20 flex items-center gap-1 bg-[#151E2B]/90 border border-[#243348] backdrop-blur-md p-1 rounded-lg shadow-clinical-md opacity-90 hover:opacity-100 transition-opacity"
+          >
           {/* Appearance dropdown popover */}
           {viewMode === '3d' && showPaletteMenu && (
             <div className="absolute right-0 bottom-full mb-2 w-64 max-w-[calc(100vw-3rem)] bg-[#151E2B] border border-[#243348] rounded-xl shadow-clinical-lg p-2 z-40 backdrop-blur-md">
@@ -1410,6 +1673,7 @@ export default function MedicalViewer({
             <RotateCcw className="w-4 h-4" />
           </button>
         </div>
+        )}
       </div>
 
       {/* Bottom Viewer Footer Bar */}

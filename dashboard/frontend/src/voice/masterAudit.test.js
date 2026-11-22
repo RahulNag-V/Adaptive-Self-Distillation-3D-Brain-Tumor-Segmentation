@@ -1,5 +1,5 @@
 /**
- * Master Test Suite for NeuroVision AI Voice Assistant
+ * Master Test Suite for Neuro Resonence AI Voice Assistant
  * Tests Section 23 (Lifecycle), Section 24 (Patient Search & missing patient 28),
  * Section 25 (Brain Appearance Presets 1-4), Section 7 (Slice clamping feedback),
  * Section 5 (Fullscreen maximize/restore), and Section 10 (Sidebar toggle).

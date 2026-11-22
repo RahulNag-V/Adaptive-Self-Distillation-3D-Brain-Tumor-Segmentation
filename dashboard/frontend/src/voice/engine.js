@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Resilient Speech Recognition Engine
+ * Neuro Resonence AI - Resilient Speech Recognition Engine
  *
  * Implements:
  * - Single SpeechRecognition instance held in a ref, safe under React StrictMode double-mount

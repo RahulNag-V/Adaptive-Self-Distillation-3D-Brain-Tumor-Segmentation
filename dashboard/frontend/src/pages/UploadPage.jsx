@@ -31,7 +31,16 @@ const MRI_MODALITIES = [
     desc: 'Fluid Attenuated Inversion Recovery (Edema / Infiltration)',
     accent: '#06B6D4',
     bgAccent: 'rgba(6, 182, 212, 0.12)',
-    borderAccent: 'rgba(6, 182, 212, 0.35)'
+    borderAccent: 'rgba(6, 182, 212, 0.35)',
+    uploadedBg: 'rgba(6, 182, 212, 0.16)',
+    uploadedBorder: 'rgba(6, 182, 212, 0.75)',
+    uploadedShadow: '0 4px 18px rgba(6, 182, 212, 0.14)',
+    uploadedBadgeBg: 'rgba(6, 182, 212, 0.20)',
+    uploadedBadgeText: '#0E7490',
+    uploadedBadgeBorder: 'rgba(6, 182, 212, 0.45)',
+    uploadedBoxBg: 'rgba(6, 182, 212, 0.12)',
+    uploadedBoxBorder: 'rgba(6, 182, 212, 0.35)',
+    dragBg: 'rgba(6, 182, 212, 0.24)',
   },
   { 
     id: 't1', 
@@ -39,7 +48,16 @@ const MRI_MODALITIES = [
     desc: 'T1-weighted Native (Structural anatomy & gray/white boundary)',
     accent: '#4C8DFF',
     bgAccent: 'rgba(76, 141, 255, 0.12)',
-    borderAccent: 'rgba(76, 141, 255, 0.35)'
+    borderAccent: 'rgba(76, 141, 255, 0.35)',
+    uploadedBg: 'rgba(76, 141, 255, 0.16)',
+    uploadedBorder: 'rgba(76, 141, 255, 0.75)',
+    uploadedShadow: '0 4px 18px rgba(76, 141, 255, 0.14)',
+    uploadedBadgeBg: 'rgba(76, 141, 255, 0.20)',
+    uploadedBadgeText: '#1D4ED8',
+    uploadedBadgeBorder: 'rgba(76, 141, 255, 0.45)',
+    uploadedBoxBg: 'rgba(76, 141, 255, 0.12)',
+    uploadedBoxBorder: 'rgba(76, 141, 255, 0.35)',
+    dragBg: 'rgba(76, 141, 255, 0.24)',
   },
   { 
     id: 't1ce', 
@@ -47,7 +65,16 @@ const MRI_MODALITIES = [
     desc: 'T1-weighted Contrast Enhanced (Active enhancing tumor core)',
     accent: '#EF4444',
     bgAccent: 'rgba(239, 68, 68, 0.12)',
-    borderAccent: 'rgba(239, 68, 68, 0.35)'
+    borderAccent: 'rgba(239, 68, 68, 0.35)',
+    uploadedBg: 'rgba(239, 68, 68, 0.16)',
+    uploadedBorder: 'rgba(239, 68, 68, 0.75)',
+    uploadedShadow: '0 4px 18px rgba(239, 68, 68, 0.14)',
+    uploadedBadgeBg: 'rgba(239, 68, 68, 0.20)',
+    uploadedBadgeText: '#B91C1C',
+    uploadedBadgeBorder: 'rgba(239, 68, 68, 0.45)',
+    uploadedBoxBg: 'rgba(239, 68, 68, 0.12)',
+    uploadedBoxBorder: 'rgba(239, 68, 68, 0.35)',
+    dragBg: 'rgba(239, 68, 68, 0.24)',
   },
   { 
     id: 't2', 
@@ -55,7 +82,16 @@ const MRI_MODALITIES = [
     desc: 'T2-weighted Native (Hyperintense gross tumor boundaries)',
     accent: '#35B982',
     bgAccent: 'rgba(53, 185, 130, 0.12)',
-    borderAccent: 'rgba(53, 185, 130, 0.35)'
+    borderAccent: 'rgba(53, 185, 130, 0.35)',
+    uploadedBg: 'rgba(53, 185, 130, 0.16)',
+    uploadedBorder: 'rgba(53, 185, 130, 0.75)',
+    uploadedShadow: '0 4px 18px rgba(53, 185, 130, 0.14)',
+    uploadedBadgeBg: 'rgba(53, 185, 130, 0.20)',
+    uploadedBadgeText: '#047857',
+    uploadedBadgeBorder: 'rgba(53, 185, 130, 0.45)',
+    uploadedBoxBg: 'rgba(53, 185, 130, 0.12)',
+    uploadedBoxBorder: 'rgba(53, 185, 130, 0.35)',
+    dragBg: 'rgba(53, 185, 130, 0.24)',
   },
 ];
 
@@ -75,6 +111,7 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
     t2: null,
     seg: null,
   });
+  const [dragOverModality, setDragOverModality] = useState(null);
 
   // CT File State (.nii, .nii.gz, .dcm, or .zip)
   const [ctFile, setCtFile] = useState(null);
@@ -403,24 +440,25 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
   const mriReady = mriFiles.flair && mriFiles.t1 && mriFiles.t1ce && mriFiles.t2;
   const ctReady = !!ctFile;
   const canValidate = selectedModality === 'mri' ? mriReady : ctReady;
+  const isVerified = Boolean(validationResult?.is_valid);
 
   const activeModelMeta = catalog?.active_model || {};
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 animate-fadeIn text-[#F4F7FC]">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 animate-fadeIn text-[#111827]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1C2636] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#98D9CE]/60 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-500/10 text-[#4C8DFF] border border-blue-500/20 uppercase">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#EBF8F6] text-[#103B5C] border border-[#98D9CE]/60 uppercase">
               Adaptive Human-in-the-Loop Pipeline
             </span>
-            <span className="text-xs text-[#627D98] font-mono">Phase 1: Ingestion & Geometric Pre-Flight</span>
+            <span className="text-xs text-[#6B7280] font-mono">Phase 1: Ingestion & Geometric Pre-Flight</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F4F7FC]">
-            Upload & Modality Selection
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827]">
+            Upload & <span className="text-[#103B5C]">Modality Selection</span>
           </h1>
-          <p className="text-sm text-[#94A3B8] mt-1">
+          <p className="text-sm text-[#475569] mt-1">
             Ingest volumetric MRI or CT scans, verify spatial geometry and PHI de-identification, and verify AI model compatibility.
           </p>
         </div>
@@ -429,38 +467,38 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
         <button
           onClick={handleLoadValidationCase}
           disabled={isRunning}
-          className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#2A384C] hover:border-[#4C8DFF] text-xs font-mono font-medium text-[#4C8DFF] transition-all disabled:opacity-50 shadow-medical-sm"
+          className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/15 hover:bg-[rgba(226,247,242,0.70)] border border-[#111111] text-xs font-mono font-bold text-[#111111] transition-all duration-250 disabled:opacity-50 shadow-[0_4px_12px_rgba(0,0,0,0.10)] hover:shadow-[0_6px_18px_rgba(0,0,0,0.12)] cursor-pointer"
         >
-          <Database className="w-3.5 h-3.5 text-[#4C8DFF]" />
+          <Database className="w-3.5 h-3.5 text-[#111111]" />
           <span>Load Validation Subject: BraTS2021_01069</span>
         </button>
       </div>
 
       {/* MODALITY & TASK SELECTOR TABS */}
-      <div className="bg-[#101722] border border-[#1C2636] rounded-xl p-6 shadow-medical-card space-y-5">
+      <div className="card-transparent rounded-xl p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-mono uppercase tracking-wider text-[#94A3B8] font-semibold block">
-              1. Select Imaging Modality & Clinical Workflow
+            <span className="text-xs font-mono uppercase tracking-wider text-[#103B5C] font-bold block">
+              1. Select Imaging Modality &amp; Clinical Workflow
             </span>
-            <p className="text-xs text-[#94A3B8] mt-0.5">
+            <p className="text-xs text-[#25313D] mt-0.5">
               Strict anatomical isolation ensures models are only applied to validated multi-modal sequences.
             </p>
           </div>
 
-          <div className="inline-flex p-1 bg-[#0B1019] rounded-lg border border-[#1C2636]">
+          <div className="inline-flex p-1 bg-white/20 rounded-lg border border-[#111111]">
             <button
               onClick={() => handleModalitySwitch('mri')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all ${
                 selectedModality === 'mri'
-                  ? 'bg-[#4C8DFF] text-white shadow-md shadow-blue-500/20'
-                  : 'text-[#94A3B8] hover:text-[#F4F7FC]'
+                  ? 'bg-[#399DBA] hover:bg-[#103B5C] text-white shadow-xs'
+                  : 'text-[#25313D] hover:text-[#103B5C]'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
               <span>Brain MRI (4-Sequence)</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                selectedModality === 'mri' ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
+                selectedModality === 'mri' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-300'
               }`}>
                 AI Supported
               </span>
@@ -468,16 +506,16 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
 
             <button
               onClick={() => handleModalitySwitch('ct')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all ${
                 selectedModality === 'ct'
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
-                  : 'text-[#94A3B8] hover:text-[#F4F7FC]'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-[#25313D] hover:text-[#103B5C]'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
               <span>Head CT (Axial / DICOM)</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                selectedModality === 'ct' ? 'bg-white/20 text-white' : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
+                selectedModality === 'ct' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900 border border-amber-300'
               }`}>
                 Manual / HITL Only
               </span>
@@ -486,50 +524,50 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
         </div>
 
         {/* MODEL CAPABILITY DECLARATION BANNER */}
-        <div className={`p-4 rounded-xl border text-xs space-y-2.5 ${
+        <div className={`p-4 rounded-xl border text-xs space-y-2.5 transition-all duration-250 ${
           selectedModality === 'mri'
-            ? 'bg-[#151E2B]/80 border-[#1C2636] text-[#F4F7FC]'
-            : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+            ? 'bg-white/15 border-[#111111]/30 text-[#111827]'
+            : 'bg-amber-50/80 border-[#111111]/30 text-amber-950'
         }`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-[#4C8DFF] shrink-0" />
-              <span className="font-semibold text-[#F4F7FC]">
+              <Cpu className="w-4 h-4 text-[#103B5C] shrink-0" />
+              <span className="font-bold text-[#103B5C]">
                 {selectedModality === 'mri' ? 'Model: ' + (activeModelMeta.name || 'Adaptive Self-Distillation UNETR') : 'Task: Head CT Anatomical & Contouring Inspection'}
               </span>
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#0B1019] border border-[#1C2636] text-[#94A3B8]">
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/40 border border-[#111111]/30 text-[#111827]">
                 {selectedModality === 'mri' ? `Version ${activeModelMeta.version || '1.0.0'}` : 'HITL Annotation Engine'}
               </span>
             </div>
-            <span className={`text-[11px] font-mono px-2.5 py-1 rounded font-semibold ${
+            <span className={`text-[11px] font-mono px-2.5 py-1 rounded font-bold ${
               selectedModality === 'mri' 
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' 
-                : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                : 'bg-amber-100 text-amber-900 border border-amber-300'
             }`}>
               {selectedModality === 'mri' ? 'AI Inference Active' : 'AI Prediction Withheld (Clinical Safety)'}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] font-mono pt-1 text-[#94A3B8]">
-            <div className="p-2 rounded bg-[#0B1019]/60 border border-[#1C2636]">
-              <span className="text-[#F4F7FC] font-semibold">Inputs: </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] font-mono pt-1 text-[#25313D]">
+            <div className="p-2 rounded bg-white/25 border border-[#111111]/25">
+              <span className="text-[#103B5C] font-bold">Inputs: </span>
               {selectedModality === 'mri' ? 'FLAIR, T1, T1ce, T2 (4 channels)' : 'Axial CT (.nii, .nii.gz, .dcm, .zip)'}
             </div>
-            <div className="p-2 rounded bg-[#0B1019]/60 border border-[#1C2636]">
-              <span className="text-[#F4F7FC] font-semibold">Architecture: </span>
+            <div className="p-2 rounded bg-white/25 border border-[#111111]/25">
+              <span className="text-[#103B5C] font-bold">Architecture: </span>
               {selectedModality === 'mri' ? 'ROI 96×96×96 sliding window, 1.0mm³' : 'Hounsfield Units scaled [-1000, 3000]'}
             </div>
-            <div className="p-2 rounded bg-[#0B1019]/60 border border-[#1C2636]">
-              <span className="text-[#F4F7FC] font-semibold">Labels: </span>
+            <div className="p-2 rounded bg-white/25 border border-[#111111]/25">
+              <span className="text-[#103B5C] font-bold">Labels: </span>
               {selectedModality === 'mri' ? '1: NCR, 2: ED, 3: ET' : 'Custom Radiologist Contouring (0-3)'}
             </div>
           </div>
 
           {selectedModality === 'ct' && (
-            <div className="pt-2.5 border-t border-amber-500/20 flex items-start gap-2.5 text-[11px] text-amber-200">
-              <ShieldAlert className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+            <div className="pt-2.5 border-t border-amber-300 flex items-start gap-2.5 text-[11px] text-amber-950">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
               <p className="leading-relaxed">
-                <strong className="text-amber-300">Clinical Safety Restriction:</strong> The production UNETR model is trained exclusively on multimodal MRI and requires 4 co-registered sequence channels. Running it on CT produces hazardous diagnostic hallucinations. CT scans are ingested for human inspection, contouring, and active candidate dataset curation.
+                <strong className="text-amber-900">Clinical Safety Restriction:</strong> The production UNETR model is trained exclusively on multimodal MRI and requires 4 co-registered sequence channels. Running it on CT produces hazardous diagnostic hallucinations. CT scans are ingested for human inspection, contouring, and active candidate dataset curation.
               </p>
             </div>
           )}
@@ -541,27 +579,66 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
         /* 4-SEQUENCE MRI UPLOAD CARDS */
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-[#94A3B8] font-semibold">
+            <h2 className="text-xs font-mono uppercase tracking-wider text-[#103B5C] font-bold">
               Required Multimodal MRI Sequences (NIfTI .nii or .nii.gz)
             </h2>
-            <span className="text-[11px] font-mono text-[#627D98]">All 4 channels mandatory for inference</span>
+            <span className="text-[11px] font-mono text-[#25313D]">All 4 channels mandatory for inference</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {MRI_MODALITIES.map(({ id, label, desc, accent, bgAccent, borderAccent }) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {MRI_MODALITIES.map(({ 
+              id, 
+              label, 
+              desc, 
+              accent, 
+              bgAccent, 
+              borderAccent,
+              uploadedBg,
+              uploadedBorder,
+              uploadedShadow,
+              uploadedBadgeBg,
+              uploadedBadgeText,
+              uploadedBadgeBorder,
+              uploadedBoxBg,
+              uploadedBoxBorder,
+              dragBg
+            }) => {
               const fileData = mriFiles[id];
+              const isUploaded = Boolean(fileData);
+              const isDragging = dragOverModality === id;
+
               return (
                 <div
                   key={id}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleMriDrop(id, e)}
-                  style={{
-                    borderColor: fileData ? accent : undefined
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragOverModality !== id) setDragOverModality(id);
                   }}
-                  className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all min-h-[230px] ${
-                    fileData
-                      ? 'bg-[#101722] shadow-medical-md'
-                      : 'bg-[#101722] border-dashed border-[#1C2636] hover:border-[#4C8DFF]/60 hover:bg-[#151E2B]/40 shadow-medical-card'
+                  onDragLeave={() => setDragOverModality(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverModality(null);
+                    handleMriDrop(id, e);
+                  }}
+                  style={{
+                    backgroundColor: isDragging 
+                      ? dragBg 
+                      : isUploaded 
+                      ? uploadedBg 
+                      : undefined,
+                    borderColor: isDragging 
+                      ? accent 
+                      : isUploaded 
+                      ? (isVerified ? '#059669' : uploadedBorder)
+                      : '#111111',
+                    borderWidth: isUploaded || isDragging ? '1.5px' : '1px',
+                    boxShadow: isUploaded 
+                      ? (isVerified ? '0 4px 20px rgba(16, 185, 129, 0.25)' : uploadedShadow) 
+                      : undefined,
+                    transition: 'background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
+                  }}
+                  className={`card-transparent-interactive relative rounded-xl p-4 sm:p-5 flex flex-col justify-between min-h-[230px] ${
+                    isDragging ? 'ring-2 ring-offset-1' : ''
                   }`}
                 >
                   <div>
@@ -576,46 +653,69 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
                       >
                         {label}
                       </span>
-                      {fileData ? (
-                        <span className="inline-flex items-center text-xs font-mono text-emerald-400 gap-1 font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Staged
+                      {isUploaded ? (
+                        <span 
+                          className="inline-flex items-center text-xs font-mono gap-1 font-bold px-2 py-0.5 rounded-full transition-all duration-300"
+                          style={{
+                            backgroundColor: isVerified ? 'rgba(16, 185, 129, 0.22)' : uploadedBadgeBg,
+                            color: isVerified ? '#047857' : uploadedBadgeText,
+                            border: `1px solid ${isVerified ? 'rgba(16, 185, 129, 0.55)' : uploadedBadgeBorder}`
+                          }}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" style={{ color: isVerified ? '#059669' : accent }} />
+                          <span>{isVerified ? 'Verified' : 'Uploaded'}</span>
                         </span>
                       ) : (
-                        <span className="text-[11px] text-[#627D98] font-mono">
+                        <span className="text-[11px] text-[#25313D] font-mono font-bold">
                           Required
                         </span>
                       )}
                     </div>
 
-                    <p className="text-[11px] text-[#94A3B8] leading-relaxed mb-4 font-sans">
+                    <p className="text-[11px] text-[#25313D] leading-relaxed mb-4 font-sans">
                       {desc}
                     </p>
 
-                    {fileData ? (
-                      <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-medium text-[#F4F7FC] truncate" title={fileData.name}>
-                          <FileText className="w-3.5 h-3.5 text-[#4C8DFF] shrink-0" />
+                    {isUploaded ? (
+                      <div 
+                        className="p-3 rounded-lg border space-y-1.5 transition-all shadow-xs"
+                        style={{
+                          backgroundColor: uploadedBoxBg,
+                          borderColor: uploadedBoxBorder,
+                        }}
+                      >
+                        <div className="flex items-center justify-between text-[11px] font-mono font-bold" style={{ color: isVerified ? '#047857' : uploadedBadgeText }}>
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" style={{ color: isVerified ? '#059669' : accent }} />
+                            <span>{isVerified ? 'Scan Verified' : 'File uploaded'}</span>
+                          </span>
+                          {fileData.isServerLoaded && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/10 font-bold">Preloaded</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#103B5C] truncate" title={fileData.name}>
+                          <FileText className="w-3.5 h-3.5 shrink-0" style={{ color: accent }} />
                           <span className="truncate font-mono">{fileData.name}</span>
                         </div>
-                        <div className="text-[11px] text-[#94A3B8] font-mono flex items-center justify-between">
+                        <div className="text-[11px] text-[#25313D] font-mono flex items-center justify-between pt-0.5">
                           <span>Size: {fileData.size}</span>
-                          {fileData.isServerLoaded && (
-                            <span className="text-[#38BDF8] text-[10px] font-semibold">Preloaded</span>
-                          )}
+                          <span className="text-[10px] font-mono font-bold flex items-center gap-1" style={{ color: isVerified ? '#047857' : uploadedBadgeText }}>
+                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: isVerified ? '#10B981' : accent }} />
+                            {isVerified ? 'Verified & Ready' : 'Ready'}
+                          </span>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-4 text-xs text-[#94A3B8] space-y-2">
-                        <UploadCloud className="w-8 h-8 text-[#627D98] mx-auto" />
+                      <div className="text-center py-4 text-xs text-[#25313D] space-y-2">
+                        <UploadCloud className="w-8 h-8 text-[#103B5C] mx-auto" />
                         <p className="text-[11px] font-mono">
-                          Drop <span className="text-[#F4F7FC]">.nii</span> or <span className="text-[#F4F7FC]">.nii.gz</span>
+                          Drop <span className="text-[#103B5C] font-bold">.nii</span> or <span className="text-[#103B5C] font-bold">.nii.gz</span>
                         </p>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[#1C2636] flex items-center justify-between">
+                  <div className="mt-4 pt-3 border-t border-[#111111]/20 flex items-center justify-between">
                     <input
                       type="file"
                       ref={mriInputRefs[id]}
@@ -624,20 +724,38 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
                       className="hidden"
                     />
 
-                    {fileData ? (
-                      <button
-                        onClick={() => handleRemoveMri(id)}
-                        disabled={isRunning}
-                        className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors disabled:opacity-50 font-medium border border-rose-500/20"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Remove</span>
-                      </button>
+                    {isUploaded ? (
+                      <div className="flex items-center gap-2 w-full">
+                        <button
+                          type="button"
+                          onClick={() => mriInputRefs[id].current?.click()}
+                          disabled={isRunning}
+                          className="flex-1 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                            borderColor: uploadedBorder,
+                            color: uploadedBadgeText,
+                          }}
+                          title="Browse and replace file"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" style={{ color: accent }} />
+                          <span>Replace</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMri(id)}
+                          disabled={isRunning}
+                          className="px-2.5 py-1.5 rounded-lg text-xs text-rose-700 hover:text-rose-900 hover:bg-rose-100/60 transition-colors disabled:opacity-50 font-bold border border-[#111111]/40 cursor-pointer shadow-xs"
+                          title="Remove uploaded file"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => mriInputRefs[id].current?.click()}
                         disabled={isRunning}
-                        className="w-full py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#2A384C] text-xs text-[#F4F7FC] font-semibold transition-colors disabled:opacity-50 shadow-medical-sm"
+                        className="w-full py-2 rounded-lg bg-white/30 hover:bg-[rgba(226,247,242,0.85)] border border-[#111111] text-xs text-[#111111] font-bold transition-all duration-250 disabled:opacity-50 shadow-xs cursor-pointer"
                       >
                         Browse File
                       </button>
@@ -651,42 +769,40 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
       ) : (
         /* SINGLE CT VOLUME UPLOAD CARD */
         <div className="space-y-3">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-[#94A3B8] font-semibold">
+          <h2 className="text-xs font-mono uppercase tracking-wider text-[#103B5C] font-bold">
             Head CT Scan Ingestion (NIfTI or DICOM Series)
           </h2>
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleCtDrop}
-            className={`rounded-xl border p-6 transition-all ${
-              ctFile
-                ? 'bg-[#101722] border-[#4C8DFF] shadow-medical-md'
-                : 'bg-[#101722] border-dashed border-[#1C2636] hover:border-[#4C8DFF]/60 hover:bg-[#151E2B]/40 shadow-medical-card'
+            className={`card-transparent-interactive rounded-xl p-6 ${
+              ctFile ? 'bg-white/20' : ''
             }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold tracking-wider px-2.5 py-1 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                  <span className="font-mono text-xs font-bold tracking-wider px-2.5 py-1 rounded bg-amber-100 border border-amber-300 text-amber-900">
                     CT AXIAL VOLUME
                   </span>
                   {ctFile ? (
-                    <span className="inline-flex items-center text-xs font-mono text-emerald-400 font-semibold gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span className="inline-flex items-center text-xs font-mono text-emerald-800 font-bold gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                       Staged ({ctFile.type})
                     </span>
                   ) : (
-                    <span className="text-xs text-[#94A3B8]">Supported: .nii, .nii.gz, .dcm, or .zip archive of DICOM series</span>
+                    <span className="text-xs text-[#25313D]">Supported: .nii, .nii.gz, .dcm, or .zip archive of DICOM series</span>
                   )}
                 </div>
-                <p className="text-xs text-[#94A3B8] max-w-2xl leading-relaxed">
+                <p className="text-xs text-[#25313D] max-w-2xl leading-relaxed">
                   Automatically extracts multi-slice DICOM series with safe archive guards, calculates Hounsfield Units, strips PHI metadata, and reconstructs 3D volumetric array.
                 </p>
                 {ctFile && (
-                  <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636] flex items-center gap-3">
-                    <FileText className="w-4 h-4 text-[#4C8DFF] shrink-0" />
+                  <div className="p-3 rounded-lg bg-white/25 border border-[#111111]/30 flex items-center gap-3">
+                    <FileText className="w-4 h-4 text-[#103B5C] shrink-0" />
                     <div className="text-xs font-mono">
-                      <span className="text-[#F4F7FC] font-semibold">{ctFile.name}</span>
-                      <span className="text-[#94A3B8] ml-2">({ctFile.size})</span>
+                      <span className="text-[#103B5C] font-bold">{ctFile.name}</span>
+                      <span className="text-[#25313D] ml-2 font-bold">({ctFile.size})</span>
                     </div>
                   </div>
                 )}
@@ -704,7 +820,7 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
                   <button
                     onClick={handleRemoveCt}
                     disabled={isRunning}
-                    className="px-4 py-2 rounded-lg text-xs text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition-colors font-medium"
+                    className="px-4 py-2 rounded-lg text-xs text-rose-700 hover:bg-rose-100/60 border border-[#111111] transition-colors font-bold cursor-pointer"
                   >
                     Remove File
                   </button>
@@ -712,7 +828,7 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
                   <button
                     onClick={() => ctInputRef.current?.click()}
                     disabled={isRunning}
-                    className="px-5 py-2.5 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#2A384C] text-xs text-[#F4F7FC] font-semibold shadow-medical-sm transition-all"
+                    className="px-5 py-2.5 rounded-lg bg-white/30 hover:bg-[rgba(226,247,242,0.85)] border border-[#111111] text-xs text-[#111111] font-bold shadow-xs transition-all duration-250 cursor-pointer"
                   >
                     Select CT File (.nii or .zip)
                   </button>
@@ -724,16 +840,16 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
       )}
 
       {/* OPTIONAL GROUND TRUTH (seg.nii.gz) CARD */}
-      <div className="p-5 rounded-xl bg-[#101722] border border-[#1C2636] shadow-medical-card space-y-3">
+      <div className="card-transparent-interactive p-5 rounded-xl space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold tracking-wider px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[#4C8DFF]">
+              <span className="font-mono text-xs font-bold tracking-wider px-2 py-0.5 rounded bg-white/40 border border-[#111111]/30 text-[#103B5C]">
                 OPTIONAL GROUND TRUTH / REFERENCE MASK
               </span>
-              <span className="text-xs text-[#94A3B8] font-mono">seg.nii.gz</span>
+              <span className="text-xs text-[#25313D] font-mono font-bold">seg.nii.gz</span>
             </div>
-            <p className="text-xs text-[#94A3B8] mt-1 font-sans">
+            <p className="text-xs text-[#25313D] mt-1 font-sans">
               Upload an existing reference mask to compare against or seed your correction workflow. If omitted, prospective segmentation is performed.
             </p>
           </div>
@@ -748,14 +864,14 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
             />
             {(selectedModality === 'mri' ? mriFiles.seg : ctSegFile) ? (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-emerald-400 font-semibold font-mono flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-xs text-emerald-800 font-bold font-mono flex items-center gap-1.5 bg-emerald-100 px-2.5 py-1 rounded border border-emerald-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                   {(selectedModality === 'mri' ? mriFiles.seg.name : ctSegFile.name)}
                 </span>
                 <button
                   onClick={() => selectedModality === 'mri' ? handleRemoveMri('seg') : setCtSegFile(null)}
                   disabled={isRunning}
-                  className="px-2.5 py-1 rounded-lg text-xs text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 font-medium"
+                  className="px-2.5 py-1 rounded-lg text-xs text-rose-700 hover:bg-rose-100/60 border border-[#111111] font-bold cursor-pointer"
                 >
                   Remove
                 </button>
@@ -764,7 +880,7 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
               <button
                 onClick={() => selectedModality === 'mri' ? mriInputRefs.seg.current?.click() : ctSegInputRef.current?.click()}
                 disabled={isRunning}
-                className="px-4 py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#2A384C] text-xs text-[#F4F7FC] font-semibold shadow-medical-sm transition-all"
+                className="px-4 py-2 rounded-lg bg-white/30 hover:bg-[rgba(226,247,242,0.85)] border border-[#111111] text-xs text-[#111111] font-bold shadow-xs transition-all duration-250 cursor-pointer"
               >
                 Attach Reference seg.nii.gz
               </button>
@@ -775,41 +891,41 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
 
       {/* DYNAMIC VALIDATION DETAILS & METADATA CARD */}
       {validationResult && validationResult.is_valid ? (
-        <div className="p-5 rounded-xl bg-[#101722] border border-emerald-500/40 shadow-medical-card space-y-3 animate-fadeIn">
-          <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
+        <div className="card-transparent p-5 rounded-xl space-y-3 animate-fadeIn border-emerald-600/60 bg-emerald-500/[0.04] shadow-[0_0_20px_rgba(16,185,129,0.12)]">
+          <div className="flex items-center justify-between border-b border-[#111111]/20 pb-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-semibold text-[#F4F7FC] uppercase tracking-wider font-mono">
-                Scan Geometry & Security Verified
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <span className="text-xs font-bold text-[#103B5C] uppercase tracking-wider font-mono">
+                Scan Geometry &amp; Security Verified
               </span>
             </div>
-            <span className="font-mono text-xs text-[#38BDF8] font-semibold">
+            <span className="font-mono text-xs text-[#103B5C] font-bold">
               Study ID: {validationResult.patient_id}
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
-            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
-              <span className="text-[10px] text-[#94A3B8] block">Matrix Dimensions</span>
-              <span className="text-[#F4F7FC] font-semibold mt-0.5 block">
+            <div className="p-3 rounded-lg bg-white/25 border border-[#111111]/30">
+              <span className="text-[10px] text-[#25313D] font-bold block">Matrix Dimensions</span>
+              <span className="text-[#103B5C] font-bold mt-0.5 block">
                 {validationResult.dimensions ? `${validationResult.dimensions[0]} × ${validationResult.dimensions[1]} × ${validationResult.dimensions[2]}` : '240 × 240 × 155'}
               </span>
             </div>
-            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
-              <span className="text-[10px] text-[#94A3B8] block">Voxel Spacing</span>
-              <span className="text-[#F4F7FC] font-semibold mt-0.5 block">
+            <div className="p-3 rounded-lg bg-white/25 border border-[#111111]/30">
+              <span className="text-[10px] text-[#25313D] font-bold block">Voxel Spacing</span>
+              <span className="text-[#103B5C] font-bold mt-0.5 block">
                 {validationResult.voxel_spacing ? `${validationResult.voxel_spacing[0].toFixed(1)} × ${validationResult.voxel_spacing[1].toFixed(1)} × ${validationResult.voxel_spacing[2].toFixed(1)} mm` : '1.0 × 1.0 × 1.0 mm'}
               </span>
             </div>
-            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
-              <span className="text-[10px] text-[#94A3B8] block">Format & Modality</span>
-              <span className="text-[#F4F7FC] font-semibold capitalize mt-0.5 block">
+            <div className="p-3 rounded-lg bg-white/25 border border-[#111111]/30">
+              <span className="text-[10px] text-[#25313D] font-bold block">Format &amp; Modality</span>
+              <span className="text-[#103B5C] font-bold capitalize mt-0.5 block">
                 {validationResult.format || (selectedModality === 'ct' ? 'CT' : 'MRI')} ({selectedModality.toUpperCase()})
               </span>
             </div>
-            <div className="p-3 rounded-lg bg-[#151E2B]/80 border border-[#1C2636]">
-              <span className="text-[10px] text-[#94A3B8] block">AI Model Status</span>
-              <span className={`font-semibold mt-0.5 block ${validationResult.is_ai_prediction_supported ? 'text-emerald-400' : 'text-amber-300'}`}>
+            <div className="p-3 rounded-lg bg-white/25 border border-[#111111]/30">
+              <span className="text-[10px] text-[#25313D] font-bold block">AI Model Status</span>
+              <span className={`font-bold mt-0.5 block ${validationResult.is_ai_prediction_supported ? 'text-emerald-800' : 'text-amber-800'}`}>
                 {validationResult.is_ai_prediction_supported ? 'Prediction Compatible' : 'Prediction Withheld'}
               </span>
             </div>
@@ -817,35 +933,29 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
         </div>
       ) : (
         /* Empty / Waiting Validation HUD */
-        <div className="p-4 rounded-xl bg-[#101722] border border-[#1C2636] flex items-center justify-between text-xs text-[#94A3B8] font-mono">
+        <div className="card-transparent p-4 rounded-xl flex items-center justify-between text-xs text-[#111827] font-mono">
           <div className="flex items-center gap-2.5">
-            <Crosshair className="w-4 h-4 text-[#4C8DFF]" />
+            <Crosshair className="w-4 h-4 text-[#103B5C]" />
             <span>Pre-Flight Geometric HUD: Awaiting scan upload and validation verification.</span>
           </div>
-          <span className="text-[11px] text-[#627D98]">Standby</span>
+          <span className="text-[11px] text-[#25313D] font-bold">Standby</span>
         </div>
       )}
 
       {/* PIPELINE PROGRESS & STATUS BANNER (7-STATE MACHINE) */}
       {pipelineState.stage !== 'idle' && (
-        <div className={`p-5 rounded-xl border flex items-start gap-3.5 text-xs shadow-medical-card animate-fadeIn ${
-          pipelineState.stage === 'error'
-            ? 'bg-rose-500/10 border-rose-500/30 text-rose-200'
-            : pipelineState.stage === 'complete'
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
-            : 'bg-blue-500/10 border-blue-500/30 text-[#F4F7FC]'
-        }`}>
+        <div className="card-transparent p-5 rounded-xl flex items-start gap-3.5 text-xs animate-fadeIn">
           {isRunning ? (
-            <Loader2 className="w-5 h-5 text-[#4C8DFF] shrink-0 mt-0.5 animate-spin" />
+            <Loader2 className="w-5 h-5 text-[#103B5C] shrink-0 mt-0.5 animate-spin" />
           ) : pipelineState.stage === 'complete' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
           )}
 
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-semibold uppercase tracking-wider text-[11px] font-mono">
+              <span className="font-bold uppercase tracking-wider text-[11px] font-mono text-[#103B5C]">
                 {pipelineState.stage === 'uploading' && 'Stage 1/4: Ingesting Scans'}
                 {pipelineState.stage === 'validating' && 'Stage 2/4: Validating Compatibility'}
                 {pipelineState.stage === 'inference' && 'Stage 3/4: Executing Adaptive Model Inference'}
@@ -856,17 +966,17 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
             </div>
             <p className="opacity-90">{pipelineState.message}</p>
             {pipelineState.error && (
-              <p className="font-mono text-rose-300 mt-1">{pipelineState.error}</p>
+              <p className="font-mono text-rose-800 font-bold mt-1">{pipelineState.error}</p>
             )}
           </div>
         </div>
       )}
 
       {/* ACTION CONTROLS */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1C2636]">
-        <div className="text-xs text-[#94A3B8] font-mono flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#111111]/20">
+        <div className="text-xs text-[#25313D] font-mono flex items-center gap-2">
           <span>Active Target:</span>
-          <span className="text-[#F4F7FC] font-semibold">
+          <span className="text-[#103B5C] font-bold">
             {selectedModality === 'mri' ? 'UNETR Brain Tumor Model' : 'CT Inspection & Contouring'}
           </span>
         </div>
@@ -876,20 +986,31 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
           <button
             onClick={handleValidate}
             disabled={!canValidate || isRunning}
-            className={`w-full sm:w-auto px-5 py-2.5 rounded-lg border text-xs font-semibold transition-all shadow-medical-sm ${
-              canValidate && !isRunning
-                ? 'bg-[#151E2B] hover:bg-[#1C2636] border-[#2A384C] text-[#F4F7FC] hover:border-[#4C8DFF]'
-                : 'bg-[#151E2B]/50 border-[#1C2636] text-[#627D98] cursor-not-allowed'
+            className={`w-full sm:w-auto px-5 py-2.5 rounded-lg border text-xs font-bold transition-all duration-250 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 ${
+              validationResult?.is_valid
+                ? 'bg-emerald-500/15 border-emerald-700/60 text-emerald-950 hover:bg-emerald-500/25'
+                : canValidate && !isRunning
+                ? 'bg-white/20 hover:bg-[rgba(226,247,242,0.70)] text-[#111827] border-[#111111]'
+                : 'bg-slate-100/50 border-slate-300 text-[#94A3B8] cursor-not-allowed border-slate-300'
             }`}
           >
-            {pipelineState.stage === 'validating' ? 'Validating Geometry...' : 'Validate Scan Geometry'}
+            {validationResult?.is_valid ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Geometry Verified</span>
+              </>
+            ) : pipelineState.stage === 'validating' ? (
+              <span>Validating Geometry...</span>
+            ) : (
+              <span>Validate Scan Geometry</span>
+            )}
           </button>
 
           {/* If CT or MRI without prediction, offer Direct Annotation Editor jump */}
           {validationResult?.is_valid && !validationResult?.is_ai_prediction_supported && (
             <button
               onClick={handleOpenAnnotationEditor}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-xs font-semibold transition-all shadow-md shadow-amber-500/20"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-all duration-250 border border-[#111111] shadow-xs cursor-pointer"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span>Open in Interactive Annotation Editor</span>
@@ -901,21 +1022,21 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
             <button
               onClick={handleRunSegmentation}
               disabled={!validationResult?.is_valid || !validationResult?.is_ai_prediction_supported || isRunning}
-              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-xs font-semibold transition-all shadow-md ${
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold transition-all duration-250 cursor-pointer ${
                 validationResult?.is_valid && validationResult?.is_ai_prediction_supported && !isRunning
-                  ? 'bg-[#4C8DFF] hover:bg-[#3B7AE8] text-white shadow-blue-500/20'
-                  : 'bg-[#151E2B]/50 border border-[#1C2636] text-[#627D98] cursor-not-allowed'
+                  ? 'btn-verified-green bg-gradient-to-r from-emerald-600 to-emerald-500 text-white border border-[#111111]'
+                  : 'bg-slate-100/50 border border-slate-300 text-[#94A3B8] cursor-not-allowed'
               }`}
             >
               {isRunning ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Processing...</span>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                  <span className="text-white">Processing...</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Run Segmentation</span>
+                  <Play className="w-3.5 h-3.5 fill-current text-white" />
+                  <span className="text-white">Run Segmentation</span>
                 </>
               )}
             </button>

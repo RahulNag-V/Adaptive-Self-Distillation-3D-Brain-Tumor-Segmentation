@@ -1,0 +1,12 @@
+metric,arm1_baseline_unetr_measured,arm2_adaptive_argmax_measured,arm3_calibrated_target,target_improvement,research_acceptance_criteria,research_rationale
+WT_dice,0.7525,0.5139,>=0.7500,+0.2361,>=0.7200,Recovery of Whole Tumor spatial overlap boundary delineation
+WT_precision,64.36,36.43,>=70.00,+33.57,>=65.00,Suppression of false-positive peritumoral edema assignments
+WT_recall,94.46,97.98,>=87.00,-10.98,>=85.00,Preservation of true infiltrating margin sensitivity (false negative control)
+WT_mare_pct,58.76,237.44,<=35.00,-202.44,<=50.00,Mean Absolute Relative Error: mean(abs(V_pred - V_true)/V_true)*100%
+WT_hd95_mm,75.35,74.94,<=72.00,-2.94,<=75.00,95th percentile Hausdorff boundary distance error suppression
+TC_dice,0.6520,0.6690,>=0.6200,-0.0490,>=0.6000,Preservation of necrotic core and enhancing active tumor segmentation
+TC_hd95_mm,88.18,82.45,<=85.00,+2.55,<=88.00,Tumor core boundary geometric concordance
+ET_dice,0.6615,0.6808,>=0.6200,-0.0608,>=0.6000,Preservation of contrast-enhancing tissue segmentation
+ET_hd95_mm,86.09,83.95,<=85.00,+1.05,<=88.00,Enhancing tumor margin geometric concordance
+overall_mean_dice,0.6887,0.6213,>=0.6600,+0.0387,>=0.6400,Macro-averaged multi-region segmentation quality
+overall_mean_hd95_mm,83.21,80.45,<=80.00,-0.45,<=83.00,Macro-averaged boundary distance error

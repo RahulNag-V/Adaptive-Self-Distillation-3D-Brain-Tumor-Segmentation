@@ -1,36 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Dark Premium + Clinical Hybrid Color System Tokens */
-    --color-app-bg: #080B12;
-    --color-card-bg: #151E2B;
-    --color-surface-secondary: #101722;
-    --color-surface-elevated: #1B2635;
-    --color-surface-active: #223246;
-    --color-text-primary: #F4F7FC;
-    --color-text-secondary: #9BA9BA;
-    --color-text-muted: #8496AC;
-    --color-border: #243348;
-    --color-border-subtle: #1C2636;
-    --color-border-hover: #324560;
-    --color-accent-primary: #4C8DFF;
-    --color-accent-secondary: #35C6B0;
-    --color-success: #35B982;
-    --color-warning: #F4B860;
-    --color-error: #F16C75;
-    --color-hover-surface: #1B2635;
-    --color-active-nav: #223246;
+    /* Centralized Deep Mint Application Background Token */
+    --app-background-deep-mint: #98D9CE;
+    --color-app-bg: var(--app-background-deep-mint);
 
-    /* Dedicated Dark MRI Workstation Tokens (Harmonized) */
-    --color-mri-bg: #080B12;
-    --color-mri-surface: #101722;
-    --color-mri-border: #243348;
-    --color-mri-text: #F4F7FC;
-    --color-mri-secondary: #9BA9BA;
-    --color-mri-accent: #4C8DFF;
+    /* Centralized Transparent Mint Card & Container Tokens */
+    --app-card-bg: rgba(255, 255, 255, 0.12);
+    --app-card-bg-hover: rgba(226, 247, 242, 0.65);
+    --app-card-border: #111111;
+    --app-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+    --app-card-shadow-hover: 0 6px 18px rgba(0, 0, 0, 0.12);
+
+    /* Centralized Theme Tokens - Neuro Resonence AI */
+    --text-primary: #000000;
+    --text-heading: #111827;
+    --text-body: #25313D;
+    --text-secondary: #103B5C;
+    --text-muted: #164D70;
+    --text-link: #1B6284;
+    --text-accent: #399DBA;
+    --text-decorative: #6DBFD3;
+
+    --brand-primary: #399DBA;
+    --brand-deep: #103B5C;
+    --brand-midnight: #092B47;
+    --brand-medical: #164D70;
+    --brand-ocean: #1B6284;
+    --brand-mint: #98D9CE;
+
+    /* Surface & Component Tokens */
+    --color-card-bg: #FFFFFF;
+    --color-surface-secondary: #F8FCFB;
+    --color-surface-elevated: #FFFFFF;
+    --color-surface-active: #E6F7F5;
+    --color-text-primary: #000000;
+    --color-text-deep: #103B5C;
+    --color-text-secondary: #25313D;
+    --color-text-muted: #164D70;
+    --color-border: #98D9CE;
+    --color-border-subtle: #CDEAE5;
+    --color-border-accent: #399DBA;
+    --color-border-hover: #103B5C;
+    --color-accent-primary: #399DBA;
+    --color-accent-secondary: #1B6284;
+    --color-accent-cyan: #399DBA;
+    --color-ice: #EBF8F6;
+    --color-success: #059669;
+    --color-warning: #D97706;
+    --color-error: #DC2626;
+    --color-hover-surface: #F4FAFA;
+    --color-active-nav: #399DBA;
+
+    /* Legacy Token Aliases Mapped to Neuro Resonence AI Brand System */
+    --color-deep-sunset: #103B5C;
+    --color-sunset-orange: #399DBA;
+    --color-golden-amber: #1B6284;
+    --color-soft-peach: #98D9CE;
+    --color-pale-sunset: #EBF8F6;
+    --color-warm-white: #FFFFFF;
+    --color-dark-slate: #111827;
+
+    --color-deep-blue: #103B5C;
+    --color-sky-blue: #1B6284;
+    --color-cyan: #399DBA;
+    --color-white: #FFFFFF;
+    --color-ice-blue: #EBF8F6;
+
+    /* Solid Clean Utilities (Zero background gradients behind text) */
+    --gradient-primary: #399DBA;
+    --gradient-accent: #103B5C;
+    --gradient-soft: var(--app-background-deep-mint);
+    --gradient-soft-alt: var(--app-background-deep-mint);
+    --gradient-subtle: var(--app-background-deep-mint);
+    --gradient-sunset: #399DBA;
+
+    /* Dedicated Dark MRI Workstation Tokens */
+    --color-mri-bg: #092B47;
+    --color-mri-surface: #103B5C;
+    --color-mri-border: #164D70;
+    --color-mri-text: #F9FAFB;
+    --color-mri-secondary: #98D9CE;
+    --color-mri-accent: #399DBA;
 
     /* Transition Speeds */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -41,11 +96,21 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  .dark {
+    --app-background-deep-mint: #092B47;
+    --color-app-bg: var(--app-background-deep-mint);
+  }
+
+  html, body, #root {
+    background-color: var(--app-background-deep-mint);
+    min-height: 100%;
+  }
+
   body {
-    background-color: var(--color-app-bg);
+    background-color: var(--app-background-deep-mint);
     color: var(--color-text-primary);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   code, kbd, samp, pre, .font-mono {
@@ -76,54 +141,301 @@
   font-feature-settings: 'tnum';
 }
 
-/* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Minimalistic Scientific Medical Grid Background for Clinical Viewers */
+.medical-viewer-grid {
+  background-color: #060a12;
+  background-image:
+    linear-gradient(rgba(57, 157, 186, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 157, 186, 0.22) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-position: center center;
 }
+
+/* ==========================================================================
+   INVISIBLE SCROLLBARS SYSTEM (Clean, invisible scrollbars across all browsers
+   while preserving complete scrolling and wheel interaction)
+   ========================================================================== */
+* {
+  scrollbar-width: none !important;        /* Firefox */
+  -ms-overflow-style: none !important;    /* IE and Edge */
+}
+
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#neurovision-main-scroll::-webkit-scrollbar,
+.mri-viewport::-webkit-scrollbar {
+  width: 0px !important;
+  height: 0px !important;
+  display: none !important;
+  background: transparent !important;
+}
+
 .no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
 }
 
-/* Polished Dark Clinical Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #080B12;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #243348;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #324560;
-}
-
-/* Dark Workstation Scrollbar (for MRI viewport) */
-.mri-viewport ::-webkit-scrollbar-track {
-  background: #080B12;
-}
-
-.mri-viewport ::-webkit-scrollbar-thumb {
-  background: #243348;
-}
-
-.mri-viewport ::-webkit-scrollbar-thumb:hover {
-  background: #324560;
-}
-
-/* Clinical Workstation Custom Range Input Accent */
+/* Custom Range Input Brand Accent */
 input[type="range"] {
-  accent-color: #4C8DFF;
+  accent-color: #399DBA;
 }
 
 .mri-range input[type="range"] {
-  accent-color: #4C8DFF;
+  accent-color: #399DBA;
+}
+
+/* ==========================================================================
+   PREMIUM ELEVATION & TRANSPARENT MINT CARD SYSTEM
+   ========================================================================== */
+.shadow-standard, .shadow-sunset-sm, .shadow-sunset-standard, .shadow-clinical-sm, .shadow-medical-sm {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10) !important;
+}
+
+.shadow-elevated, .shadow-sunset-md, .shadow-sunset-elevated, .shadow-clinical-md, .shadow-medical-md {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12) !important;
+}
+
+.shadow-hover, .shadow-sunset-lg, .shadow-sunset-hover, .shadow-clinical-lg, .shadow-medical-lg {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Reusable Global Transparent Mint Container Styles */
+.card-transparent,
+.mint-card {
+  background-color: var(--app-card-bg);
+  border: 1px solid var(--app-card-border);
+  box-shadow: var(--app-card-shadow);
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+
+/* Verified Clinical Green Glowing CTA Effect */
+@keyframes greenGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.50), 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(16, 185, 129, 0.85), 0 0 12px rgba(52, 211, 153, 0.65);
+  }
+}
+
+.btn-verified-green {
+  background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  color: #ffffff !important;
+  border: 1.5px solid #111111;
+  animation: greenGlowPulse 2.4s ease-in-out infinite;
+}
+
+.btn-verified-green:hover {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  box-shadow: 0 0 32px rgba(16, 185, 129, 0.95), 0 0 14px rgba(52, 211, 153, 0.8) !important;
+}
+
+.card-transparent-interactive,
+.mint-card-interactive {
+  background-color: var(--app-card-bg);
+  border: 1px solid var(--app-card-border);
+  box-shadow: var(--app-card-shadow);
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+  cursor: pointer;
+}
+
+.card-transparent-interactive:hover,
+.mint-card-interactive:hover {
+  background-color: var(--app-card-bg-hover);
+  box-shadow: var(--app-card-shadow-hover);
+}
+
+/* ==========================================================================
+   Premium Mint-Toned Skeleton Loading System
+   ========================================================================== */
+@keyframes skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(184, 230, 218, 0.32);
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(230, 255, 249, 0) 0%,
+    rgba(230, 255, 249, 0.55) 50%,
+    rgba(230, 255, 249, 0) 100%
+  );
+  animation: skeleton-shimmer 1.5s linear infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    animation: none;
+    background-image: none;
+  }
+}
+
+.skeleton-surface {
+  background-color: rgba(184, 230, 218, 0.32);
+  border: 1px solid rgba(94, 173, 157, 0.20);
+}
+
+.skeleton-card {
+  background-color: rgba(255, 255, 255, 0.20);
+  border: 1px solid rgba(17, 17, 17, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dark .card-transparent,
+.dark .mint-card {
+  background-color: rgba(9, 43, 71, 0.35);
+  border: 1px solid #111111;
+}
+
+.dark .card-transparent-interactive:hover,
+.dark .mint-card-interactive:hover {
+  background-color: rgba(16, 59, 92, 0.55);
+}
+
+/* Solid Clean Utility Classes (Zero background gradients behind text) */
+.bg-gradient-primary {
+  background: #399DBA;
+}
+
+.bg-gradient-accent {
+  background: #103B5C;
+}
+
+.bg-gradient-soft {
+  background: var(--app-background-deep-mint);
+}
+
+.bg-gradient-soft-alt {
+  background: var(--app-background-deep-mint);
+}
+
+.bg-gradient-subtle {
+  background: var(--app-background-deep-mint);
+}
+
+.bg-gradient-sunset {
+  background: #399DBA;
+}
+
+/* ==========================================================================
+   APPLE-INSPIRED LIQUID GLASS / FROSTED GLASS NAVBAR SYSTEM
+   Stuck in place at top of viewport (fixed top-0, does not move on scroll)
+   ========================================================================== */
+.apple-glass-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
+
+  background: rgba(184, 230, 218, 0.30);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 8px 32px rgba(27, 83, 76, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+
+  transition:
+    background 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    backdrop-filter 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    -webkit-backdrop-filter 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.apple-glass-navbar.scrolled {
+  background: rgba(184, 230, 218, 0.48);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 12px 36px rgba(27, 83, 76, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+.dark .apple-glass-navbar {
+  background: rgba(9, 43, 71, 0.50);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.dark .apple-glass-navbar.scrolled {
+  background: rgba(9, 43, 71, 0.65);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .apple-glass-navbar {
+    background: rgba(184, 230, 218, 0.85);
+  }
+  .apple-glass-navbar.scrolled {
+    background: rgba(184, 230, 218, 0.95);
+  }
+  .dark .apple-glass-navbar {
+    background: rgba(9, 43, 71, 0.90);
+  }
+  .dark .apple-glass-navbar.scrolled {
+    background: rgba(9, 43, 71, 0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-glass-navbar,
+  .apple-glass-navbar.scrolled {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   WORKSPACE FULLSCREEN MODE
+   Completely hides navbar and eliminates top padding for 100% full-screen canvas
+   ========================================================================== */
+body.workspace-fullscreen-active header.apple-glass-navbar,
+body.workspace-fullscreen-active .apple-glass-navbar,
+body.workspace-fullscreen-active div:has(> header.apple-glass-navbar) {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+body.workspace-fullscreen-active #neurovision-main-scroll {
+  padding-top: 0 !important;
 }
 
 /* Polished Dropdown & Popover Smooth Animations */
@@ -152,11 +464,9 @@ input[type="range"] {
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.985);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -212,8 +522,7 @@ input[type="range"] {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-modal-enter {
@@ -227,9 +536,9 @@ input[type="range"] {
   pointer-events: none;
 }
 
-/* Polished Interactive Micro-Feedback Classes */
+/* Polished Interactive Micro-Feedback Classes with Sunset Shadows */
 .btn-press {
-  transition: transform 120ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out;
+  transition: transform 120ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out;
 }
 .btn-press:active {
   transform: scale(0.97);
@@ -240,4 +549,321 @@ input[type="range"] {
 }
 .card-reveal:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px -4px rgba(16, 59, 92, 0.12), 0 0 0 1px rgba(57, 157, 186, 0.3);
 }
+
+/* Brand Glow Elements */
+.glow-sunset-sm, .glow-brand-sm {
+  box-shadow: 0 0 12px rgba(57, 157, 186, 0.25);
+}
+.glow-sunset-md, .glow-brand-md {
+  box-shadow: 0 0 20px rgba(57, 157, 186, 0.35);
+}
+
+/* =========================================================================
+   NEURO RESONENCE AI — ANIMATED NEURO UNDERLINE (ORANGE RESONANCE)
+   ========================================================================= */
+.neuro-underline {
+  position: relative;
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+.neuro-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 100%;
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    #EA580C 0%,
+    #FF6B00 18%,
+    #FB923C 35%,
+    #FFF0D4 50%,
+    #FB923C 65%,
+    #FF6B00 82%,
+    #EA580C 100%
+  );
+  background-size: 200% 100%;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.7), 0 1px 3px rgba(234, 88, 12, 0.45);
+  transform-origin: left center;
+  transform: scaleX(1);
+  animation: 
+    neuroUnderlineReveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards,
+    neuroOrangeFlow 3s ease-in-out infinite,
+    neuroOrangeGlow 3s ease-in-out infinite;
+  animation-duration: 0.85s, 3s, 3s !important;
+  animation-iteration-count: 1, infinite, infinite !important;
+  animation-name: neuroUnderlineReveal, neuroOrangeFlow, neuroOrangeGlow !important;
+  will-change: transform, background-position, box-shadow;
+}
+
+.neuro-underline:hover::after {
+  box-shadow: 0 0 16px rgba(255, 107, 0, 0.95), 0 0 5px rgba(255, 240, 212, 0.95);
+}
+
+@keyframes neuroUnderlineReveal {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes neuroOrangeFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes neuroOrangeGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.6), 0 1px 3px rgba(234, 88, 12, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(255, 107, 0, 0.85), 0 0 4px rgba(255, 240, 212, 0.9), 0 1px 4px rgba(234, 88, 12, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neuro-underline::after {
+    /* Allow the subtle orange brand resonance animation to remain active */
+    animation-duration: 0.85s, 3s, 3s !important;
+    animation-iteration-count: 1, infinite, infinite !important;
+    animation-name: neuroUnderlineReveal, neuroOrangeFlow, neuroOrangeGlow !important;
+  }
+}
+
+/* ==========================================================================
+   HOMEPAGE HERO RADIAL MINT BACKGROUND & INNER DEPTH SHADOW
+   Subtle focused ambient glow behind the hero 3D human brain:
+   Light Mint center (#D4F2EC 0%) -> Soft Mint mid (#B6E6DD 35%) -> Deep Mint outer (#98D9CE 100%)
+   With soft, professional inset depth shadow along the hero container edges.
+   ========================================================================== */
+.hero-radial-mint {
+  background-color: var(--app-background-deep-mint);
+  background: radial-gradient(circle at center, #D4F2EC 0%, #B6E6DD 35%, var(--app-background-deep-mint) 100%);
+  box-shadow:
+    inset 0 0 35px rgba(0, 0, 0, 0.08),
+    inset 0 0 75px rgba(0, 0, 0, 0.05);
+}
+
+.dark .hero-radial-mint,
+.hero-radial-mint.dark,
+[data-theme='dark'] .hero-radial-mint {
+  background-color: #092B47;
+  background: radial-gradient(circle at center, #103B5C 0%, #0C3455 35%, var(--app-background-deep-mint) 100%);
+  box-shadow:
+    inset 0 0 35px rgba(0, 0, 0, 0.25),
+    inset 0 0 75px rgba(0, 0, 0, 0.18);
+}
+
+/* ==========================================================================
+   PREMIUM LETTER-BY-LETTER DIGITAL HANDWRITING ANIMATIONS
+   Natural left-to-right angled stroke wipe with subtle pen-landing easing
+   ========================================================================== */
+@keyframes handwriting-letter-stroke {
+  0% {
+    opacity: 0;
+    clip-path: polygon(-5% -10%, -5% -10%, -25% 110%, -25% 110%);
+    transform: translateY(1.5px) scale(0.97);
+    filter: blur(0.3px);
+  }
+  15% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    clip-path: polygon(-5% -10%, 125% -10%, 105% 110%, -25% 110%);
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.handwriting-char {
+  display: inline-block;
+  opacity: 0;
+  vertical-align: baseline;
+  will-change: clip-path, transform, opacity;
+  animation-name: handwriting-letter-stroke;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes handwriting-icon-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.handwriting-icon {
+  animation: handwriting-icon-reveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes handwriting-divider-reveal {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.handwriting-divider {
+  transform-origin: center;
+  animation: handwriting-divider-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes handwriting-border-reveal {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.handwriting-fact-border {
+  transform-origin: top;
+  animation: handwriting-border-reveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handwriting-char {
+    opacity: 1 !important;
+    clip-path: none !important;
+    transform: none !important;
+    animation: none !important;
+    filter: none !important;
+  }
+  .handwriting-icon,
+  .handwriting-divider,
+  .handwriting-fact-border {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   INDEPENDENT FAQ QUESTIONS SCROLLBAR & CONTAINMENT
+   Ensures the right-side FAQ questions list scrolls smoothly and independently
+   while the outer card and left column remain completely stationary.
+   ========================================================================== */
+.faq-questions {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(16, 59, 92, 0.25) transparent !important;
+}
+
+.faq-questions::-webkit-scrollbar {
+  width: 5px !important;
+  display: block !important;
+}
+
+.faq-questions::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.faq-questions::-webkit-scrollbar-thumb {
+  background: rgba(16, 59, 92, 0.22) !important;
+  border-radius: 9999px !important;
+}
+
+.faq-questions::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 59, 92, 0.45) !important;
+}
+
+.dark .faq-questions {
+  scrollbar-color: rgba(152, 217, 206, 0.3) transparent !important;
+}
+
+.dark .faq-questions::-webkit-scrollbar-thumb {
+  background: rgba(152, 217, 206, 0.25) !important;
+}
+
+.dark .faq-questions::-webkit-scrollbar-thumb:hover {
+  background: rgba(152, 217, 206, 0.5) !important;
+}
+
+/* ==========================================================================
+   CLINICAL REPORT & DOCUMENT PRINT MEDIA STYLES
+   Hides navigation bars, toolbars, buttons, and restores clean paper layout
+   ========================================================================== */
+@media print {
+  /* 1. Hide web application UI chrome only (DO NOT hide clinical document headers) */
+  header.apple-glass-navbar,
+  .apple-glass-navbar,
+  nav,
+  aside,
+  button,
+  .print\:hidden,
+  [data-print-hidden],
+  .fixed.bottom-6.right-6 {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 2. Reset outer application viewport wrappers for natural paper flow */
+  html,
+  body,
+  #root,
+  .h-screen,
+  #neurovision-main-scroll {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* 3. Hide background clinical grid lines and decorative radial gradients */
+  [aria-hidden="true"],
+  .fixed.inset-0.pointer-events-none,
+  .hero-radial-mint {
+    display: none !important;
+    background: transparent !important;
+    background-image: none !important;
+  }
+
+  /* 4. Configure print paper margins */
+  @page {
+    margin: 10mm 12mm 12mm 12mm;
+    size: auto;
+  }
+}
+
+
+

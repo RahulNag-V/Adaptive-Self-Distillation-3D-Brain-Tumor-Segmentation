@@ -3,6 +3,7 @@
 Loads checkpoints/classifier/best.pth on demand or startup.
 """
 import io
+import os
 import time
 from pathlib import Path
 from typing import Dict, Any
@@ -12,8 +13,8 @@ import torch
 from src.classifier.model import build_model
 from src.classifier.dataset import get_val_transforms, CLASS_NAMES
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-DEFAULT_CLASSIFIER_CHECKPOINT = PROJECT_ROOT / "checkpoints" / "classifier" / "best.pth"
+PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", str(Path(__file__).resolve().parents[4])))
+DEFAULT_CLASSIFIER_CHECKPOINT = Path(os.getenv("CLASSIFIER_CHECKPOINT_PATH", str(PROJECT_ROOT / "checkpoints" / "classifier" / "best.pth")))
 
 class ClassificationService:
     _model = None

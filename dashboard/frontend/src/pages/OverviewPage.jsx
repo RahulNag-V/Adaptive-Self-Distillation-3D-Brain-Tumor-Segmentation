@@ -1,514 +1,346 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { 
-  Box, 
-  Layers, 
-  Cpu, 
-  ShieldCheck, 
-  ArrowRight, 
-  Database, 
-  Activity, 
-  Sparkles, 
-  CheckCircle2, 
-  Sliders, 
-  FileCheck,
-  TrendingUp,
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Stethoscope,
+  FlaskConical,
+  Settings,
+  ChevronDown,
+  Box,
+  UploadCloud,
+  CheckCircle2,
+  Image as ImageIcon,
   FileText,
-  Brain,
-  Zap,
-  Server,
+  Cpu,
+  Activity,
   RefreshCw,
-  ExternalLink
+  Info,
+  HelpCircle,
+  ArrowRight,
+  ArrowUpRight,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
-import { client } from '../api/client';
-import { fetchModelComparison } from '../api/benchmarks';
-import { gsap, prefersReducedMotion, MOTION } from '../utils/motion';
+import InteractiveBrainHero from '../components/InteractiveBrainHero';
+import InteractiveCancerCell from '../components/InteractiveCancerCell';
+import AnimatedDropdown from '../components/ui/animated-dropdown';
+import { GlyphBackground } from '../components/ui/backgrounds-glyph';
+import { ClinicalProfileDropdown } from '../components/ui/clinical-profile-dropdown';
+import HandwritingText from '../components/ui/handwriting-text';
+
+// Research Paper Benchmark Link (U-Net biomedical image segmentation benchmark reference)
+const RESEARCH_PAPER_URL = "https://arxiv.org/abs/1505.04597";
+
+// GitHub SVG Logo Icon matching screenshot
+function GithubIcon({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+    </svg>
+  );
+}
+
+// Navigation Dropdown Definitions mapped to existing routes
+const NAV_CATEGORIES = [
+  {
+    id: 'clinical',
+    title: 'CLINICAL WORKSPACE',
+    icon: Stethoscope,
+    items: [
+      { id: 'viewer', label: '3D Brain Viewer', icon: Box, desc: 'Synchronized multiplanar MPR & 3D mesh' },
+      { id: 'upload', label: 'AI Segmentation', icon: UploadCloud, desc: 'Multimodal NIfTI scan ingestion' },
+      { id: 'results', label: 'Segmentation Results', icon: CheckCircle2, desc: 'Volumetric burden & validation' },
+      { id: 'classify', label: '2D Slice Pathology', icon: ImageIcon, desc: 'Histopathological classification' },
+      { id: 'reports', label: 'Clinical Reports', icon: FileText, desc: 'Sub-compartment quantitative report' },
+    ],
+  },
+  {
+    id: 'research',
+    title: 'RESEARCH & BENCHMARKS',
+    icon: FlaskConical,
+    items: [
+      { id: 'models', label: 'Model Lab', icon: Cpu, desc: 'Baseline UNETR vs Proposed Self-Distillation' },
+      { id: 'analytics', label: 'Training Dynamics', icon: Activity, desc: '10 Epoch loss & convergence curves' },
+      { id: 'adaptive', label: 'Adaptive Learning', icon: RefreshCw, desc: 'Continual distillation & HITL queue' },
+    ],
+  },
+  {
+    id: 'system',
+    title: 'SYSTEM & SPECIFICATIONS',
+    icon: Settings,
+    items: [
+      { id: 'settings', label: 'Workstation Settings', icon: Settings, desc: 'Display preferences & voice controls' },
+      { id: 'about', label: 'Methodology & Viva', icon: Info, desc: 'UNETR ViT, EMA balancing & academic guide' },
+      { id: 'faq', label: 'Frequently Asked Questions', icon: HelpCircle, desc: 'Architecture, imaging workflow & FAQ' },
+      { id: 'security', label: 'Privacy & Clinical Security', icon: ShieldCheck, desc: 'Data protection, de-identification & sandbox policy' },
+    ],
+  },
+];
 
 export default function OverviewPage({ onNavigate }) {
-  const containerRef = useRef(null);
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'clinical' | 'research' | 'system' | null
+  const headerNavRef = useRef(null);
 
-  // Live system telemetry state
-  const [systemHealth, setSystemHealth] = useState({
-    status: 'online',
-    model: 'UNETR 3D (ViT-B/16)',
-    device: 'CUDA / PyTorch 2.11',
-    checkpoint_loaded: true
-  });
-  const [readiness, setReadiness] = useState({
-    segmentation_model_loaded: true,
-    classifier_model_loaded: true
-  });
-  const [patients, setPatients] = useState([]);
-  const [benchmarkSummary, setBenchmarkSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch real system telemetry & patient cohort on mount
+  // Ensure default light mode and remove any residual dark class
   useEffect(() => {
-    let isMounted = true;
-    async function loadTelemetry() {
-      try {
-        const [healthRes, readyRes, patientsRes, benchmarkRes] = await Promise.allSettled([
-          client.get('/api/health'),
-          client.get('/api/ready'),
-          client.get('/api/patients'),
-          fetchModelComparison()
-        ]);
-
-        if (!isMounted) return;
-
-        if (healthRes.status === 'fulfilled' && healthRes.value?.data) {
-          setSystemHealth(healthRes.value.data);
-        }
-        if (readyRes.status === 'fulfilled' && readyRes.value?.data) {
-          setReadiness(readyRes.value.data);
-        }
-        if (patientsRes.status === 'fulfilled' && patientsRes.value?.data?.patients) {
-          setPatients(patientsRes.value.data.patients);
-        }
-        if (benchmarkRes.status === 'fulfilled' && benchmarkRes.value) {
-          setBenchmarkSummary(benchmarkRes.value);
-        }
-      } catch (err) {
-        console.warn('Telemetry fetch warning:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.remove('dark');
     }
-    loadTelemetry();
-    return () => { isMounted = false; };
   }, []);
 
-  // GSAP entrance animation conforming to unified motion standards
-  useLayoutEffect(() => {
-    if (prefersReducedMotion() || !containerRef.current) return;
+  // Toggle or open a specific dropdown
+  const handleToggleDropdown = (catId) => {
+    setActiveDropdown((prev) => (prev === catId ? null : catId));
+  };
 
-    let ctx;
-    try {
-      ctx = gsap.context(() => {
-        gsap.fromTo(
-          '.overview-hero-card',
-          { opacity: 0, y: 12 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: MOTION.durations.slow,
-            ease: MOTION.easings.out,
-            clearProps: 'all',
-          }
-        );
-
-        gsap.fromTo(
-          '.overview-telemetry-chip',
-          { opacity: 0, y: 8 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: MOTION.durations.normal,
-            stagger: 0.06,
-            delay: 0.1,
-            ease: MOTION.easings.out,
-            clearProps: 'all',
-          }
-        );
-
-        gsap.fromTo(
-          '.overview-module-card',
-          { opacity: 0, y: 14 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: MOTION.durations.slow,
-            stagger: 0.08,
-            delay: 0.15,
-            ease: MOTION.easings.out,
-            clearProps: 'all',
-          }
-        );
-      }, containerRef);
-    } catch (err) {
-      console.warn('Overview GSAP animation fallback:', err);
+  // Navigate to an existing page and close dropdown
+  const handleItemSelect = (routeId) => {
+    setActiveDropdown(null);
+    if (onNavigate) {
+      onNavigate(routeId);
     }
+  };
 
+  // Click-outside & Escape key handlers to close open dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (headerNavRef.current && !headerNavRef.current.contains(e.target)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      if (ctx) ctx.revert();
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
-  const totalPatients = patients.length || 50;
-  const validationPatients = patients.filter(p => p.split === 'val').length || 10;
-  const trainingPatients = totalPatients - validationPatients;
-
   return (
-    <div ref={containerRef} className="min-h-full bg-[#080B12] p-4 sm:p-6 lg:p-8 space-y-6 font-sans text-[#F4F7FC]">
-      {/* 1. CLINICAL RESEARCH COMMAND HEADER */}
-      <section className="overview-hero-card rounded-xl bg-[#101722] border border-[#1C2636] p-6 lg:p-7 shadow-clinical-md">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-start gap-4 sm:gap-5 max-w-3xl">
-            <div className="relative shrink-0 hidden sm:block">
+    <div
+      className="min-h-screen md:h-screen w-screen overflow-y-auto md:overflow-hidden flex flex-col justify-between select-none transition-colors duration-300 relative hero-radial-mint text-[#000000]"
+    >
+      {/* ========================================================
+          0. BACKGROUND GLYPH ANIMATION LAYER (TRANSPARENT MINT)
+          Positioned behind all content (z-0), preserving hero-radial-mint
+          ======================================================== */}
+      <GlyphBackground
+        className="absolute inset-0 z-0 pointer-events-auto"
+        fontSize={9}
+        glowColor="#3D8B7D"
+        shapeColor="#2D7366"
+        interactive={true}
+      />
+
+      {/* ========================================================
+          0B. PRECISION CLINICAL GRID BACKGROUND
+          ======================================================== */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        aria-hidden="true"
+        style={{
+          backgroundImage: `linear-gradient(to right, rgba(16, 59, 92, 0.07) 1px, transparent 1px),
+             linear-gradient(to bottom, rgba(16, 59, 92, 0.07) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+        }}
+      />
+
+      {/* ========================================================
+          1. TOP HEADER (BRANDING, ENTER WORKSPACE & CLINICAL PROFILE)
+          ======================================================== */}
+      <header className="w-full px-[20px] pt-[20px] pb-2 relative z-30 shrink-0">
+        <div className="w-full flex items-center justify-between gap-4">
+          {/* Left: Brain-Shaped NRAI Logo & Brand Name */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <div className="relative flex items-center justify-center">
               <img
-                src="/logo-circle.png"
-                alt="NeuroVision AI Logo"
-                className="w-16 h-16 rounded-xl object-cover ring-2 ring-[#4C8DFF]/40 shadow-clinical-md"
+                src="/nrai-logo.png"
+                alt="Neuro Resonence AI Logo"
+                className="h-9 sm:h-10 w-auto object-contain filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-transform hover:scale-105"
               />
-              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#35B982] ring-2 ring-[#101722] animate-pulse" />
             </div>
-
-            <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#151E2B] border border-[#243348] text-[#4C8DFF] font-semibold uppercase text-[10px] tracking-wider shadow-xs">
-                  <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse" />
-                  Clinical AI Workstation
-                </span>
-                <span className="text-[#1C2636]">•</span>
-                <span className="px-2 py-0.5 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] text-[10px]">
-                  MONAI 3D ENGINE
-                </span>
-                <span className="text-[#1C2636]">•</span>
-                <span className="px-2 py-0.5 rounded bg-[#35B982]/15 border border-[#35B982]/30 text-[#35B982] text-[10px] font-semibold">
-                  {systemHealth.device?.toUpperCase().includes('CUDA') ? 'GPU ACCELERATED (CUDA)' : 'CPU INFERENCE READY'}
-                </span>
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F4F7FC] leading-snug">
-                NeuroVision AI Diagnostic & Research Platform
-              </h1>
-
-              <p className="text-xs sm:text-sm text-[#8496AC] leading-relaxed max-w-2xl font-sans">
-                Multi-modal 3D brain tumor volumetric segmentation powered by Adaptive Self-Distillation and UNETR Vision Transformers. Synchronized multiplanar reconstruction (MPR), continuous human-in-the-loop boundary correction, and quantitative sub-compartment phenotyping.
-              </p>
-            </div>
+            <span className="text-base sm:text-xl lg:text-2xl font-bold tracking-tight text-[#111827] whitespace-nowrap">
+              <span className="neuro-underline">
+                <HandwritingText text="Neuro" delay={0.0} stagger={0.025} duration={0.18} />
+              </span>{' '}
+              <HandwritingText text="Resonence AI" delay={0.16} stagger={0.022} duration={0.18} />
+            </span>
           </div>
 
-          {/* Quick Launch Clinical Actions */}
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 min-w-[210px]">
+          {/* Center: Navigation Buttons (Enter Workspace & Research Paper) */}
+          <div className="hidden md:flex items-center gap-3 absolute left-1/2 -translate-x-1/2 z-20">
+            {/* 1. Enter Workspace Button */}
             <button
-              onClick={() => onNavigate('viewer')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#4C8DFF] hover:bg-[#3B7AE8] text-white font-semibold text-xs transition-colors shadow-clinical-sm cursor-pointer"
+              type="button"
+              onClick={() => handleItemSelect('upload')}
+              className="px-6 py-2 rounded-full bg-white/70 hover:bg-white text-[#103B5C] hover:text-[#092B47] border border-[#111111]/30 hover:border-[#103B5C] font-mono font-bold text-xs uppercase tracking-wider shadow-xs hover:shadow-md transition-all duration-200 flex items-center gap-2.5 cursor-pointer active:scale-95 group backdrop-blur-md"
+              title="Enter Neuro Resonence AI Workspace (AI Segmentation)"
             >
-              <Box className="w-4 h-4" />
-              <span>Launch 3D Workstation</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              <Sparkles className="w-4 h-4 text-[#399DBA] group-hover:rotate-12 transition-transform handwriting-icon" style={{ animationDelay: '0.22s' }} />
+              <HandwritingText text="Enter Workspace" delay={0.25} stagger={0.02} duration={0.18} />
+              <ArrowRight className="w-4 h-4 text-[#103B5C] group-hover:translate-x-1 transition-transform handwriting-icon" style={{ animationDelay: '0.55s' }} />
             </button>
 
-            <button
-              onClick={() => onNavigate('models')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#243348] text-[#F4F7FC] font-medium text-xs transition-colors cursor-pointer"
+            {/* 2. Research Paper Button */}
+            <a
+              href={RESEARCH_PAPER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-2 rounded-full bg-white/70 hover:bg-white text-[#103B5C] hover:text-[#092B47] border border-[#111111]/30 hover:border-[#103B5C] font-mono font-bold text-xs uppercase tracking-wider shadow-xs hover:shadow-md transition-all duration-200 flex items-center gap-2.5 cursor-pointer active:scale-95 group backdrop-blur-md"
+              title="View Research Paper on arXiv (opens in new tab)"
             >
-              <Cpu className="w-4 h-4 text-[#4C8DFF]" />
-              <span>Explore Model Lab</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#8496AC] ml-auto" />
-            </button>
+              <FileText className="w-4 h-4 text-[#399DBA] group-hover:scale-110 transition-transform handwriting-icon" style={{ animationDelay: '0.28s' }} />
+              <HandwritingText text="Research Paper" delay={0.32} stagger={0.02} duration={0.18} />
+              <ArrowUpRight className="w-4 h-4 text-[#103B5C] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform handwriting-icon" style={{ animationDelay: '0.62s' }} />
+            </a>
+          </div>
 
-            <button
-              onClick={() => onNavigate('reports')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#243348] text-[#8496AC] hover:text-[#F4F7FC] font-medium text-xs transition-colors cursor-pointer"
-            >
-              <FileText className="w-4 h-4 text-[#06B6D4]" />
-              <span>Clinical Reports</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#8496AC] ml-auto" />
-            </button>
+          {/* Right: Premium Clinical Profile Dropdown (Top-Right Corner of Navbar) */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 ml-auto z-10">
+            <ClinicalProfileDropdown onNavigate={handleItemSelect} />
           </div>
         </div>
 
-        {/* Live Operational Telemetry Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-5 border-t border-[#1C2636] text-xs font-mono">
-          <div className="overview-telemetry-chip p-3 rounded-lg bg-[#151E2B] border border-[#243348] flex items-center justify-between">
-            <span className="text-[#8496AC]">Enhancing Core (ET) Dice:</span>
-            <span className="font-bold text-[#35B982]">+12.7% (0.7454)</span>
-          </div>
+        {/* Mobile Navigation Buttons (Enter Workspace & Research Paper) */}
+        <div className="md:hidden flex flex-wrap items-center justify-center gap-2.5 mt-3 py-1">
+          <button
+            type="button"
+            onClick={() => handleItemSelect('upload')}
+            className="px-4 py-2 rounded-full bg-white/70 hover:bg-white text-[#103B5C] border border-[#111111]/30 font-mono font-bold text-xs uppercase tracking-wider shadow-xs transition-all flex items-center gap-2 cursor-pointer active:scale-95 group backdrop-blur-md"
+            title="Enter Neuro Resonence AI Workspace (AI Segmentation)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#399DBA] handwriting-icon" style={{ animationDelay: '0.22s' }} />
+            <HandwritingText text="Enter Workspace" delay={0.25} stagger={0.02} duration={0.18} />
+            <ArrowRight className="w-3.5 h-3.5 text-[#103B5C] handwriting-icon" style={{ animationDelay: '0.55s' }} />
+          </button>
 
-          <div className="overview-telemetry-chip p-3 rounded-lg bg-[#151E2B] border border-[#243348] flex items-center justify-between">
-            <span className="text-[#8496AC]">Boundary Error (HD95):</span>
-            <span className="font-bold text-[#4C8DFF]">77.48 mm (-5.73mm)</span>
-          </div>
-
-          <div className="overview-telemetry-chip p-3 rounded-lg bg-[#151E2B] border border-[#243348] flex items-center justify-between">
-            <span className="text-[#8496AC]">Patient Cohort:</span>
-            <span className="font-bold text-[#F4F7FC]">{totalPatients} Subjects ({validationPatients} Val)</span>
-          </div>
-
-          <div className="overview-telemetry-chip p-3 rounded-lg bg-[#151E2B] border border-[#243348] flex items-center justify-between">
-            <span className="text-[#8496AC]">Active Architecture:</span>
-            <span className="font-bold text-[#EAB308]">Adaptive MOD ViT</span>
-          </div>
+          <a
+            href={RESEARCH_PAPER_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-full bg-white/70 hover:bg-white text-[#103B5C] border border-[#111111]/30 font-mono font-bold text-xs uppercase tracking-wider shadow-xs transition-all flex items-center gap-2 cursor-pointer active:scale-95 group backdrop-blur-md"
+            title="View Research Paper on arXiv (opens in new tab)"
+          >
+            <FileText className="w-3.5 h-3.5 text-[#399DBA] handwriting-icon" style={{ animationDelay: '0.28s' }} />
+            <HandwritingText text="Research Paper" delay={0.32} stagger={0.02} duration={0.18} />
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#103B5C] handwriting-icon" style={{ animationDelay: '0.62s' }} />
+          </a>
         </div>
-      </section>
+      </header>
 
-      {/* 2. CORE CLINICAL WORKSTATION MODULES */}
-      <section className="space-y-3.5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-[#8496AC] font-semibold flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-[#4C8DFF]" />
-            Core Operational Workstation Modules
-          </h2>
-          <span className="text-[11px] font-mono text-[#8496AC]">Multi-objective Clinical Pipeline</span>
+      {/* ========================================================
+          2. MIDDLE SECTION: CENTRAL 3D BRAIN
+          ======================================================== */}
+      <main className="flex-1 w-full mx-auto flex items-center justify-center relative z-10 min-h-0">
+        {/* Middle Center: Large Realistic Orange 3D Brain */}
+        <div className="flex-1 flex items-center justify-center relative min-h-0 min-w-0">
+          <InteractiveBrainHero />
         </div>
+      </main>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Module 1: 3D Multiplanar Reconstruction */}
-          <div className="overview-module-card p-5 rounded-xl bg-[#101722] border border-[#1C2636] hover:border-[#4C8DFF]/50 transition-all flex flex-col justify-between space-y-4 shadow-clinical-sm">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-lg bg-[#151E2B] border border-[#243348] text-[#4C8DFF] flex items-center justify-center">
-                  <Box className="w-4 h-4" />
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30">
-                  4-UP MPR WORKSTATION
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-[#F4F7FC]">
-                  3D MRI Multiplanar Workspace
-                </h3>
-                <p className="text-xs text-[#8496AC] mt-1 leading-relaxed">
-                  Synchronized Axial, Coronal, and Sagittal crosshairs with real-time BraTS sub-compartment overlays and 3D surface mesh.
-                </p>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-[#151E2B] border border-[#243348] space-y-1.5 text-[11px] font-mono">
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Sequences:</span>
-                  <span className="text-[#F4F7FC] font-semibold">FLAIR • T1 • T1CE • T2</span>
-                </div>
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Subregions:</span>
-                  <span className="text-[#35B982]">WT (Yellow) • TC (Coral) • ET (Cyan)</span>
-                </div>
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Sliding Window:</span>
-                  <span className="text-[#4C8DFF]">96 × 96 × 96 (Overlap 0.25)</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onNavigate('viewer')}
-              className="w-full py-2 px-3 rounded-lg bg-[#151E2B] hover:bg-[#4C8DFF] text-[#F4F7FC] hover:text-white font-semibold text-xs font-mono transition-colors flex items-center justify-center gap-1.5 border border-[#243348] cursor-pointer"
-            >
-              <span>Open 3D Viewer</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Module 2: Academic Model Lab */}
-          <div className="overview-module-card p-5 rounded-xl bg-[#101722] border border-[#1C2636] hover:border-[#4C8DFF]/50 transition-all flex flex-col justify-between space-y-4 shadow-clinical-sm">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-lg bg-[#151E2B] border border-[#243348] text-[#35B982] flex items-center justify-center">
-                  <Cpu className="w-4 h-4" />
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#35B982]/15 text-[#35B982] border border-[#35B982]/30">
-                  EMPIRICAL BENCHMARK
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-[#F4F7FC]">
-                  Model Benchmark & Ablation Lab
-                </h3>
-                <p className="text-xs text-[#8496AC] mt-1 leading-relaxed">
-                  Rigorous empirical comparison between Baseline UNETR, Online Tokenizer, Dense Predictor, Full MOD, and Adaptive MOD.
-                </p>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-[#151E2B] border border-[#243348] space-y-1.5 text-[11px] font-mono">
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Cohort:</span>
-                  <span className="text-[#F4F7FC]">50 Subjects (BraTS 2021)</span>
-                </div>
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>ET Gain:</span>
-                  <span className="text-[#35B982] font-semibold">0.6615 &rarr; 0.7454 (+12.7%)</span>
-                </div>
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Parameters:</span>
-                  <span className="text-[#4C8DFF]">92.8M &rarr; 94.7M ViT-B/16</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onNavigate('models')}
-              className="w-full py-2 px-3 rounded-lg bg-[#151E2B] hover:bg-[#4C8DFF] text-[#F4F7FC] hover:text-white font-semibold text-xs font-mono transition-colors flex items-center justify-center gap-1.5 border border-[#243348] cursor-pointer"
-            >
-              <span>Explore Model Comparison</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Module 3: Adaptive Governance & HITL */}
-          <div className="overview-module-card p-5 rounded-xl bg-[#101722] border border-[#1C2636] hover:border-[#4C8DFF]/50 transition-all flex flex-col justify-between space-y-4 shadow-clinical-sm">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-lg bg-[#151E2B] border border-[#243348] text-[#EAB308] flex items-center justify-center">
-                  <Brain className="w-4 h-4" />
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#EAB308]/15 text-[#EAB308] border border-[#EAB308]/30">
-                  HITL GOVERNANCE
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-[#F4F7FC]">
-                  Adaptive Learning & Registry
-                </h3>
-                <p className="text-xs text-[#8496AC] mt-1 leading-relaxed">
-                  Supervisory review queue, non-regression safety criteria, background continual fine-tuning, and one-click model rollback.
-                </p>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-[#151E2B] border border-[#243348] space-y-1.5 text-[11px] font-mono">
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Data Ingestion:</span>
-                  <span className="text-[#35B982]">Strict Split Isolation</span>
-                </div>
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Safety Guard:</span>
-                  <span className="text-[#EAB308]">Non-Regression Verified</span>
-                </div>
-                <div className="flex items-center justify-between text-[#8496AC]">
-                  <span>Rollback:</span>
-                  <span className="text-[#4C8DFF]">Instant Checkpoint Restore</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onNavigate('adaptive')}
-              className="w-full py-2 px-3 rounded-lg bg-[#151E2B] hover:bg-[#4C8DFF] text-[#F4F7FC] hover:text-white font-semibold text-xs font-mono transition-colors flex items-center justify-center gap-1.5 border border-[#243348] cursor-pointer"
-            >
-              <span>Manage Adaptive Pipeline</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. PATIENT COHORT DIRECTORY TABLE */}
-      <section className="p-5 rounded-xl bg-[#101722] border border-[#1C2636] shadow-clinical-md space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1C2636] pb-3">
-          <div className="space-y-0.5">
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[#F4F7FC] flex items-center gap-2">
-              <Database className="w-3.5 h-3.5 text-[#4C8DFF]" />
-              BraTS 2021 Clinical Research Cohort Directory
-            </h2>
-            <p className="text-[11px] text-[#8496AC] font-mono">
-              Real co-registered multimodal scans available for instant 3D volume reconstruction
-            </p>
-          </div>
-
-          <span className="text-[11px] font-mono text-[#8496AC] px-2 py-0.5 rounded bg-[#151E2B] border border-[#243348]">
-            Showing Verified Cohort ({patients.length || 2} loaded)
-          </span>
+      {/* Mobile View: Stationary Educational Facts (Stationary, guaranteed >= 20px gap from borders) */}
+      <div className="flex md:hidden flex-col gap-3 px-6 py-1.5 w-full max-w-sm mx-auto text-left z-20 shrink-0 select-none">
+        {/* Fact 1 */}
+        <div className="border-l border-[#103B5C] pl-3 text-xs font-medium text-[#25313D] leading-snug handwriting-fact-border" style={{ animationDelay: '1.60s' }}>
+          <p><HandwritingText text="Your brain generates ~20 watts of power," delay={1.65} stagger={0.014} duration={0.15} /></p>
+          <p><HandwritingText text="enough to light a small bulb." delay={1.95} stagger={0.014} duration={0.15} /></p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono border-collapse">
-            <thead>
-              <tr className="border-b border-[#1C2636] text-[#8496AC] text-[10px] uppercase">
-                <th className="py-2.5 px-3">Subject ID</th>
-                <th className="py-2.5 px-3">Split Designation</th>
-                <th className="py-2.5 px-3">Modalities</th>
-                <th className="py-2.5 px-3">Resolution</th>
-                <th className="py-2.5 px-3">Ground Truth</th>
-                <th className="py-2.5 px-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1C2636]">
-              {(patients.length > 0 ? patients.slice(0, 5) : [
-                { id: 'BraTS2021_01017', split: 'train' },
-                { id: 'BraTS2021_01069', split: 'val' }
-              ]).map((p) => {
-                const isVal = p.split === 'val' || p.id === 'BraTS2021_01069';
-                return (
-                  <tr key={p.id} className="hover:bg-[#151E2B] transition-colors">
-                    <td className="py-2.5 px-3 font-bold text-[#F4F7FC] flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#4C8DFF]" />
-                      <span>{p.id}</span>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        isVal 
-                          ? 'bg-[#35B982]/15 text-[#35B982] border border-[#35B982]/30'
-                          : 'bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30'
-                      }`}>
-                        {isVal ? 'Validation Split' : 'Training Split'}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-[#8496AC]">
-                      FLAIR • T1 • T1CE • T2
-                    </td>
-                    <td className="py-2.5 px-3 text-[#F4F7FC]">
-                      240 × 240 × 155 (1.0 mm³ iso)
-                    </td>
-                    <td className="py-2.5 px-3 text-[#35B982]">
-                      Available (WT, TC, ET)
-                    </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <button
-                        onClick={() => onNavigate('viewer')}
-                        className="px-2.5 py-1 rounded bg-[#151E2B] hover:bg-[#4C8DFF] text-[#F4F7FC] hover:text-white border border-[#243348] text-[11px] font-semibold transition-colors inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>Open Scan</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {/* Fact 2 */}
+        <div className="border-l border-[#103B5C] pl-3 text-xs font-medium text-[#25313D] leading-snug handwriting-fact-border" style={{ animationDelay: '2.10s' }}>
+          <p><HandwritingText text="A brain tumor is an abnormal growth of cells" delay={2.15} stagger={0.014} duration={0.15} /></p>
+          <p><HandwritingText text="that can affect thinking, memory, and vision." delay={2.45} stagger={0.014} duration={0.15} /></p>
         </div>
-      </section>
-
-      {/* 4. TECHNICAL SPECIFICATIONS & SYSTEM MATRIX */}
-      <section className="p-5 rounded-xl bg-[#101722] border border-[#1C2636] shadow-clinical-md space-y-4">
-        <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
-          <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-[#4C8DFF]" />
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[#F4F7FC]">
-              System Specification & Benchmark Environment
-            </h2>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC]">
-            Protocol: BraTS 2021 Benchmark
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-          <div className="p-3 rounded-lg bg-[#151E2B] border border-[#243348] space-y-1">
-            <span className="text-[10px] text-[#8496AC] uppercase block font-semibold">Architecture</span>
-            <div className="font-bold text-[#F4F7FC]">UNETR 3D (ViT-B/16)</div>
-            <div className="text-[10px] text-[#8496AC] font-sans">16³ patch embeddings (768-d)</div>
-          </div>
-
-          <div className="p-3 rounded-lg bg-[#151E2B] border border-[#243348] space-y-1">
-            <span className="text-[10px] text-[#8496AC] uppercase block font-semibold">Loss Formulation</span>
-            <div className="font-bold text-[#F4F7FC]">Adaptive Dynamic MOD</div>
-            <div className="text-[10px] text-[#8496AC] font-sans">Soft Dice + CE + EMA balancing</div>
-          </div>
-
-          <div className="p-3 rounded-lg bg-[#151E2B] border border-[#243348] space-y-1">
-            <span className="text-[10px] text-[#8496AC] uppercase block font-semibold">Sliding Window</span>
-            <div className="font-bold text-[#F4F7FC]">96 × 96 × 96 ROI</div>
-            <div className="text-[10px] text-[#8496AC] font-sans">Overlap 0.25, Gaussian blend</div>
-          </div>
-
-          <div className="p-3 rounded-lg bg-[#151E2B] border border-[#243348] space-y-1">
-            <span className="text-[10px] text-[#8496AC] uppercase block font-semibold">Acceleration</span>
-            <div className="font-bold text-[#35B982]">{systemHealth.device || 'PyTorch 2.11 + CUDA'}</div>
-            <div className="text-[10px] text-[#8496AC] font-sans">FP16 Automatic Mixed Prec</div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. RESEARCH PROTOCOL NOTICE */}
-      <div className="p-3.5 rounded-xl bg-[#151E2B] border border-[#243348] flex items-start gap-3 text-xs text-[#8496AC]">
-        <ShieldCheck className="w-4 h-4 text-[#4C8DFF] shrink-0 mt-0.5" />
-        <p className="leading-relaxed">
-          <strong className="text-[#F4F7FC] font-semibold">Research Protocol Notice:</strong> NeuroVision AI is an investigational clinical research platform designed for multi-compartment brain tumor self-distillation benchmarking. Output segmentations and volumetric calculations are for academic evaluation and clinical research workflows.
-        </p>
       </div>
+
+      {/* ========================================================
+          3. BOTTOM SECTION: "Soundless. Alive." & GITHUB LINK
+          ======================================================== */}
+      <footer className="w-full px-[20px] pb-[20px] pt-2 relative z-20 shrink-0">
+        <div className="w-full flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+          {/* Bottom Left: "Soundless. Alive." Composition with 3D Cancer Cell positioned above */}
+          <div className="flex flex-col text-left relative">
+            {/* 3D Cancer Cell: moved exactly 30px upward and 30px to the right */}
+            <div
+              className="block absolute bottom-[calc(100%+55px)] left-[40px] z-30 pointer-events-auto"
+            >
+              <InteractiveCancerCell />
+            </div>
+
+            {/* Top Line: Soundless. */}
+            <div
+              className="text-3xl sm:text-4xl lg:text-[46px] xl:text-[52px] font-bold tracking-normal leading-[1.05] text-[#111827] dark:text-white font-audiowide"
+              style={{ fontFamily: '"Audiowide", cursive, system-ui, sans-serif' }}
+            >
+              <HandwritingText text="Soundless." delay={0.60} stagger={0.035} duration={0.22} />
+            </div>
+
+            {/* Second Line: Alive. + Divider + Subtitle */}
+            <div className="flex items-center gap-3 sm:gap-3.5 mt-0.5 sm:mt-1">
+              <div
+                className="text-3xl sm:text-4xl lg:text-[46px] xl:text-[52px] font-bold tracking-normal leading-[1.05] text-[#111827] dark:text-white font-audiowide shrink-0"
+                style={{ fontFamily: '"Audiowide", cursive, system-ui, sans-serif' }}
+              >
+                <HandwritingText text="Alive." delay={1.10} stagger={0.035} duration={0.22} />
+              </div>
+
+              {/* Thin Vertical Divider with Smooth Reveal */}
+              <div
+                className="h-6 sm:h-7 w-[1.5px] bg-[#103B5C]/75 dark:bg-white/75 shrink-0 self-center handwriting-divider"
+                style={{ animationDelay: '1.25s' }}
+              />
+
+              {/* Supporting Subtitle */}
+              <div className="text-[11px] sm:text-xs lg:text-[13px] font-normal text-[#164D70] dark:text-[#98D9CE] leading-tight select-none">
+                <div>
+                  <HandwritingText text="A thousand small movements." delay={1.30} stagger={0.018} duration={0.16} />
+                </div>
+                <div>
+                  <HandwritingText text="One living sculpture." delay={1.65} stagger={0.018} duration={0.16} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Right: GitHub Project Link with Educational Facts anchored 100px above */}
+          <div className="relative flex flex-col items-end">
+            {/* Desktop Facts: Positioned exactly 100px above GitHub link & 40px from right border */}
+            <div className="hidden md:flex flex-col gap-6 justify-center text-left shrink-0 w-max z-20 absolute bottom-[calc(100%+100px)] right-[20px] pointer-events-auto select-none">
+              {/* Fact 1 */}
+              <div className="border-l border-[#103B5C] pl-4 text-xs lg:text-sm font-medium text-[#25313D] leading-snug whitespace-nowrap handwriting-fact-border" style={{ animationDelay: '1.60s' }}>
+                <p><HandwritingText text="Your brain generates" delay={1.65} stagger={0.015} duration={0.15} /></p>
+                <p><HandwritingText text="~20 watts of power," delay={1.85} stagger={0.015} duration={0.15} /></p>
+                <p><HandwritingText text="enough to light a small bulb." delay={2.05} stagger={0.015} duration={0.15} /></p>
+              </div>
+
+              {/* Fact 2 */}
+              <div className="border-l border-[#103B5C] pl-4 text-xs lg:text-sm font-medium text-[#25313D] leading-snug whitespace-nowrap handwriting-fact-border" style={{ animationDelay: '1.90s' }}>
+                <p><HandwritingText text="A brain tumor is an abnormal" delay={1.95} stagger={0.014} duration={0.15} /></p>
+                <p><HandwritingText text="growth of cells in the brain" delay={2.15} stagger={0.014} duration={0.15} /></p>
+                <p><HandwritingText text="that can affect thinking," delay={2.35} stagger={0.014} duration={0.15} /></p>
+                <p><HandwritingText text="memory, movement, and vision." delay={2.55} stagger={0.014} duration={0.15} /></p>
+              </div>
+            </div>
+
+            <a
+              href="https://github.com/RahulNag-V/Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-[#1B6284] hover:text-[#103B5C] hover:opacity-80 transition-opacity cursor-pointer group pb-1 shrink-0"
+              title="View project on GitHub"
+            >
+              <GithubIcon className="w-5 h-5 shrink-0 text-[#1B6284] handwriting-icon" style={{ animationDelay: '2.15s' }} />
+              <HandwritingText text="View project on GitHub" delay={2.20} stagger={0.02} duration={0.18} as="span" />
+              <ArrowRight className="w-4 h-4 shrink-0 group-hover:translate-x-0.5 transition-transform text-[#1B6284] handwriting-icon" style={{ animationDelay: '2.75s' }} />
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

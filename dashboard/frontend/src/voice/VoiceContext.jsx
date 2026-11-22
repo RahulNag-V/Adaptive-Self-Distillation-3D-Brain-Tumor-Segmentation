@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Voice Context Provider
+ * Neuro Resonence AI - Voice Context Provider
  *
  * Implements:
  * - Single SpeechEngine instance held in ref, safe under React StrictMode double-mount
@@ -249,15 +249,15 @@ export function VoiceProvider({ children, activeTab, onNavigate, onPlayIntro }) 
     setAudioFeedbackEnabled,
     isSupported: engineRef.current ? engineRef.current.isSupported : true,
     isSecureContext: engineRef.current ? engineRef.current.isSecureContext : true,
-    startListening: () => engineRef.current?.start(),
-    stopListening: () => engineRef.current?.stop(),
-    toggleListening: () => engineRef.current?.toggle(),
+    startListening: useCallback(() => engineRef.current?.start(), []),
+    stopListening: useCallback(() => engineRef.current?.stop(), []),
+    toggleListening: useCallback(() => engineRef.current?.toggle(), []),
     executeTypedCommand: (text) => processAndDispatch(text, true),
-    registerLayoutHandler: (h) => dispatcherRef.current.registerLayoutHandler(h),
-    registerPageActionHandler: (h) => dispatcherRef.current.registerPageActionHandler(h),
-    registerViewerHandler: (h) => viewerAdapter.registerHandler(h),
+    registerLayoutHandler: useCallback((h) => dispatcherRef.current.registerLayoutHandler(h), []),
+    registerPageActionHandler: useCallback((h) => dispatcherRef.current.registerPageActionHandler(h), []),
+    registerViewerHandler: useCallback((h) => viewerAdapter.registerHandler(h), []),
     viewerStatus,
-    updateViewerStatus: (s) => viewerAdapter.updateStatus(s),
+    updateViewerStatus: useCallback((s) => viewerAdapter.updateStatus(s), []),
   };
 
   return <VoiceContext.Provider value={value}>{children}</VoiceContext.Provider>;

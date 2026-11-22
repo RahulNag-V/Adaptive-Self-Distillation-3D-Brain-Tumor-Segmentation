@@ -3,7 +3,7 @@ import { parseVoiceCommand } from '../services/voiceCommandParser';
 
 /**
  * useVoiceControl Hook
- * Connects browser Web Speech API to NeuroVision AI voice command dispatcher.
+ * Connects browser Web Speech API to Neuro Resonence AI voice command dispatcher.
  * Handles microphone permissions, speech recognition lifecycle, debouncing,
  * interim vs final results, prevention of TTS audio feedback loop, and true execution state tracking.
  */

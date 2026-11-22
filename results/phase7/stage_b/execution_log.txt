@@ -1,0 +1,138 @@
+nvImageCodec is not available; skipping pydicom decoder plugin registration.
+D:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\.venv\Lib\site-packages\monai\data\image_reader.py:1166: UserWarning: NvImgCodecPydicomReader: nvImageCodec decoder plugin did not register successfully. Falling back to default pydicom decoders.
+  warnings.warn(
+D:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\.venv\Lib\site-packages\monai\utils\deprecate_utils.py:320: FutureWarning: monai.transforms.spatial.dictionary Orientationd.__init__:labels: Current default value of argument `labels=(('L', 'R'), ('P', 'A'), ('I', 'S'))` was changed in version None from `labels=(('L', 'R'), ('P', 'A'), ('I', 'S'))` to `labels=None`. Default value changed to None meaning that the transform now uses the 'space' of a meta-tensor, if applicable, to determine appropriate axis labels.
+  warn_deprecated(argname, msg, warning_category)
+D:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\.venv\Lib\site-packages\monai\utils\deprecate_utils.py:220: FutureWarning: monai.metrics.utils get_mask_edges:always_return_as_numpy: Argument `always_return_as_numpy` has been deprecated since version 1.5.0. It will be removed in version 1.7.0. The option is removed and the return type will always be equal to the input type.
+  warn_deprecated(argname, msg, warning_category)
+[Init] Output directories verified: d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b
+================================================================================
+   NEUROVISION AI — PHASE 7 STAGE B: PROBABILITY & ERROR INVESTIGATION
+   Hardware: NVIDIA RTX A1000 6GB Laptop GPU (cuda)
+================================================================================
+[DataLoader] Loaded validation cohort (10 subjects)
+[Checkpoints] All 5 checkpoints verified.
+
+============================================================
+PART 1: Multiclass Probability & Spatial Error Analysis (Adaptive MOD)
+============================================================
+
+Processing [1/10]: BraTS2021_01024 ...
+  Done BraTS2021_01024 | WT Dice: 0.2010 | WT Recall: 99.3% | WT Prec: 11.2% | FP Edema: 93.64%
+
+Processing [2/10]: BraTS2021_01026 ...
+  Done BraTS2021_01026 | WT Dice: 0.5941 | WT Recall: 94.6% | WT Prec: 43.3% | FP Edema: 96.56%
+
+Processing [3/10]: BraTS2021_01045 ...
+  Done BraTS2021_01045 | WT Dice: 0.6158 | WT Recall: 90.8% | WT Prec: 46.6% | FP Edema: 94.77%
+
+Processing [4/10]: BraTS2021_01046 ...
+  Done BraTS2021_01046 | WT Dice: 0.3563 | WT Recall: 99.9% | WT Prec: 21.7% | FP Edema: 96.28%
+
+Processing [5/10]: BraTS2021_01047 ...
+  Done BraTS2021_01047 | WT Dice: 0.6752 | WT Recall: 99.8% | WT Prec: 51.0% | FP Edema: 81.85%
+
+Processing [6/10]: BraTS2021_01052 ...
+  Done BraTS2021_01052 | WT Dice: 0.4241 | WT Recall: 98.3% | WT Prec: 27.0% | FP Edema: 93.23%
+
+Processing [7/10]: BraTS2021_01058 ...
+  Done BraTS2021_01058 | WT Dice: 0.4566 | WT Recall: 99.2% | WT Prec: 29.7% | FP Edema: 95.68%
+
+Processing [8/10]: BraTS2021_01063 ...
+  Done BraTS2021_01063 | WT Dice: 0.7679 | WT Recall: 99.8% | WT Prec: 62.4% | FP Edema: 86.1%
+
+Processing [9/10]: BraTS2021_01069 ...
+  Done BraTS2021_01069 | WT Dice: 0.5557 | WT Recall: 98.9% | WT Prec: 38.6% | FP Edema: 98.09%
+
+Processing [10/10]: BraTS2021_01072 ...
+  Done BraTS2021_01072 | WT Dice: 0.4928 | WT Recall: 99.2% | WT Prec: 32.8% | FP Edema: 93.73%
+
+============================================================
+PART 2: Comprehensive Evaluation of All 5 Checkpoints on Identical Data
+============================================================
+
+Evaluating Model: Baseline UNETR (epoch_10.pth) ...
+    BraTS2021_01024  | WT: 0.4786 | TC: 0.2268 | ET: 0.2543 | Mean: 0.3199
+    BraTS2021_01026  | WT: 0.7999 | TC: 0.7811 | ET: 0.5974 | Mean: 0.7261
+    BraTS2021_01045  | WT: 0.7964 | TC: 0.7048 | ET: 0.7876 | Mean: 0.7629
+    BraTS2021_01046  | WT: 0.6752 | TC: 0.6983 | ET: 0.7337 | Mean: 0.7024
+    BraTS2021_01047  | WT: 0.8217 | TC: 0.4382 | ET: 0.5229 | Mean: 0.5943
+    BraTS2021_01052  | WT: 0.7131 | TC: 0.6052 | ET: 0.6903 | Mean: 0.6695
+    BraTS2021_01058  | WT: 0.7465 | TC: 0.7273 | ET: 0.7249 | Mean: 0.7329
+    BraTS2021_01063  | WT: 0.9180 | TC: 0.6744 | ET: 0.6840 | Mean: 0.7588
+    BraTS2021_01069  | WT: 0.8080 | TC: 0.8349 | ET: 0.8908 | Mean: 0.8445
+    BraTS2021_01072  | WT: 0.7678 | TC: 0.8286 | ET: 0.7293 | Mean: 0.7753
+
+Evaluating Model: Online Tokenizer (epoch_10.pth) ...
+    BraTS2021_01024  | WT: 0.2317 | TC: 0.4091 | ET: 0.4450 | Mean: 0.3620
+    BraTS2021_01026  | WT: 0.6061 | TC: 0.7861 | ET: 0.7107 | Mean: 0.7010
+    BraTS2021_01045  | WT: 0.6427 | TC: 0.8131 | ET: 0.8445 | Mean: 0.7668
+    BraTS2021_01046  | WT: 0.3679 | TC: 0.8165 | ET: 0.8351 | Mean: 0.6731
+    BraTS2021_01047  | WT: 0.6911 | TC: 0.4265 | ET: 0.5834 | Mean: 0.5670
+    BraTS2021_01052  | WT: 0.4387 | TC: 0.7086 | ET: 0.8092 | Mean: 0.6521
+    BraTS2021_01058  | WT: 0.4697 | TC: 0.7398 | ET: 0.7732 | Mean: 0.6609
+    BraTS2021_01063  | WT: 0.7800 | TC: 0.6312 | ET: 0.7646 | Mean: 0.7253
+    BraTS2021_01069  | WT: 0.5710 | TC: 0.8621 | ET: 0.9091 | Mean: 0.7807
+    BraTS2021_01072  | WT: 0.5251 | TC: 0.8293 | ET: 0.7788 | Mean: 0.7111
+
+Evaluating Model: Dense Predictor (epoch_10.pth) ...
+    BraTS2021_01024  | WT: 0.1917 | TC: 0.3257 | ET: 0.3247 | Mean: 0.2807
+    BraTS2021_01026  | WT: 0.5705 | TC: 0.7909 | ET: 0.6438 | Mean: 0.6684
+    BraTS2021_01045  | WT: 0.5792 | TC: 0.7868 | ET: 0.8061 | Mean: 0.7240
+    BraTS2021_01046  | WT: 0.3221 | TC: 0.7965 | ET: 0.8036 | Mean: 0.6407
+    BraTS2021_01047  | WT: 0.6285 | TC: 0.3951 | ET: 0.4650 | Mean: 0.4962
+    BraTS2021_01052  | WT: 0.4041 | TC: 0.6944 | ET: 0.7375 | Mean: 0.6120
+    BraTS2021_01058  | WT: 0.4168 | TC: 0.7386 | ET: 0.7301 | Mean: 0.6285
+    BraTS2021_01063  | WT: 0.7139 | TC: 0.5376 | ET: 0.5928 | Mean: 0.6148
+    BraTS2021_01069  | WT: 0.5173 | TC: 0.8490 | ET: 0.8880 | Mean: 0.7514
+    BraTS2021_01072  | WT: 0.4706 | TC: 0.7995 | ET: 0.7145 | Mean: 0.6615
+
+Evaluating Model: Full MOD (epoch_09.pth) ...
+    BraTS2021_01024  | WT: 0.2884 | TC: 0.1781 | ET: 0.1883 | Mean: 0.2183
+    BraTS2021_01026  | WT: 0.7237 | TC: 0.7387 | ET: 0.5653 | Mean: 0.6759
+    BraTS2021_01045  | WT: 0.6649 | TC: 0.6333 | ET: 0.6073 | Mean: 0.6351
+    BraTS2021_01046  | WT: 0.4830 | TC: 0.6068 | ET: 0.5753 | Mean: 0.5550
+    BraTS2021_01047  | WT: 0.7303 | TC: 0.4713 | ET: 0.3543 | Mean: 0.5186
+    BraTS2021_01052  | WT: 0.4972 | TC: 0.4483 | ET: 0.4764 | Mean: 0.4740
+    BraTS2021_01058  | WT: 0.6145 | TC: 0.6696 | ET: 0.5987 | Mean: 0.6276
+    BraTS2021_01063  | WT: 0.8539 | TC: 0.5520 | ET: 0.5232 | Mean: 0.6430
+    BraTS2021_01069  | WT: 0.6647 | TC: 0.7922 | ET: 0.7815 | Mean: 0.7461
+    BraTS2021_01072  | WT: 0.6599 | TC: 0.7762 | ET: 0.6386 | Mean: 0.6916
+
+Evaluating Model: Adaptive MOD (best.pth) ...
+    BraTS2021_01024  | WT: 0.2010 | TC: 0.3063 | ET: 0.3049 | Mean: 0.2708
+    BraTS2021_01026  | WT: 0.5941 | TC: 0.7941 | ET: 0.6622 | Mean: 0.6835
+    BraTS2021_01045  | WT: 0.6158 | TC: 0.7887 | ET: 0.8032 | Mean: 0.7359
+    BraTS2021_01046  | WT: 0.3563 | TC: 0.7954 | ET: 0.7952 | Mean: 0.6490
+    BraTS2021_01047  | WT: 0.6752 | TC: 0.3934 | ET: 0.4914 | Mean: 0.5200
+    BraTS2021_01052  | WT: 0.4241 | TC: 0.6369 | ET: 0.7274 | Mean: 0.5961
+    BraTS2021_01058  | WT: 0.4566 | TC: 0.7353 | ET: 0.7424 | Mean: 0.6448
+    BraTS2021_01063  | WT: 0.7679 | TC: 0.5808 | ET: 0.6578 | Mean: 0.6688
+    BraTS2021_01069  | WT: 0.5557 | TC: 0.8600 | ET: 0.8986 | Mean: 0.7714
+    BraTS2021_01072  | WT: 0.4928 | TC: 0.7989 | ET: 0.7252 | Mean: 0.6723
+
+============================================================
+PART 3: Generating Visualizations for 3 Patients in Axial, Coronal, Sagittal
+============================================================
+  Saved visual figure: BraTS2021_01069_axial.png
+  Saved visual figure: BraTS2021_01069_coronal.png
+  Saved visual figure: BraTS2021_01069_sagittal.png
+  Saved visual figure: BraTS2021_01026_axial.png
+  Saved visual figure: BraTS2021_01026_coronal.png
+  Saved visual figure: BraTS2021_01026_sagittal.png
+  Saved visual figure: BraTS2021_01024_axial.png
+  Saved visual figure: BraTS2021_01024_coronal.png
+  Saved visual figure: BraTS2021_01024_sagittal.png
+
+============================================================
+PART 4: Exporting Stage B Quantitative Artifacts
+============================================================
+[Exported] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b\stage_b_per_patient_error_analysis.csv (10 records)
+[Exported] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b\stage_b_model_comparison.csv (50 records)
+[Exported] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b\stage_b_threshold_sweep.csv (90 records)
+[Exported] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b\stage_b_component_analysis.csv (70 records)
+[Exported] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b\stage_b_probability_analysis.json
+
+================================================================================
+STAGE B INVESTIGATION PIPELINE COMPLETED SUCCESSFULLY!
+================================================================================

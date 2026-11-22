@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Voice Command Registry (Single Source of Truth)
+ * Neuro Resonence AI - Voice Command Registry (Single Source of Truth)
  *
  * Defines:
  * 1. Platform routes and aliases
@@ -21,7 +21,8 @@ export const ROUTES = [
   { id: 'reports', name: 'Reports', aliases: ['reports', 'report', 'clinical report'] },
   { id: 'settings', name: 'Settings', aliases: ['settings', 'preferences', 'configuration', 'config'] },
   { id: 'results', name: 'Quantitative Report', aliases: ['results', 'segmentation results', 'quantitative report'] },
-  { id: 'about', name: 'About & Viva', aliases: ['about', 'viva', 'defense', 'viva defense', 'specifications', 'faq', 'research methodology'] },
+  { id: 'about', name: 'About & Viva', aliases: ['about', 'viva', 'defense', 'viva defense', 'specifications', 'research methodology'] },
+  { id: 'faq', name: 'Frequently Asked Questions', aliases: ['faq', 'frequently asked questions', 'questions', 'help base', 'knowledge base'] },
 ];
 
 export const SCROLL_CONFIG = {
@@ -334,6 +335,18 @@ export const COMMAND_REGISTRY = [
     constraints: 'Examiner FAQ and architecture overview.',
   },
   {
+    id: 'nav_faq',
+    sectionId: 'navigation',
+    category: 'Navigation',
+    phrases: ['faq', 'frequently asked questions', 'open faq', 'go to faq', 'show questions', 'help questions'],
+    examples: ['"Go to FAQ"', '"Frequently Asked Questions"', '"Show questions"'],
+    action: { type: 'NAVIGATE', tab: 'faq' },
+    targetPage: 'all',
+    requiresConfirmation: false,
+    description: 'Navigates to the Frequently Asked Questions (FAQ) page.',
+    constraints: 'Knowledge base & architecture answers.',
+  },
+  {
     id: 'nav_intro',
     sectionId: 'navigation',
     category: 'Navigation',
@@ -342,7 +355,7 @@ export const COMMAND_REGISTRY = [
     action: { type: 'PLAY_INTRO' },
     targetPage: 'all',
     requiresConfirmation: false,
-    description: 'Plays the NeuroVision AI cinematic 3D introductory presentation.',
+    description: 'Plays the Neuro Resonence AI cinematic 3D introductory presentation.',
     constraints: 'Can be skipped at any time with Esc.',
   },
 

@@ -2,6 +2,7 @@
 Inference service for NeuroSeg 3D Adaptive Self-Distillation.
 Loads checkpoints/adaptive/best.pth at startup and executes 96x96x96 sliding-window inference.
 """
+import os
 from pathlib import Path
 import json
 import logging
@@ -10,7 +11,7 @@ import time
 from typing import Dict, Any, Optional, Tuple
 
 # Ensure project root is in sys.path so existing src/ packages are imported
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", str(Path(__file__).resolve().parents[4])))
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -43,9 +44,13 @@ class InferenceService:
         """
         if checkpoint_path is not None:
             cls._checkpoint_path = Path(checkpoint_path)
+        elif os.getenv("ADAPTIVE_CHECKPOINT_PATH"):
+            cls._checkpoint_path = Path(os.getenv("ADAPTIVE_CHECKPOINT_PATH"))
 
         if force_device:
             cls._device = force_device
+        elif os.getenv("DEVICE"):
+            cls._device = os.getenv("DEVICE")
         else:
             cls._device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -164,9 +169,10 @@ class InferenceService:
                 target_tensor=gt_tensor
             )
 
-        # 4. Attach prediction tensor for inversion
+        # 4. Attach prediction and continuous probability tensors for inversion
         # Note: Invertd expects channel-first tensor matching pipeline structure
         processed_data["pred"] = pred_labels.squeeze(0).cpu()  # [1, H, W, D]
+        processed_data["prob"] = probs.squeeze(0).cpu()        # [4, H, W, D]
 
         # 5. Restore full-volume NIfTI prediction in original space
         prediction_file = session_dir / "prediction.nii.gz"

@@ -1,0 +1,161 @@
+{
+  "protocol": "NeuroVision AI - Phase 7 Stage C Patient-Level Calibration Split",
+  "document_version": "3.0 (Final Pre-Execution Methodological Revision)",
+  "selection_method": "Volume-stratified rank interleaving using ground-truth tumor volumes",
+  "stratification_variable": "Ground-Truth Whole Tumor (WT) Volume (cm3)",
+  "source_split": "data/splits/val.txt (N=10)",
+  "total_validation_patients": 10,
+  "split_transparency_and_provenance_declaration": {
+    "is_fully_independent_random_sample": false,
+    "methodological_provenance": "The 5-patient locked-test cohort was NOT generated through random sampling. It was partitioned deterministically using ground-truth tumor volume characteristics across all 10 validation patients to ensure structural stratification across tumor burdens.",
+    "ground_truth_knowledge_disclosure": "Ground-truth Whole Tumor volumes of all 10 validation patients were used to establish the rank-interleaved ordering prior to experiment design.",
+    "locked_test_independence_guarantee": [
+      "No locked-test model predictions or inference outputs were inspected or generated to select the split.",
+      "No model outputs from locked-test patients will be used for candidate threshold selection.",
+      "The calibration and locked-test groups are strictly mutually exclusive (0 patient overlap).",
+      "The partition is permanently sealed and will NOT be modified after threshold calibration begins or after observing test outcomes."
+    ]
+  },
+  "verification_audit": {
+    "all_ten_patients_in_source_split": true,
+    "source_patients_verified": [
+      "BraTS2021_01024",
+      "BraTS2021_01026",
+      "BraTS2021_01045",
+      "BraTS2021_01046",
+      "BraTS2021_01047",
+      "BraTS2021_01052",
+      "BraTS2021_01058",
+      "BraTS2021_01063",
+      "BraTS2021_01069",
+      "BraTS2021_01072"
+    ],
+    "mutually_exclusive_partitions": true,
+    "patient_overlap_count": 0
+  },
+  "calibration_cohort": {
+    "count": 5,
+    "description": "Used exclusively for threshold grid search and objective optimization. Never used for final certification.",
+    "patients": [
+      {
+        "patient_id": "BraTS2021_01024",
+        "rank_by_wt_volume": 1,
+        "wt_volume_cm3": 51.39,
+        "tc_volume_cm3": 6.026,
+        "et_volume_cm3": 5.953,
+        "ed_volume_cm3": 45.364,
+        "tumor_size_category": "Small Core (<10 cm3)"
+      },
+      {
+        "patient_id": "BraTS2021_01052",
+        "rank_by_wt_volume": 3,
+        "wt_volume_cm3": 100.733,
+        "tc_volume_cm3": 30.345,
+        "et_volume_cm3": 22.13,
+        "ed_volume_cm3": 70.388,
+        "tumor_size_category": "Moderate Lesion (100 cm3)"
+      },
+      {
+        "patient_id": "BraTS2021_01072",
+        "rank_by_wt_volume": 5,
+        "wt_volume_cm3": 112.626,
+        "tc_volume_cm3": 72.909,
+        "et_volume_cm3": 34.296,
+        "ed_volume_cm3": 39.717,
+        "tumor_size_category": "Large Core / Moderate WT"
+      },
+      {
+        "patient_id": "BraTS2021_01047",
+        "rank_by_wt_volume": 7,
+        "wt_volume_cm3": 143.733,
+        "tc_volume_cm3": 58.252,
+        "et_volume_cm3": 20.482,
+        "ed_volume_cm3": 85.481,
+        "tumor_size_category": "Large Necrotic Core"
+      },
+      {
+        "patient_id": "BraTS2021_01063",
+        "rank_by_wt_volume": 9,
+        "wt_volume_cm3": 189.997,
+        "tc_volume_cm3": 24.419,
+        "et_volume_cm3": 20.057,
+        "ed_volume_cm3": 165.578,
+        "tumor_size_category": "Massive Edema / Small Core"
+      }
+    ],
+    "cohort_mean_wt_volume_cm3": 119.696,
+    "cohort_std_wt_volume_cm3": 51.688,
+    "cohort_mean_tc_volume_cm3": 38.390,
+    "cohort_mean_et_volume_cm3": 20.584,
+    "cohort_mean_ed_volume_cm3": 81.306,
+    "cohort_min_wt_volume_cm3": 51.39,
+    "cohort_max_wt_volume_cm3": 189.997
+  },
+  "locked_test_cohort": {
+    "count": 5,
+    "description": "Completely locked and untouched during candidate threshold selection. Evaluated strictly once for final independent certification.",
+    "patients": [
+      {
+        "patient_id": "BraTS2021_01046",
+        "rank_by_wt_volume": 2,
+        "wt_volume_cm3": 95.466,
+        "tc_volume_cm3": 54.932,
+        "et_volume_cm3": 40.39,
+        "ed_volume_cm3": 40.534,
+        "tumor_size_category": "Moderate Core (55 cm3)"
+      },
+      {
+        "patient_id": "BraTS2021_01058",
+        "rank_by_wt_volume": 4,
+        "wt_volume_cm3": 104.559,
+        "tc_volume_cm3": 58.6,
+        "et_volume_cm3": 32.282,
+        "ed_volume_cm3": 45.959,
+        "tumor_size_category": "Moderate Lesion (105 cm3)"
+      },
+      {
+        "patient_id": "BraTS2021_01069",
+        "rank_by_wt_volume": 6,
+        "wt_volume_cm3": 136.069,
+        "tc_volume_cm3": 66.002,
+        "et_volume_cm3": 48.544,
+        "ed_volume_cm3": 70.067,
+        "tumor_size_category": "High-Grade Large Lesion"
+      },
+      {
+        "patient_id": "BraTS2021_01026",
+        "rank_by_wt_volume": 8,
+        "wt_volume_cm3": 186.129,
+        "tc_volume_cm3": 56.553,
+        "et_volume_cm3": 24.033,
+        "ed_volume_cm3": 129.576,
+        "tumor_size_category": "Large Infiltrative Glioblastoma"
+      },
+      {
+        "patient_id": "BraTS2021_01045",
+        "rank_by_wt_volume": 10,
+        "wt_volume_cm3": 211.084,
+        "tc_volume_cm3": 58.717,
+        "et_volume_cm3": 39.536,
+        "ed_volume_cm3": 152.367,
+        "tumor_size_category": "Massive Bilateral Lesion"
+      }
+    ],
+    "cohort_mean_wt_volume_cm3": 146.661,
+    "cohort_std_wt_volume_cm3": 49.336,
+    "cohort_mean_tc_volume_cm3": 58.961,
+    "cohort_mean_et_volume_cm3": 36.957,
+    "cohort_mean_ed_volume_cm3": 87.701,
+    "cohort_min_wt_volume_cm3": 95.466,
+    "cohort_max_wt_volume_cm3": 211.084
+  },
+  "volume_imbalance_documentation": {
+    "wt_mean_difference_cm3": 26.965,
+    "wt_mean_difference_pct": 22.53,
+    "tc_mean_difference_cm3": 20.571,
+    "tc_mean_difference_pct": 53.58,
+    "et_mean_difference_cm3": 16.373,
+    "et_mean_difference_pct": 79.54,
+    "analysis_and_limitation": "The Locked Test cohort has systematically higher mean tumor burden than the Calibration cohort (+22.5% for WT, +53.6% for TC, and +79.5% for ET). Rank interleaving preserved rank ordering, but the extremes (smallest tumor in Calib, largest in Test) create a non-negligible volume shift. This imbalance must be treated as a source of variance between calibration and test results, reinforcing that results cannot be generalized beyond this sample."
+  }
+}

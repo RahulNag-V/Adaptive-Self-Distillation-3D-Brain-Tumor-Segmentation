@@ -1,0 +1,57 @@
+nvImageCodec is not available; skipping pydicom decoder plugin registration.
+D:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\.venv\Lib\site-packages\monai\data\image_reader.py:1166: UserWarning: NvImgCodecPydicomReader: nvImageCodec decoder plugin did not register successfully. Falling back to default pydicom decoders.
+  warnings.warn(
+D:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\.venv\Lib\site-packages\monai\utils\deprecate_utils.py:320: FutureWarning: monai.transforms.spatial.dictionary Orientationd.__init__:labels: Current default value of argument `labels=(('L', 'R'), ('P', 'A'), ('I', 'S'))` was changed in version None from `labels=(('L', 'R'), ('P', 'A'), ('I', 'S'))` to `labels=None`. Default value changed to None meaning that the transform now uses the 'space' of a meta-tensor, if applicable, to determine appropriate axis labels.
+  warn_deprecated(argname, msg, warning_category)
+D:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\.venv\Lib\site-packages\monai\utils\deprecate_utils.py:220: FutureWarning: monai.metrics.utils get_mask_edges:always_return_as_numpy: Argument `always_return_as_numpy` has been deprecated since version 1.5.0. It will be removed in version 1.7.0. The option is removed and the return type will always be equal to the input type.
+  warn_deprecated(argname, msg, warning_category)
+================================================================================
+   NEUROVISION AI — PHASE 7 STAGE B.1: SCIENTIFIC VERIFICATION AUDIT
+================================================================================
+Hardware: NVIDIA RTX A1000 6GB Laptop GPU (cuda)
+
+[1/7] Computing and Verifying Checkpoint & Split Hashes...
+  checkpoints/baseline/epoch_10.pth          : 57C4250B0F3FCB0C93CCEF5B26E2A5D8775675E3DE810176AE272DF1D08CD0E6
+  checkpoints/online_tokenizer/epoch_10.pth  : 4547C6F0BEEA7C380165B2072E5639C8F379625A9418E3518CEA5FDAF33E5358
+  checkpoints/dense_predictor/epoch_10.pth   : 838F6F1A05D3B0AAC55C07C3942F5F6CE489B8BD6253155B8E813D235B16BF8F
+  checkpoints/mod/epoch_09.pth               : ED4F64BBA190E2F8378CB97269C9E469B13CB6A8E1E8E6BD5E2CF2B2635D0686
+  checkpoints/adaptive/best.pth              : B2F63BF5209DA7AD62D52A1234EE1BE0414D67119B6B5EEBF598FF992B22497E
+  data/splits/train.txt                      : 04766B4D6AD65E46D82099B9E53334B03F4372BE8C2E7F26C34A2F90DFEC1F99
+  data/splits/val.txt                        : E728F824019285FC4516F5F1AF491CD1CE7A09BDB3F8A65BDDA92C323DCF2661
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\integrity_verification.json
+
+[2/7] Investigating Parameter Count Discrepancy...
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\parameter_count_audit.json
+
+[3/7] Running Independent Sliding Window Inference on Adaptive MOD (N=10)...
+  Evaluating [1/10] BraTS2021_01024 ...
+  Evaluating [2/10] BraTS2021_01026 ...
+  Evaluating [3/10] BraTS2021_01045 ...
+  Evaluating [4/10] BraTS2021_01046 ...
+  Evaluating [5/10] BraTS2021_01047 ...
+  Evaluating [6/10] BraTS2021_01052 ...
+  Evaluating [7/10] BraTS2021_01058 ...
+  Evaluating [8/10] BraTS2021_01063 ...
+  Evaluating [9/10] BraTS2021_01069 ...
+  Evaluating [10/10] BraTS2021_01072 ...
+  Hierarchy violations: 0 (0 expected)
+  Mutual exclusivity violations: 0 (0 expected)
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\per_patient_verified_metrics.csv
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\independent_threshold_sweep.csv
+
+[4/7] Generating Discrepancy Table vs Original Stage B...
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\threshold_discrepancy_report.csv
+
+[5/7] Verifying Five-Model Comparison Across Checkpoints...
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\independent_five_model_comparison.csv
+
+[6/7] Auditing FLAIR Intensity Statistical Rigor...
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\flair_statistical_verification.json
+
+[7/7] Documenting Data Leakage Assessment & Visual Audits...
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\data_leakage_assessment.md
+  [Saved] d:\Project\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\results\phase7\stage_b1\visualization_audit.md
+
+================================================================================
+STAGE B.1 SCIENTIFIC VERIFICATION AUDIT COMPLETED SUCCESSFULLY!
+================================================================================

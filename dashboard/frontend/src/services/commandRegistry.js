@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Unified Voice Command Registry
+ * Neuro Resonence AI - Unified Voice Command Registry
  * Single Source of Truth for Voice Parser Intents, Aliases, Constraints,
  * Spoken Confirmation Rules, and Auto-Generated Manual Documentation.
  */

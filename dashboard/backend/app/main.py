@@ -2,6 +2,7 @@
 NeuroSeg 3D - FastAPI Backend Application
 Loads Adaptive Self-Distillation checkpoint once at startup and serves inference API.
 """
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,16 +29,24 @@ app = FastAPI(
 )
 
 # Configure CORS to allow frontend communication
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://neurovision-ai-3d.web.app",
+    "https://neurovision-ai-3d.firebaseapp.com",
+]
+env_origins = os.getenv("ALLOWED_ORIGINS", "")
+if env_origins:
+    for origin in env_origins.split(","):
+        clean = origin.strip()
+        if clean and clean not in allowed_origins:
+            allowed_origins.append(clean)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://neurovision-ai-3d.web.app",
-        "https://neurovision-ai-3d.firebaseapp.com",
-    ],
+    allow_origins=allowed_origins,
     allow_origin_regex=r"https://.*\.web\.app|https://.*\.firebaseapp\.com",
     allow_credentials=True,
     allow_methods=["*"],

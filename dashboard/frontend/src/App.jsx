@@ -1,8 +1,8 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import AppLayout from './layouts/AppLayout';
 import OverviewPage from './pages/OverviewPage';
-import CinematicIntro from './components/CinematicIntro';
 import PageTransition from './components/PageTransition';
+import PageSkeleton from './components/skeletons/PageSkeleton';
 import { smoothScrollToTop } from './utils/motion';
 import { VoiceProvider } from './voice/VoiceContext';
 
@@ -17,14 +17,14 @@ const ModelLabPage = lazy(() => import('./pages/ModelLabPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const ReportPage = lazy(() => import('./pages/ReportPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
+const SecurityPrivacyPage = lazy(() => import('./pages/SecurityPrivacyPage'));
 
-function ClinicalLoadingFallback() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-slate-400">
-      <div className="w-8 h-8 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
-      <span className="text-xs font-mono text-[#64748B]">Loading Clinical Module...</span>
-    </div>
-  );
+function ClinicalLoadingFallback({ activeTab }) {
+  if (activeTab === 'overview' || activeTab === 'home' || !activeTab) {
+    return null;
+  }
+  return <PageSkeleton tab={activeTab} />;
 }
 
 class ErrorBoundary extends React.Component {
@@ -76,16 +76,29 @@ export default function App() {
     return 'overview';
   });
   const [liveResult, setLiveResult] = useState(null);
-  const [showIntro, setShowIntro] = useState(() => {
-    if (typeof window !== 'undefined') {
+
+  // Sync route changes with browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('nointro') === 'true' || params.get('tab')) return false;
-    }
-    return true;
-  });
+      const tab = params.get('tab') || 'overview';
+      setActiveTab(tab);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleTabChange = (nextTab) => {
     if (nextTab !== activeTab) {
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location);
+        if (nextTab === 'overview') {
+          url.searchParams.delete('tab');
+        } else {
+          url.searchParams.set('tab', nextTab);
+        }
+        window.history.pushState({}, '', url);
+      }
       setActiveTab(nextTab);
       smoothScrollToTop();
     }
@@ -118,6 +131,7 @@ export default function App() {
       case 'adaptive':
         return (
           <AdaptiveDashboardPage 
+            currentResult={liveResult}
             onNavigate={setActiveTab}
             onOpenPatientInViewer={(patientId) => {
               setLiveResult({ session_id: patientId });
@@ -148,6 +162,10 @@ export default function App() {
         );
       case 'about':
         return <AboutPage onNavigate={setActiveTab} />;
+      case 'faq':
+        return <FAQPage onNavigate={setActiveTab} />;
+      case 'security':
+        return <SecurityPrivacyPage onNavigate={setActiveTab} />;
       default:
         return <OverviewPage onNavigate={setActiveTab} />;
     }
@@ -155,21 +173,16 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      {showIntro && (
-        <CinematicIntro onComplete={() => setShowIntro(false)} />
-      )}
       <VoiceProvider
         activeTab={activeTab}
         onNavigate={handleTabChange}
-        onPlayIntro={() => setShowIntro(true)}
       >
         <AppLayout 
           activeTab={activeTab} 
           onTabChange={handleTabChange}
-          onPlayIntro={() => setShowIntro(true)}
         >
           <ErrorBoundary>
-            <Suspense fallback={<ClinicalLoadingFallback />}>
+            <Suspense fallback={<ClinicalLoadingFallback activeTab={activeTab} />}>
               <PageTransition pageKey={activeTab}>
                 {renderActivePage()}
               </PageTransition>

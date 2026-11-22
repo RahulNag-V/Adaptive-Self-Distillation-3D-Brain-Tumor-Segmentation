@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Voice Command Parser Pipeline
+ * Neuro Resonence AI - Voice Command Parser Pipeline
  *
  * Pipeline:
  * Transcript -> Normalization -> Negation Check -> Stop Words -> Intent Extraction -> Parameter Validation -> Structured Intent Object

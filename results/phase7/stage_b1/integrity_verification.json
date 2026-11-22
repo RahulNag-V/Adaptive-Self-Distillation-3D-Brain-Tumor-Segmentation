@@ -1,0 +1,52 @@
+{
+  "audit_phase": "Phase 7 - Stage B.1 Integrity Audit",
+  "timestamp": "2026-11-06 12:27:59 UTC",
+  "hardware": {
+    "device": "cuda",
+    "device_name": "NVIDIA RTX A1000 6GB Laptop GPU"
+  },
+  "file_hashes": {
+    "checkpoints/baseline/epoch_10.pth": {
+      "path": "d:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\checkpoints\\baseline\\epoch_10.pth",
+      "sha256": "57C4250B0F3FCB0C93CCEF5B26E2A5D8775675E3DE810176AE272DF1D08CD0E6",
+      "size_bytes": 1226971717,
+      "modified_time": "Wed Oct  7 17:40:26 2026"
+    },
+    "checkpoints/online_tokenizer/epoch_10.pth": {
+      "path": "d:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\checkpoints\\online_tokenizer\\epoch_10.pth",
+      "sha256": "4547C6F0BEEA7C380165B2072E5639C8F379625A9418E3518CEA5FDAF33E5358",
+      "size_bytes": 1636019203,
+      "modified_time": "Wed Oct  7 19:43:16 2026"
+    },
+    "checkpoints/dense_predictor/epoch_10.pth": {
+      "path": "d:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\checkpoints\\dense_predictor\\epoch_10.pth",
+      "sha256": "838F6F1A05D3B0AAC55C07C3942F5F6CE489B8BD6253155B8E813D235B16BF8F",
+      "size_bytes": 1385257717,
+      "modified_time": "Thu Oct  8 05:15:22 2026"
+    },
+    "checkpoints/mod/epoch_09.pth": {
+      "path": "d:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\checkpoints\\mod\\epoch_09.pth",
+      "sha256": "ED4F64BBA190E2F8378CB97269C9E469B13CB6A8E1E8E6BD5E2CF2B2635D0686",
+      "size_bytes": 1794302515,
+      "modified_time": "Wed Oct  7 18:33:16 2026"
+    },
+    "checkpoints/adaptive/best.pth": {
+      "path": "d:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\checkpoints\\adaptive\\best.pth",
+      "sha256": "B2F63BF5209DA7AD62D52A1234EE1BE0414D67119B6B5EEBF598FF992B22497E",
+      "size_bytes": 1794254739,
+      "modified_time": "Thu Oct  8 06:32:52 2026"
+    },
+    "data/splits/train.txt": {
+      "path": "d:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\data\\splits\\train.txt",
+      "sha256": "04766B4D6AD65E46D82099B9E53334B03F4372BE8C2E7F26C34A2F90DFEC1F99",
+      "size_bytes": 680,
+      "modified_time": "Wed Oct  7 21:39:35 2026"
+    },
+    "data/splits/val.txt": {
+      "path": "d:\\Project\\Adaptive-Self-Distillation-3D-Brain-Tumor-Segmentation\\data\\splits\\val.txt",
+      "sha256": "E728F824019285FC4516F5F1AF491CD1CE7A09BDB3F8A65BDDA92C323DCF2661",
+      "size_bytes": 170,
+      "modified_time": "Wed Oct  7 21:39:35 2026"
+    }
+  }
+}

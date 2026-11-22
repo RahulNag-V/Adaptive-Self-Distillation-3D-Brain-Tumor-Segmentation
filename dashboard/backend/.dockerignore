@@ -18,17 +18,25 @@ env/
 node_modules/
 dashboard/frontend/
 
-# Local data & logs
+# Local raw data & logs
 data/raw/
 *.log
 scratch/
+results/phase7/
 
 # Runtime sessions
 dashboard/backend/runtime/sessions/
 runtime/sessions/
 
+# Unused training epoch checkpoints
+checkpoints/baseline/
+checkpoints/online_tokenizer/
+checkpoints/dense_predictor/
+checkpoints/mod/
+checkpoints/adaptive/candidates/
+checkpoints/adaptive/epoch_*.pth
+
 # Local env files
 .env
 .env.*
 !.env.example
-

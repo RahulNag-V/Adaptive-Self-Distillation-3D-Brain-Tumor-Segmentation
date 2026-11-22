@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Isolated Website-Wide Scroll Controller
+ * Neuro Resonence AI - Isolated Website-Wide Scroll Controller
  *
  * Dedicated controller for primary content container scrolling.
  * - Targets primary main content container (#neurovision-main-scroll or main.flex-1)

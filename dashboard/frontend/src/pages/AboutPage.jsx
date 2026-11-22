@@ -108,29 +108,29 @@ export default function AboutPage({ onNavigate }) {
     },
     {
       q: "How is the clinical workflow completed beyond raw inference?",
-      a: "NeuroVision AI provides a full diagnostic workstation: Quad synchronized MPR (Axial, Coronal, Sagittal), 3D surface mesh generation via Marching Cubes, quantitative volumetric burden calculation in cm³, human-in-the-loop (HITL) active annotation refinement, hands-free voice control, and print-ready clinical research reports."
+      a: "Neuro Resonence AI provides a full diagnostic workstation: Quad synchronized MPR (Axial, Coronal, Sagittal), 3D surface mesh generation via Marching Cubes, quantitative volumetric burden calculation in cm³, human-in-the-loop (HITL) active annotation refinement, hands-free voice control, and print-ready clinical research reports."
     }
   ];
 
   return (
-    <div ref={containerRef} className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 font-sans animate-fadeIn text-[#F4F7FC]">
+    <div ref={containerRef} className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 font-sans animate-fadeIn text-[#000000]">
       {/* 1. HEADER */}
-      <section className="rounded-xl bg-[#101722] border border-[#1C2636] p-6 sm:p-8 shadow-medical-card">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-b border-[#1C2636] pb-6">
+      <section className="card-transparent rounded-xl p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-b border-[#111111]/20 pb-6">
           <img
-            src="/logo-circle.png"
-            alt="NeuroVision AI Logo"
-            className="w-20 h-20 rounded-full object-cover shrink-0 shadow-medical-md ring-2 ring-blue-500/30 hover:scale-105 transition-transform duration-300"
+            src="/nrai-logo.png"
+            alt="Neuro Resonence AI Logo"
+            className="w-20 h-20 object-contain shrink-0 filter drop-shadow-sm hover:scale-105 transition-transform duration-300"
           />
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-mono text-[#4C8DFF]">
-              <FlaskConical className="w-3.5 h-3.5 text-[#4C8DFF]" />
-              <span>ACADEMIC RESEARCH & VIVA DEFENSE GUIDE</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-[#111111] text-xs font-mono font-bold text-[#111111] shadow-xs">
+              <FlaskConical className="w-3.5 h-3.5 text-[#103B5C]" />
+              <span>ACADEMIC RESEARCH &amp; VIVA DEFENSE GUIDE</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F4F7FC]">
-              About NeuroVision AI
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827]">
+              About Neuro Resonence AI
             </h1>
-            <p className="text-sm text-[#94A3B8] leading-relaxed">
+            <p className="text-sm text-[#25313D] leading-relaxed">
               Adaptive Self-Distillation Framework for 3D Brain Tumor Segmentation on Multimodal MRI.
               AI For A Healthier Tomorrow.
             </p>
@@ -140,69 +140,69 @@ export default function AboutPage({ onNavigate }) {
 
       {/* 2. CORE SPECIFICATIONS MATRIX */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="about-spec-card p-5 rounded-xl bg-[#101722] border border-[#1C2636] shadow-medical-card space-y-2 hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5">
-          <div className="flex items-center gap-2 text-[#4C8DFF] text-xs font-mono uppercase tracking-wider font-semibold">
-            <Cpu className="w-4 h-4" />
+        <div className="about-spec-card card-transparent-interactive p-5 rounded-xl space-y-2">
+          <div className="flex items-center gap-2 text-[#103B5C] text-xs font-mono uppercase tracking-wider font-bold">
+            <Cpu className="w-4 h-4 text-[#399DBA]" />
             <span>Research Model</span>
           </div>
-          <div className="text-sm font-semibold text-[#F4F7FC]">
+          <div className="text-sm font-bold text-[#103B5C]">
             Adaptive Self-Distillation
           </div>
-          <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+          <p className="text-[11px] text-[#25313D] leading-relaxed">
             Multi-objective self-distillation with dynamic EMA loss-ratio balancing across dual auxiliary heads.
           </p>
         </div>
 
-        <div className="about-spec-card p-5 rounded-xl bg-[#101722] border border-[#1C2636] shadow-medical-card space-y-2 hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5">
-          <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono uppercase tracking-wider font-semibold">
-            <Layers className="w-4 h-4" />
+        <div className="about-spec-card card-transparent-interactive p-5 rounded-xl space-y-2">
+          <div className="flex items-center gap-2 text-[#103B5C] text-xs font-mono uppercase tracking-wider font-bold">
+            <Layers className="w-4 h-4 text-[#399DBA]" />
             <span>Base Architecture</span>
           </div>
-          <div className="text-sm font-semibold text-[#F4F7FC]">
+          <div className="text-sm font-bold text-[#103B5C]">
             MONAI UNETR (ViT-B/16)
           </div>
-          <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+          <p className="text-[11px] text-[#25313D] leading-relaxed">
             Vision Transformer encoder with 16³ patch embeddings (768 hidden dim, 12 layers) and CNN decoders.
           </p>
         </div>
 
-        <div className="about-spec-card p-5 rounded-xl bg-[#101722] border border-[#1C2636] shadow-medical-card space-y-2 hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5">
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono uppercase tracking-wider font-semibold">
-            <FileCode className="w-4 h-4" />
+        <div className="about-spec-card card-transparent-interactive p-5 rounded-xl space-y-2">
+          <div className="flex items-center gap-2 text-[#164D70] text-xs font-mono uppercase tracking-wider font-bold">
+            <FileCode className="w-4 h-4 text-[#399DBA]" />
             <span>Compute Platform</span>
           </div>
-          <div className="text-sm font-semibold text-[#F4F7FC]">
+          <div className="text-sm font-bold text-[#103B5C]">
             PyTorch 2.11 + CUDA
           </div>
-          <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+          <p className="text-[11px] text-[#25313D] leading-relaxed">
             FP16 mixed precision acceleration, 96³ sliding-window inference with Gaussian blending.
           </p>
         </div>
 
-        <div className="about-spec-card p-5 rounded-xl bg-[#101722] border border-[#1C2636] shadow-medical-card space-y-2 hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5">
-          <div className="flex items-center gap-2 text-amber-400 text-xs font-mono uppercase tracking-wider font-semibold">
-            <Database className="w-4 h-4" />
+        <div className="about-spec-card card-transparent-interactive p-5 rounded-xl space-y-2">
+          <div className="flex items-center gap-2 text-[#164D70] text-xs font-mono uppercase tracking-wider font-bold">
+            <Database className="w-4 h-4 text-[#399DBA]" />
             <span>Cohort Benchmark</span>
           </div>
-          <div className="text-sm font-semibold text-[#F4F7FC]">
+          <div className="text-sm font-bold text-[#103B5C]">
             BraTS 2021 Dataset
           </div>
-          <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+          <p className="text-[11px] text-[#25313D] leading-relaxed">
             50-Subject verified cohort (40 train / 10 val), evaluated across WT, TC, and ET compartments.
           </p>
         </div>
       </div>
 
       {/* 3. VIVA & ACADEMIC EVALUATION DEFENSE GUIDE */}
-      <section className="about-viva-panel p-6 rounded-xl bg-[#101722] border border-[#1C2636] shadow-medical-card space-y-4 transition-all duration-300">
-        <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
+      <section className="about-viva-panel card-transparent p-6 rounded-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-[#111111]/20 pb-3">
           <div className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-[#4C8DFF]" />
-            <h2 className="text-sm font-semibold text-[#F4F7FC] font-mono uppercase tracking-wider">
-              Academic Viva Defense & Examiner Key Questions
+            <Award className="w-5 h-5 text-[#399DBA]" />
+            <h2 className="text-sm font-bold text-[#103B5C] font-mono uppercase tracking-wider">
+              Academic Viva Defense &amp; Examiner Key Questions
             </h2>
           </div>
-          <span className="text-[10px] font-mono text-[#94A3B8]">
+          <span className="text-[10px] font-mono text-[#164D70] font-bold">
             5 Core Assessment Pillars
           </span>
         </div>
@@ -213,19 +213,19 @@ export default function AboutPage({ onNavigate }) {
             return (
               <div 
                 key={idx}
-                className="rounded-xl bg-[#151E2B]/80 border border-[#1C2636] overflow-hidden transition-all shadow-medical-sm"
+                className="rounded-xl bg-white/20 border border-[#111111]/30 overflow-hidden transition-all duration-250 shadow-xs hover:bg-[rgba(226,247,242,0.65)]"
               >
                 <button
                   onClick={() => setActiveFaq(isOpen ? -1 : idx)}
-                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs font-semibold text-[#F4F7FC] hover:text-[#4C8DFF] transition-colors btn-press active:scale-[0.99]"
+                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs font-semibold text-[#103B5C] hover:text-[#399DBA] transition-colors cursor-pointer"
                 >
                   <span className="flex items-center gap-3">
-                    <span className="w-5 h-5 rounded-full bg-blue-500/20 text-[#4C8DFF] text-[10px] font-mono flex items-center justify-center shrink-0 font-bold border border-blue-500/30">
+                    <span className="w-5 h-5 rounded-full bg-white/30 text-[#103B5C] text-[10px] font-mono flex items-center justify-center shrink-0 font-bold border border-[#111111]/40">
                       {idx + 1}
                     </span>
-                    <span>{item.q}</span>
+                    <span className="font-bold text-[#111827]">{item.q}</span>
                   </span>
-                  <ArrowRight className={`w-4 h-4 text-[#94A3B8] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-90 text-[#4C8DFF]' : ''}`} />
+                  <ArrowRight className={`w-4 h-4 text-[#399DBA] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
                 <div 
                   className={`grid transition-[grid-template-rows] duration-250 ease-out ${
@@ -233,7 +233,7 @@ export default function AboutPage({ onNavigate }) {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <div className="px-5 pb-4 pt-2 border-t border-[#1C2636] text-xs text-[#94A3B8] leading-relaxed font-sans bg-[#0B1019]/60">
+                    <div className="px-5 pb-4 pt-2 border-t border-[#111111]/20 text-xs text-[#25313D] leading-relaxed font-sans bg-white/30">
                       {item.a}
                     </div>
                   </div>
@@ -245,23 +245,23 @@ export default function AboutPage({ onNavigate }) {
       </section>
 
       {/* 4. WORKSTATION NAVIGATOR */}
-      <div className="p-6 rounded-xl bg-[#101722] border border-[#1C2636] shadow-medical-card flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="card-transparent p-6 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h3 className="text-sm font-bold text-[#F4F7FC]">Ready to inspect experimental benchmarks?</h3>
-          <p className="text-xs text-[#94A3B8] mt-0.5">
+          <h3 className="text-sm font-bold text-[#111827]">Ready to inspect experimental benchmarks?</h3>
+          <p className="text-xs text-[#25313D] mt-0.5">
             View the live model comparison matrix or explore training loss curves.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => onNavigate && onNavigate('models')}
-            className="btn-press px-4 py-2 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#2A384C] text-[#F4F7FC] text-xs font-mono font-medium transition-colors shadow-medical-sm"
+            className="px-4 py-2 rounded-lg border border-[#111111] bg-white/30 hover:bg-[rgba(226,247,242,0.85)] text-[#111111] text-xs font-mono font-bold transition-all duration-250 shadow-xs cursor-pointer"
           >
             Model Lab
           </button>
           <button
             onClick={() => onNavigate && onNavigate('viewer')}
-            className="btn-press px-4 py-2 rounded-lg bg-[#4C8DFF] hover:bg-[#3B7AE8] text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition-all"
+            className="px-4 py-2 rounded-lg bg-[#399DBA] hover:bg-[#103B5C] border border-[#111111] text-white text-xs font-bold shadow-sm transition-all duration-250 cursor-pointer"
           >
             Open 3D Viewer
           </button>
@@ -269,15 +269,15 @@ export default function AboutPage({ onNavigate }) {
       </div>
 
       {/* 5. MANDATORY REGULATORY RESEARCH DISCLAIMER */}
-      <div className="p-6 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3 shadow-medical-sm">
-        <div className="flex items-center gap-2.5 text-amber-300 font-bold text-sm">
-          <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
-          <span>Mandatory Research & Educational Disclaimer</span>
+      <div className="p-6 rounded-xl bg-amber-50/80 border border-[#111111] space-y-3 shadow-[0_4px_12px_rgba(0,0,0,0.10)]">
+        <div className="flex items-center gap-2.5 text-amber-950 font-bold text-sm">
+          <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0" />
+          <span>Mandatory Research &amp; Educational Disclaimer</span>
         </div>
-        <p className="text-xs text-amber-200 font-medium leading-relaxed">
-          "For research and educational purposes only. This system is not a medical diagnostic tool."
+        <p className="text-xs text-amber-900 font-semibold leading-relaxed">
+          &quot;For research and educational purposes only. This system is not a medical diagnostic tool.&quot;
         </p>
-        <p className="text-[11px] text-[#94A3B8] leading-relaxed font-mono">
+        <p className="text-[11px] text-[#25313D] leading-relaxed font-mono">
           This software has not been evaluated, cleared, or approved by the FDA, EMA, or any regulatory medical device authority. All predictions, segmentations, and volumetric estimates are intended purely for academic and algorithmic investigation.
         </p>
       </div>

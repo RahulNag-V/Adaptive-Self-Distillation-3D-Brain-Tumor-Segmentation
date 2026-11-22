@@ -1,101 +1,122 @@
-import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
-import { gsap, prefersReducedMotion, MOTION, smoothScrollToTop } from '../utils/motion';
+import React, { useRef, useState, useEffect } from 'react';
+import PageSkeleton from './skeletons/PageSkeleton';
+import { prefersReducedMotion, smoothScrollToTop } from '../utils/motion';
+
+/**
+ * Target skeleton loading duration: approximately 1.2 seconds.
+ * Transition duration: 250ms fade.
+ */
+const SKELETON_TARGET_MS = 1200;
+const SKELETON_FADE_MS = 250;
 
 /**
  * PageTransition Component
- * Provides coordinated exit-then-entrance transitions between clinical pages.
- * Never causes blank screens, layout jumps, or flickering.
- * Supports rapid navigation cancellation guard and reduced motion.
+ * Provides Apple-inspired, premium mint-toned skeleton loading across application routes.
+ * CRITICAL RULE: Home page ('overview') must NEVER display a skeleton loader.
  */
 export default function PageTransition({ children, pageKey, className = '' }) {
-  const containerRef = useRef(null);
-  const [displayedContent, setDisplayedContent] = useState({ key: pageKey, node: children });
-  const isTransitioningRef = useRef(false);
-  const pendingPageRef = useRef({ key: pageKey, node: children });
+  // CRITICAL: Home page ('overview') never uses a skeleton
+  const isHome = pageKey === 'overview' || pageKey === 'home' || !pageKey;
 
-  pendingPageRef.current = { key: pageKey, node: children };
+  // Track skeleton display state for non-home routes
+  const [isSkeletonVisible, setIsSkeletonVisible] = useState(() => !isHome);
+  const [skeletonTab, setSkeletonTab] = useState(() => (isHome ? null : pageKey));
+  const [fadePhase, setFadePhase] = useState('idle'); // 'idle' | 'fading'
+  const activeTimerRef = useRef(null);
+  const fadeTimerRef = useRef(null);
 
   useEffect(() => {
-    // If the key hasn't changed, keep node updated
-    if (pageKey === displayedContent.key) {
-      setDisplayedContent({ key: pageKey, node: children });
-      return;
-    }
+    // Clear any existing timers on route/tab change
+    if (activeTimerRef.current) clearTimeout(activeTimerRef.current);
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
 
-    if (prefersReducedMotion() || !containerRef.current) {
-      setDisplayedContent({ key: pageKey, node: children });
+    // CRITICAL: If navigating to Home, bypass skeleton completely with zero delay
+    if (pageKey === 'overview' || pageKey === 'home' || !pageKey) {
+      setIsSkeletonVisible(false);
+      setSkeletonTab(null);
+      setFadePhase('idle');
       smoothScrollToTop();
       return;
     }
 
-    // Kill any active tweens on the container
-    gsap.killTweensOf(containerRef.current);
-    isTransitioningRef.current = true;
+    // Navigating to a non-home route: activate page-specific skeleton
+    setIsSkeletonVisible(true);
+    setSkeletonTab(pageKey);
+    setFadePhase('idle');
+    smoothScrollToTop();
 
-    // Coordinated Exit: fade out & slight translate upward
-    gsap.to(containerRef.current, {
-      opacity: 0,
-      y: -6,
-      duration: MOTION.durations.fast,
-      ease: MOTION.easings.inOut,
-      onComplete: () => {
-        // Swap to the most recent pending page
-        const latest = pendingPageRef.current;
-        setDisplayedContent({ key: latest.key, node: latest.node });
-        smoothScrollToTop();
+    const reducedMotion = prefersReducedMotion();
+    const duration = reducedMotion ? 400 : SKELETON_TARGET_MS;
+    const fadeDuration = reducedMotion ? 0 : SKELETON_FADE_MS;
 
-        // Coordinated Entrance: fade in & glide to 0
-        gsap.fromTo(
-          containerRef.current,
-          {
-            opacity: 0,
-            y: 8,
-          },
-          {
-            opacity: 1,
-            y: 0,
-            duration: MOTION.durations.normal,
-            ease: MOTION.easings.out,
-            clearProps: 'all',
-            onComplete: () => {
-              isTransitioningRef.current = false;
-            },
-          }
-        );
-      },
-    });
+    activeTimerRef.current = setTimeout(() => {
+      // Start smooth crossfade from skeleton to actual content
+      setFadePhase('fading');
+
+      fadeTimerRef.current = setTimeout(() => {
+        setIsSkeletonVisible(false);
+        setFadePhase('idle');
+      }, fadeDuration);
+    }, duration);
 
     return () => {
-      if (containerRef.current) {
-        gsap.killTweensOf(containerRef.current);
-      }
+      if (activeTimerRef.current) clearTimeout(activeTimerRef.current);
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
     };
   }, [pageKey]);
 
-  // Initial mount entrance animation
-  useLayoutEffect(() => {
-    if (prefersReducedMotion() || !containerRef.current) return;
-
-    gsap.fromTo(
-      containerRef.current,
-      { opacity: 0, y: 8 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.durations.normal,
-        ease: MOTION.easings.out,
-        clearProps: 'all',
-      }
+  // If on Home, render children directly with zero overhead and zero delay
+  if (isHome) {
+    return (
+      <div
+        className={`h-full w-full min-h-0 flex-1 flex flex-col ${className}`}
+        data-testid="page-transition-container"
+      >
+        {children}
+      </div>
     );
-  }, []);
+  }
 
   return (
     <div
-      ref={containerRef}
-      className={`h-full w-full min-h-0 ${className}`}
+      className={`h-full w-full min-h-0 flex-1 flex flex-col relative ${className}`}
       data-testid="page-transition-container"
+      aria-busy={isSkeletonVisible}
     >
-      {displayedContent.node}
+      {/* 1. Page-Specific Skeleton Overlay with gentle shimmer */}
+      {isSkeletonVisible && (
+        <div
+          className={`w-full h-full min-h-0 flex-1 z-30 transition-opacity ${
+            fadePhase === 'fading' ? 'opacity-0' : 'opacity-100'
+          }`}
+          style={{
+            transitionDuration: `${SKELETON_FADE_MS}ms`,
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+          aria-hidden={fadePhase === 'fading'}
+          data-testid="page-skeleton-overlay"
+        >
+          <PageSkeleton tab={skeletonTab} />
+        </div>
+      )}
+
+      {/* 2. Destination Page Content (Pre-mounted for zero-lag reveal) */}
+      <div
+        className={`w-full h-full min-h-0 flex-1 flex flex-col transition-opacity ${
+          isSkeletonVisible && fadePhase !== 'fading'
+            ? 'opacity-0 pointer-events-none absolute inset-0 overflow-hidden'
+            : fadePhase === 'fading'
+            ? 'opacity-100 pointer-events-none'
+            : 'opacity-100'
+        }`}
+        style={{
+          transitionDuration: `${SKELETON_FADE_MS}ms`,
+          transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+        data-testid="page-content-wrapper"
+      >
+        {children}
+      </div>
     </div>
   );
 }

@@ -40,12 +40,16 @@ import {
   Compass,
   Crosshair,
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  ArrowUpDown
 } from 'lucide-react';
 import MedicalViewer, { BRAIN_APPEARANCE_OPTIONS, ANATOMICAL_REGIONS_LEGEND } from '../viewer/MedicalViewer';
 import OrthogonalSliceViewer from '../viewer/OrthogonalSliceViewer';
 import SliceCoordinatesPanel from '../viewer/SliceCoordinatesPanel';
 import TumorBurdenPanel from '../viewer/TumorBurdenPanel';
+import WorkspaceAccordions from '../components/workspace/WorkspaceAccordions';
+import VolumetricsAnalysisPanel from '../components/workspace/VolumetricsAnalysisPanel';
+import { cn } from '../lib/utils';
 import { getPatients, getPatientMetadata, runPatientPrediction } from '../api/segmentation';
 import { 
   getAnnotation, 
@@ -61,6 +65,38 @@ import { REGION_LEGEND, DEMO_CASE_METADATA } from '../utils/mockData';
 import { useVoice } from '../voice/VoiceContext';
 import { prefersReducedMotion } from '../utils/motion';
 
+const DEFAULT_DIMENSIONS = { axial: 155, coronal: 240, sagittal: 240 };
+
+function getBottomViewsOrder(activeView) {
+  if (activeView === '3d') return ['axial', 'coronal', 'sagittal'];
+  if (activeView === 'axial') return ['3d', 'coronal', 'sagittal'];
+  if (activeView === 'coronal') return ['3d', 'axial', 'sagittal'];
+  if (activeView === 'sagittal') return ['3d', 'axial', 'coronal'];
+  return ['axial', 'coronal', 'sagittal'];
+}
+
+function getViewGridArea(viewId, activeView) {
+  if (activeView === 'quad') {
+    switch (viewId) {
+      case '3d': return '1 / 1 / 2 / 2';
+      case 'axial': return '1 / 2 / 2 / 3';
+      case 'coronal': return '2 / 1 / 3 / 2';
+      case 'sagittal': return '2 / 2 / 3 / 3';
+      default: return 'auto';
+    }
+  }
+
+  // Active main view spans all 3 columns on row 1
+  if (viewId === activeView) {
+    return '1 / 1 / 2 / 4';
+  }
+
+  // Previews sit on row 2, in columns 1, 2, 3
+  const bottomOrder = getBottomViewsOrder(activeView);
+  const colIndex = bottomOrder.indexOf(viewId);
+  return `2 / ${colIndex + 1} / 3 / ${colIndex + 2}`;
+}
+
 export default function ViewerPage({ currentResult, onNavigate }) {
   // Patient and Dataset State
   const [patients, setPatients] = useState([]);
@@ -71,13 +107,41 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   const [metaLoading, setMetaLoading] = useState(false);
 
   // Dimensions derived from real metadata or fallback
-  const dimensions = patientMeta?.dimensions || { axial: 155, coronal: 240, sagittal: 240 };
+  const dimensions = patientMeta?.dimensions || DEFAULT_DIMENSIONS;
 
-  // View Layout Mode: 'quad' (4-view MPR standard) | '3d' | 'axial' | 'coronal' | 'sagittal'
-  const [viewLayout, setViewLayout] = useState('quad');
+  // View Layout Mode: '3d' (default) | 'axial' | 'coronal' | 'sagittal' | 'quad'
+  const [viewLayout, setViewLayout] = useState('3d');
 
   // Full-Screen Maximized Mode: null | '3d' | 'axial' | 'coronal' | 'sagittal'
   const [maximizedViewer, setMaximizedViewer] = useState(null);
+
+  // Shared Active Volumetrics & Analysis Tab across Normal and Fullscreen Views
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState('burden');
+  const fullscreenContainerRef = useRef(null);
+
+  // Sync fullscreen state with document.body and native Fullscreen API
+  useEffect(() => {
+    const isFs = !!maximizedViewer;
+    if (isFs) {
+      document.body.classList.add('workspace-fullscreen-active');
+    } else {
+      document.body.classList.remove('workspace-fullscreen-active');
+    }
+    window.dispatchEvent(new CustomEvent('workspace-fullscreen-change', { detail: { isFullscreen: isFs } }));
+
+    const handleNativeFullscreenChange = () => {
+      if (!document.fullscreenElement && maximizedViewer) {
+        setMaximizedViewer(null);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleNativeFullscreenChange);
+
+    return () => {
+      document.body.classList.remove('workspace-fullscreen-active');
+      window.dispatchEvent(new CustomEvent('workspace-fullscreen-change', { detail: { isFullscreen: false } }));
+      document.removeEventListener('fullscreenchange', handleNativeFullscreenChange);
+    };
+  }, [maximizedViewer]);
 
   // Inspector Sidebar Toggle (Allows true 100% canvas view when collapsed)
   const [inspectorOpen, setInspectorOpen] = useState(true);
@@ -101,6 +165,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   const [segSource, setSegSource] = useState(
     currentResult ? (currentResult.is_ct ? 'corrected' : 'prediction') : 'ground_truth'
   );
+  // 90% Calibrated High-Confidence Threshold for AI Prediction (Default 0.90)
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0.90);
   const [predicting, setPredicting] = useState(false);
   const [predictError, setPredictError] = useState(null);
 
@@ -136,7 +202,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   });
 
   // Brain Surface & Segmentation Opacity (0.0 to 1.0)
-  const [opacity, setOpacity] = useState(0.85);
+  const [opacity, setOpacity] = useState(0.58);
   const [brainAppearance, setBrainAppearance] = useState('regions');
 
   // Interactive Animated Dropdown States & Lifecycle Managers
@@ -340,11 +406,17 @@ export default function ViewerPage({ currentResult, onNavigate }) {
     setSubregions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Scoped 3D Viewport Reset (Restores 3D camera, orientation, zoom without disrupting workspace)
+  const handle3dReset = useCallback(() => {
+    setThreeCommand({ type: 'RESET_VIEW', id: Date.now() });
+  }, []);
+
+  // Workspace-wide Reset (Restores slices, zoom, brightness, contrast, and default 58% opacity)
   const handleReset = () => {
     setAxialSlice(Math.floor(dimensions.axial / 2));
     setCoronalSlice(Math.floor(dimensions.coronal / 2));
     setSagittalSlice(Math.floor(dimensions.sagittal / 2));
-    setOpacity(0.75);
+    setOpacity(0.58);
     setSliceRotation(0);
     setSliceBrightness(100);
     setSliceContrast(100);
@@ -810,7 +882,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
       }
 
       else if (type === 'RESET_OVERLAY') {
-        setOpacity(0.85);
+        setOpacity(0.58);
         setLayers((prev) => ({ ...prev, tumor: true, overlay: true }));
       }
 
@@ -880,510 +952,582 @@ export default function ViewerPage({ currentResult, onNavigate }) {
   const stateBadgeStyle = (status) => {
     switch (status) {
       case 'Prediction Generated':
-        return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
+        return 'bg-[#EBF8F6] text-[#103B5C] border-[#98D9CE]/60';
       case 'Correction In Progress':
-        return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+        return 'bg-amber-50 text-amber-900 border-amber-300';
       case 'Draft Saved':
-        return 'bg-purple-500/15 text-purple-300 border-purple-500/30';
+        return 'bg-purple-50 text-purple-900 border-purple-300';
       case 'Submitted for Review':
-        return 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
+        return 'bg-[#F8FCFB] text-[#103B5C] border-[#98D9CE]/60';
       case 'Approved for Training':
-        return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+        return 'bg-teal-50 text-teal-900 border-teal-300';
       case 'Rejected':
-        return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
+        return 'bg-rose-50 text-rose-900 border-rose-300';
       case 'Included in Training Dataset':
-        return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
+        return 'bg-[#EBF8F6] text-[#103B5C] border-[#98D9CE]/60';
       default:
-        return 'bg-[#151E2B] text-[#8496AC] border-[#1C2636]';
+        return 'bg-[#F8FCFB] text-[#103B5C] border-[#98D9CE]/60';
     }
   };
 
   return (
-    <div className="h-full flex flex-col p-2.5 sm:p-3 lg:p-3.5 space-y-2 overflow-hidden bg-[#080B12]">
-      {/* 1. TOP CLINICAL WORKSTATION COMMAND STRIP (Single Unified 44px Ribbon) */}
-      <header className="flex flex-wrap items-center justify-between gap-2 bg-[#101722] border border-[#1C2636] px-3 py-1.5 rounded-xl shadow-medical-sm shrink-0">
+    <div className="w-full h-full min-h-0 flex flex-col overflow-hidden bg-transparent text-[#111827]">
+      {/* MAIN WORKSPACE LAYOUT — Two Columns (Desktop: ~72% Left, ~28% Right) */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-2.5 min-h-0 overflow-hidden p-2 sm:p-2.5 lg:p-3">
         
-        {/* Left Section: Case Selector, Split Badge, Mask Source */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* CASE SELECTOR */}
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse shrink-0" />
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8496AC] hidden sm:inline">
-              Case:
-            </span>
-
-            {/* Custom Clinical Patient Dropdown */}
-            <div className="relative" ref={caseDropdownRef}>
-              <button
-                type="button"
-                onClick={toggleCaseDropdown}
-                className="flex items-center gap-2 bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] hover:border-[#4C8DFF]/60 text-[#F4F7FC] text-xs font-mono font-semibold px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#4C8DFF] cursor-pointer shadow-xs transition-colors"
-                aria-haspopup="listbox"
-                aria-expanded={caseDropdownState === 'open'}
-              >
-                <span className="truncate max-w-[130px] sm:max-w-[170px]">
-                  {currentResult && selectedPatientId === currentResult.session_id
-                    ? `Live: ${currentResult.session_id.substring(0, 12)}...`
-                    : selectedPatientId}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30 font-medium">
-                  {patients.find(p => p.id === selectedPatientId)?.is_validation ? 'Val' : 'Train'}
-                </span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-[#8496AC] transition-transform duration-200 ${
-                    caseDropdownState === 'open' ? 'rotate-180 text-[#4C8DFF]' : ''
-                  }`}
-                />
-              </button>
-
-              {/* Animated Clinical Popover */}
-              {caseDropdownState !== 'closed' && (
-                <div 
-                  className={`absolute top-full left-0 mt-2 z-[100] w-72 max-h-80 flex flex-col bg-[#151E2B] border border-[#1C2636] rounded-xl shadow-medical-lg p-2 ring-1 ring-[#4C8DFF]/30 text-xs font-mono ${
-                    caseDropdownState === 'closing' ? 'animate-dropdown-exit' : 'animate-dropdown-down'
-                  }`}
+        {/* LEFT WORKSPACE (~72% width): Large Main Viewer + 3 Bottom Previews */}
+        <div className="w-full lg:w-[72%] xl:w-[73%] flex flex-col min-h-0 h-full overflow-hidden self-stretch">
+          <div 
+            className={`w-full h-full min-h-0 grid gap-2.5 transition-all duration-200 ${
+              viewLayout === 'quad' 
+                ? 'grid-cols-1 sm:grid-cols-2 grid-rows-2' 
+                : 'grid-cols-3'
+            }`}
+            style={
+              viewLayout === 'quad'
+                ? undefined
+                : {
+                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                    gridTemplateRows: '1fr minmax(180px, 215px)',
+                  }
+            }
+          >
+            {/* View 1: 3D Brain Model */}
+            {(() => {
+              const isMain = viewLayout === '3d' || viewLayout === 'quad';
+              return (
+                <div
+                  key="3d"
+                  style={{
+                    gridArea: getViewGridArea('3d', viewLayout),
+                    transition: 'all 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  onClick={!isMain ? () => setViewLayout('3d') : undefined}
+                  className={cn(
+                    "relative flex flex-col min-h-0 rounded-xl overflow-hidden border transition-all duration-200 select-none bg-[#060A12] medical-viewer-grid",
+                    isMain
+                      ? "border-[#111111] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+                      : "border-[#98D9CE]/60 hover:border-[#103B5C] hover:shadow-lg cursor-pointer group hover:-translate-y-0.5"
+                  )}
+                  title={!isMain ? "Click to promote 3D Brain Model to Main Workspace" : undefined}
                 >
-                  <div className="px-2.5 py-1.5 rounded-lg bg-[#101722] border border-[#1C2636] flex items-center justify-between text-[11px] font-bold text-[#F4F7FC] mb-1.5 shrink-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse" />
-                      <span>Select BraTS Case</span>
+                  {/* Header bar */}
+                  <div className={cn(
+                    "px-2.5 flex items-center justify-between shrink-0 z-20 backdrop-blur-sm border-b select-none",
+                    isMain
+                      ? "h-8 bg-[#101722]/95 border-[#1C2636]"
+                      : "h-7 bg-[#101722]/90 border-[#1C2636] group-hover:bg-[#151E2B]"
+                  )}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse shrink-0" />
+                      <span className="font-mono font-bold text-xs text-[#F4F7FC] truncate">
+                        {isMain ? '3D Brain Model • Atlas Reference & Tumor Mesh' : '3D Brain Model'}
+                      </span>
+                      {isMain && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono hidden sm:inline">
+                          {selectedPatientId} • {segSource === 'ground_truth' ? 'Ground Truth' : 'UNETR Pred'}
+                        </span>
+                      )}
                     </div>
-                    <span className="text-[#4C8DFF] text-[10px]">{patients.length || 1} available</span>
-                  </div>
 
-                  {/* Filter Search Input */}
-                  <div className="relative mb-2 shrink-0">
-                    <Search className="w-3.5 h-3.5 text-[#8496AC] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={caseSearch}
-                      onChange={(e) => setCaseSearch(e.target.value)}
-                      placeholder="Filter case ID..."
-                      className="w-full bg-[#101722] border border-[#1C2636] focus:border-[#4C8DFF] rounded-lg pl-7 pr-2.5 py-1 text-[11px] text-[#F4F7FC] placeholder-[#8496AC] focus:outline-none transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                      autoFocus
-                    />
-                  </div>
-
-                  {/* Scrollable Cases List */}
-                  <div className="overflow-y-auto space-y-1 max-h-56 pr-0.5">
-                    {currentResult && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPatientId(currentResult.session_id);
-                          closeCaseDropdown();
-                        }}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
-                          selectedPatientId === currentResult.session_id
-                            ? 'bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40'
-                            : 'text-[#F4F7FC] hover:bg-[#1C2636] border border-transparent'
-                        }`}
-                      >
-                        <div className="truncate min-w-0">
-                          <span className="block truncate font-semibold">Live: {currentResult.session_id.substring(0, 14)}...</span>
-                          <span className="text-[10px] text-[#8496AC]">Prospective Upload</span>
+                    <div className="flex items-center gap-1">
+                      {!isMain ? (
+                        <div className="flex items-center gap-1 text-[#98D9CE] group-hover:text-white transition-colors">
+                          <span className="text-[9px] font-mono uppercase tracking-wider hidden sm:inline opacity-0 group-hover:opacity-100 transition-opacity">
+                            Swap
+                          </span>
+                          <ArrowUpDown className="w-3.5 h-3.5" />
                         </div>
-                        {selectedPatientId === currentResult.session_id && (
-                          <Check className="w-3.5 h-3.5 text-[#4C8DFF] shrink-0 ml-1.5" />
-                        )}
-                      </button>
-                    )}
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={handle3dReset}
+                            className="p-1 rounded text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors cursor-pointer"
+                            title="Reset Camera View"
+                            aria-label="Reset Camera View"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMaximizedViewer('3d')}
+                            className="p-1 rounded text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors cursor-pointer"
+                            title="Maximize Whole Screen"
+                            aria-label="Maximize 3D View"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                    {patients.length > 0 ? (
-                      patients
-                        .filter((p) => p.id.toLowerCase().includes(caseSearch.toLowerCase()))
-                        .map((p) => {
-                          const isSelected = selectedPatientId === p.id;
-                          return (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedPatientId(p.id);
-                                closeCaseDropdown();
-                              }}
-                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
-                                isSelected
-                                  ? 'bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40'
-                                  : 'text-[#F4F7FC] hover:bg-[#1C2636] border border-transparent'
-                              }`}
-                            >
-                              <span className="truncate">{p.id}</span>
-                              <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                                <span className={`text-[10px] px-1.5 py-0.2 rounded border ${
-                                  p.is_validation
-                                    ? 'bg-purple-950/40 text-purple-300 border-purple-500/30'
-                                    : 'bg-blue-950/40 text-blue-300 border-blue-500/30'
-                                }`}>
-                                  {p.is_validation ? 'Val' : 'Train'}
-                                </span>
-                                {isSelected && <Check className="w-3.5 h-3.5 text-[#4C8DFF]" />}
-                              </div>
-                            </button>
-                          );
-                        })
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPatientId('BraTS2021_01017');
-                          closeCaseDropdown();
-                        }}
-                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40"
-                      >
-                        <span>BraTS2021_01017</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950/40 text-blue-300 border border-blue-500/30">Train</span>
-                      </button>
-                    )}
-
-                    {patients.length > 0 && patients.filter((p) => p.id.toLowerCase().includes(caseSearch.toLowerCase())).length === 0 && (
-                      <div className="px-3 py-3 text-center text-[#8496AC] text-[11px]">
-                        No matching BraTS cases
-                      </div>
-                    )}
+                  {/* Viewer content */}
+                  <div className={cn("relative flex-1 w-full min-h-0", !isMain && "pointer-events-none")}>
+                    <MedicalViewer
+                      viewMode="3d"
+                      patientId={selectedPatientId}
+                      segSource={segSource}
+                      confidenceThreshold={confidenceThreshold}
+                      layers={layers}
+                      opacity={opacity}
+                      subregions={subregions}
+                      brainAppearance={brainAppearance}
+                      onBrainAppearanceChange={setBrainAppearance}
+                      isMaximized={false}
+                      onToggleMaximize={() => setMaximizedViewer('3d')}
+                      viewerCommand={threeCommand}
+                      isCompactPreview={!isMain}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
-            {/* Dataset split badge */}
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#151E2B] border border-[#1C2636] text-[#8496AC] hidden md:inline">
-              BraTS 2021
-            </span>
+            {/* View 2: Axial MRI */}
+            {(() => {
+              const isMain = viewLayout === 'axial' || viewLayout === 'quad';
+              return (
+                <div
+                  key="axial"
+                  style={{
+                    gridArea: getViewGridArea('axial', viewLayout),
+                    transition: 'all 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  onClick={!isMain ? () => setViewLayout('axial') : undefined}
+                  className={cn(
+                    "relative flex flex-col min-h-0 rounded-xl overflow-hidden border transition-all duration-200 select-none bg-[#060A12] medical-viewer-grid",
+                    isMain
+                      ? "border-[#111111] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+                      : "border-[#98D9CE]/60 hover:border-[#103B5C] hover:shadow-lg cursor-pointer group hover:-translate-y-0.5"
+                  )}
+                  title={!isMain ? "Click to promote Axial MRI to Main Workspace" : undefined}
+                >
+                  {/* Header bar */}
+                  <div className={cn(
+                    "px-2.5 flex items-center justify-between shrink-0 z-20 backdrop-blur-sm border-b select-none",
+                    isMain
+                      ? "h-8 bg-[#101722]/95 border-[#1C2636]"
+                      : "h-7 bg-[#101722]/90 border-[#1C2636] group-hover:bg-[#151E2B]"
+                  )}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-[#35B982] animate-pulse shrink-0" />
+                      <span className="font-mono font-bold text-xs text-[#F4F7FC] truncate">
+                        {isMain ? `Axial MRI (Z) • Transverse Slice ${axialSlice + 1} / ${dimensions.axial}` : 'Axial MRI (Z)'}
+                      </span>
+                      {!isMain && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono">
+                          {axialSlice + 1}/{dimensions.axial}
+                        </span>
+                      )}
+                      {isMain && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono uppercase hidden sm:inline">
+                          MOD: {activeMriModality}
+                        </span>
+                      )}
+                    </div>
 
-            {/* Annotation Lifecycle State Badge */}
-            {annotationRecord && (
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${stateBadgeStyle(annotationRecord.status)} hidden lg:inline`}>
-                {annotationRecord.status} (v{annotationRecord.version || 1})
-              </span>
-            )}
-          </div>
+                    <div className="flex items-center gap-1">
+                      {!isMain ? (
+                        <div className="flex items-center gap-1 text-[#98D9CE] group-hover:text-white transition-colors">
+                          <span className="text-[9px] font-mono uppercase tracking-wider hidden sm:inline opacity-0 group-hover:opacity-100 transition-opacity">
+                            Swap
+                          </span>
+                          <ArrowUpDown className="w-3.5 h-3.5" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setMaximizedViewer('axial')}
+                            className="p-1 rounded text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors cursor-pointer"
+                            title="Maximize Whole Screen"
+                            aria-label="Maximize Axial View"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-          <div className="h-4 w-px bg-[#1C2636] hidden sm:block" />
-
-          {/* MASK SOURCE SELECTOR */}
-          <div className="flex items-center gap-0.5 bg-[#080B12] border border-[#1C2636] p-0.5 rounded-lg text-xs font-mono">
-            <span className="text-[10px] text-[#8496AC] px-1.5 hidden xl:inline">Mask:</span>
-            {[
-              { id: 'prediction', label: 'AI Pred' },
-              { id: 'corrected', label: 'Corrected' },
-              { id: 'ground_truth', label: 'Ground Truth' },
-            ].map(({ id, label }) => (
-              <button
-                key={id}
-                onClick={() => setSegSource(id)}
-                className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
-                  segSource === id
-                    ? 'bg-[#4C8DFF] text-white shadow-xs'
-                    : 'text-[#8496AC] hover:text-[#F4F7FC]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Section: Modalities, Layout Modes, Legend, HITL Toggle, Inspector Toggle */}
-        <div className="flex flex-wrap items-center gap-2">
-          
-          {/* MRI MODALITY SELECTOR */}
-          <div className="flex items-center gap-0.5 bg-[#080B12] border border-[#1C2636] p-0.5 rounded-lg text-xs font-mono">
-            {availableModalities.map((mod) => (
-              <button
-                key={mod}
-                onClick={() => setActiveMriModality(mod)}
-                className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold transition-colors ${
-                  activeMriModality === mod
-                    ? 'bg-[#4C8DFF] text-white shadow-xs'
-                    : 'text-[#8496AC] hover:text-[#F4F7FC]'
-                }`}
-              >
-                {mod}
-              </button>
-            ))}
-          </div>
-
-          <div className="h-4 w-px bg-[#1C2636] hidden md:block" />
-
-          {/* VIEW LAYOUT SELECTOR */}
-          <div className="flex items-center gap-0.5 bg-[#080B12] border border-[#1C2636] p-0.5 rounded-lg text-xs font-mono">
-            {[
-              { id: 'quad', label: 'Quad', icon: Grid },
-              { id: '3d', label: '3D', icon: Box },
-              { id: 'axial', label: 'Axial (Z)' },
-              { id: 'coronal', label: 'Coronal (Y)' },
-              { id: 'sagittal', label: 'Sagittal (X)' },
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => {
-                  setViewLayout(id);
-                  if (maximizedViewer) setMaximizedViewer(null);
-                }}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
-                  viewLayout === id
-                    ? 'bg-[#4C8DFF] text-white shadow-xs'
-                    : 'text-[#8496AC] hover:text-[#F4F7FC]'
-                }`}
-                title={`Switch layout to ${label}`}
-              >
-                {Icon && <Icon className="w-3 h-3" />}
-                <span className={id === 'quad' || id === '3d' ? '' : 'hidden xl:inline'}>
-                  {id === 'quad' || id === '3d' ? label : label.split(' ')[0]}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="h-4 w-px bg-[#1C2636] hidden lg:block" />
-
-          {/* PERSISTENT BRA-TS COMPACT LEGEND */}
-          <div className="hidden xl:flex items-center gap-2 px-2 py-0.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-[10px] font-mono">
-            <div className="flex items-center gap-1" title="Whole Tumor (Edema + Core + Enhancing)">
-              <span className="w-2 h-2 rounded-xs bg-[#EAB308]" />
-              <span className="text-[#EAB308] font-semibold">WT</span>
-            </div>
-            <div className="flex items-center gap-1" title="Tumor Core (Necrotic + Enhancing)">
-              <span className="w-2 h-2 rounded-xs bg-[#F43F5E]" />
-              <span className="text-[#F43F5E] font-semibold">TC</span>
-            </div>
-            <div className="flex items-center gap-1" title="Enhancing Tumor">
-              <span className="w-2 h-2 rounded-xs bg-[#06B6D4]" />
-              <span className="text-[#06B6D4] font-semibold">ET</span>
-            </div>
-          </div>
-
-          {/* HITL ANNOTATION / CORRECTION TOGGLE BUTTON */}
-          <button
-            onClick={() => setIsEditing(prev => !prev)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs ${
-              isEditing
-                ? 'bg-amber-400 text-slate-950 border-amber-300'
-                : 'bg-[#151E2B] text-amber-300 border-amber-400/40 hover:bg-amber-400/10'
-            }`}
-            title="Toggle Human-In-The-Loop Contour Correction Mode"
-          >
-            <Paintbrush className="w-3.5 h-3.5" />
-            <span>{isEditing ? 'Exit Editor' : 'Correct'}</span>
-          </button>
-
-          {/* RESET VIEW BUTTON */}
-          <button
-            onClick={handleReset}
-            className="p-1 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#8496AC] hover:text-[#F4F7FC] transition-colors"
-            title="Reset Pan, Zoom, Rotation and Coordinates"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-
-          {/* TOGGLE INSPECTOR SIDEBAR BUTTON */}
-          <button
-            onClick={() => setInspectorOpen(prev => !prev)}
-            className={`p-1 rounded-lg border text-xs font-mono transition-colors ${
-              inspectorOpen 
-                ? 'bg-[#151E2B] text-[#4C8DFF] border-[#4C8DFF]/40' 
-                : 'bg-[#151E2B] text-[#8496AC] border-[#1C2636] hover:text-[#F4F7FC]'
-            }`}
-            title={inspectorOpen ? 'Collapse Diagnostic Inspector for maximum canvas' : 'Expand Diagnostic Inspector'}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </header>
-
-      {/* 2. DOCKED HITL CORRECTION RIBBON (VISIBLE WHEN isEditing IS TRUE) */}
-      {isEditing && (
-        <div className="bg-[#101722] border border-amber-400/40 rounded-xl px-3.5 py-1.5 flex flex-wrap items-center justify-between gap-2.5 shadow-medical-md animate-fadeIn shrink-0">
-          {/* Mode (Paint vs Erase) & Label Selection */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Paintbrush className="w-3.5 h-3.5" />
-              HITL Editor:
-            </span>
-
-            {/* Brush vs Eraser Toggle */}
-            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-[#080B12] border border-[#1C2636]">
-              <button
-                onClick={() => setBrushMode('paint')}
-                className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold transition-colors ${
-                  brushMode === 'paint'
-                    ? 'bg-[#4C8DFF] text-white shadow-xs'
-                    : 'text-[#8496AC] hover:text-white'
-                }`}
-              >
-                <Paintbrush className="w-3 h-3" />
-                <span>Brush</span>
-              </button>
-              <button
-                onClick={() => setBrushMode('erase')}
-                className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold transition-colors ${
-                  brushMode === 'erase'
-                    ? 'bg-rose-500 text-white shadow-xs'
-                    : 'text-[#8496AC] hover:text-white'
-                }`}
-              >
-                <Eraser className="w-3 h-3" />
-                <span>Eraser</span>
-              </button>
-            </div>
-
-            {/* Subregion Label Selection */}
-            {brushMode === 'paint' && (
-              <div className="flex items-center gap-1 text-xs font-mono">
-                <span className="text-[10px] text-[#8496AC] hidden sm:inline">Label:</span>
-                {[
-                  { id: 1, name: 'TC (Core)', color: '#F43F5E', desc: 'Tumor Core / Necrotic' },
-                  { id: 2, name: 'WT (Edema)', color: '#EAB308', desc: 'Peritumoral Edema' },
-                  { id: 3, name: 'ET (Enhancing)', color: '#06B6D4', desc: 'Enhancing Active Tumor' },
-                ].map(({ id, name, color, desc }) => (
-                  <button
-                    key={id}
-                    onClick={() => setActiveLabel(id)}
-                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-colors ${
-                      activeLabel === id
-                        ? 'border-white text-slate-950 font-bold shadow-xs'
-                        : 'border-transparent text-[#8496AC] hover:text-white bg-[#080B12]'
-                    }`}
-                    style={{
-                      backgroundColor: activeLabel === id ? color : undefined,
-                    }}
-                    title={desc}
-                  >
-                    <span 
-                      className="w-1.5 h-1.5 rounded-full inline-block"
-                      style={{ backgroundColor: activeLabel === id ? '#000' : color }}
+                  {/* Viewer content */}
+                  <div className={cn("relative flex-1 w-full min-h-0", !isMain && "pointer-events-none")}>
+                    <OrthogonalSliceViewer
+                      plane="axial"
+                      title="Axial (Z)"
+                      patientId={selectedPatientId}
+                      sliceIndex={axialSlice}
+                      totalSlices={dimensions.axial}
+                      modality={activeMriModality}
+                      segSource={segSource}
+                      confidenceThreshold={confidenceThreshold}
+                      subregions={subregions}
+                      onToggleSubregion={toggleSubregion}
+                      opacity={opacity}
+                      showOverlay={layers.tumor || layers.overlay}
+                      crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
+                      dimensions={dimensions}
+                      onSliceChange={setAxialSlice}
+                      onCoordinateClick={handleCoordinateClick}
+                      accentColor="teal"
+                      isMaximized={false}
+                      onToggleMaximize={() => setMaximizedViewer('axial')}
+                      isEditing={isEditing}
+                      brushMode={brushMode}
+                      activeLabel={activeLabel}
+                      brushRadius={brushRadius}
+                      onStrokeComplete={handleStrokeComplete}
+                      segTimestamp={segTimestamp}
+                      rotation={sliceRotation}
+                      brightness={sliceBrightness}
+                      contrast={sliceContrast}
+                      externalZoom={sliceZoom}
+                      externalPan={slicePan}
+                      showControls={isMain}
                     />
-                    <span className="text-[11px]">{name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+                  </div>
+                </div>
+              );
+            })()}
 
-            {/* Brush Radius Slider & Presets */}
-            <div className="flex items-center gap-2 pl-2 border-l border-[#1C2636] text-xs font-mono">
-              <span className="text-[#8496AC] text-[10px]">Radius: {brushRadius}px</span>
-              <input
-                type="range"
-                min="1"
-                max="25"
-                value={brushRadius}
-                onChange={(e) => setBrushRadius(Number(e.target.value))}
-                className="w-16 accent-[#4C8DFF] cursor-pointer"
-              />
-              <div className="flex items-center gap-0.5">
-                {[2, 4, 8, 16].map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setBrushRadius(r)}
-                    className={`px-1.5 py-0.2 rounded text-[10px] ${brushRadius === r ? 'bg-[#4C8DFF] text-white font-bold' : 'text-[#8496AC] hover:text-white bg-[#080B12]'}`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
+            {/* View 3: Coronal MRI */}
+            {(() => {
+              const isMain = viewLayout === 'coronal' || viewLayout === 'quad';
+              return (
+                <div
+                  key="coronal"
+                  style={{
+                    gridArea: getViewGridArea('coronal', viewLayout),
+                    transition: 'all 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  onClick={!isMain ? () => setViewLayout('coronal') : undefined}
+                  className={cn(
+                    "relative flex flex-col min-h-0 rounded-xl overflow-hidden border transition-all duration-200 select-none bg-[#060A12] medical-viewer-grid",
+                    isMain
+                      ? "border-[#111111] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+                      : "border-[#98D9CE]/60 hover:border-[#103B5C] hover:shadow-lg cursor-pointer group hover:-translate-y-0.5"
+                  )}
+                  title={!isMain ? "Click to promote Coronal MRI to Main Workspace" : undefined}
+                >
+                  {/* Header bar */}
+                  <div className={cn(
+                    "px-2.5 flex items-center justify-between shrink-0 z-20 backdrop-blur-sm border-b select-none",
+                    isMain
+                      ? "h-8 bg-[#101722]/95 border-[#1C2636]"
+                      : "h-7 bg-[#101722]/90 border-[#1C2636] group-hover:bg-[#151E2B]"
+                  )}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-[#35C6B0] animate-pulse shrink-0" />
+                      <span className="font-mono font-bold text-xs text-[#F4F7FC] truncate">
+                        {isMain ? `Coronal MRI (Y) • Frontal Slice ${coronalSlice + 1} / ${dimensions.coronal}` : 'Coronal MRI (Y)'}
+                      </span>
+                      {!isMain && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono">
+                          {coronalSlice + 1}/{dimensions.coronal}
+                        </span>
+                      )}
+                      {isMain && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono uppercase hidden sm:inline">
+                          MOD: {activeMriModality}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {!isMain ? (
+                        <div className="flex items-center gap-1 text-[#98D9CE] group-hover:text-white transition-colors">
+                          <span className="text-[9px] font-mono uppercase tracking-wider hidden sm:inline opacity-0 group-hover:opacity-100 transition-opacity">
+                            Swap
+                          </span>
+                          <ArrowUpDown className="w-3.5 h-3.5" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setMaximizedViewer('coronal')}
+                            className="p-1 rounded text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors cursor-pointer"
+                            title="Maximize Whole Screen"
+                            aria-label="Maximize Coronal View"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Viewer content */}
+                  <div className={cn("relative flex-1 w-full min-h-0", !isMain && "pointer-events-none")}>
+                    <OrthogonalSliceViewer
+                      plane="coronal"
+                      title="Coronal (Y)"
+                      patientId={selectedPatientId}
+                      sliceIndex={coronalSlice}
+                      totalSlices={dimensions.coronal}
+                      modality={activeMriModality}
+                      segSource={segSource}
+                      confidenceThreshold={confidenceThreshold}
+                      subregions={subregions}
+                      onToggleSubregion={toggleSubregion}
+                      opacity={opacity}
+                      showOverlay={layers.tumor || layers.overlay}
+                      crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
+                      dimensions={dimensions}
+                      onSliceChange={setCoronalSlice}
+                      onCoordinateClick={handleCoordinateClick}
+                      accentColor="cyan"
+                      isMaximized={false}
+                      onToggleMaximize={() => setMaximizedViewer('coronal')}
+                      isEditing={isEditing}
+                      brushMode={brushMode}
+                      activeLabel={activeLabel}
+                      brushRadius={brushRadius}
+                      onStrokeComplete={handleStrokeComplete}
+                      segTimestamp={segTimestamp}
+                      rotation={sliceRotation}
+                      brightness={sliceBrightness}
+                      contrast={sliceContrast}
+                      externalZoom={sliceZoom}
+                      externalPan={slicePan}
+                      showControls={isMain}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* View 4: Sagittal MRI */}
+            {(() => {
+              const isMain = viewLayout === 'sagittal' || viewLayout === 'quad';
+              return (
+                <div
+                  key="sagittal"
+                  style={{
+                    gridArea: getViewGridArea('sagittal', viewLayout),
+                    transition: 'all 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  onClick={!isMain ? () => setViewLayout('sagittal') : undefined}
+                  className={cn(
+                    "relative flex flex-col min-h-0 rounded-xl overflow-hidden border transition-all duration-200 select-none bg-[#060A12] medical-viewer-grid",
+                    isMain
+                      ? "border-[#111111] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+                      : "border-[#98D9CE]/60 hover:border-[#103B5C] hover:shadow-lg cursor-pointer group hover:-translate-y-0.5"
+                  )}
+                  title={!isMain ? "Click to promote Sagittal MRI to Main Workspace" : undefined}
+                >
+                  {/* Header bar */}
+                  <div className={cn(
+                    "px-2.5 flex items-center justify-between shrink-0 z-20 backdrop-blur-sm border-b select-none",
+                    isMain
+                      ? "h-8 bg-[#101722]/95 border-[#1C2636]"
+                      : "h-7 bg-[#101722]/90 border-[#1C2636] group-hover:bg-[#151E2B]"
+                  )}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse shrink-0" />
+                      <span className="font-mono font-bold text-xs text-[#F4F7FC] truncate">
+                        {isMain ? `Sagittal MRI (X) • Lateral Slice ${sagittalSlice + 1} / ${dimensions.sagittal}` : 'Sagittal MRI (X)'}
+                      </span>
+                      {!isMain && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono">
+                          {sagittalSlice + 1}/{dimensions.sagittal}
+                        </span>
+                      )}
+                      {isMain && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono uppercase hidden sm:inline">
+                          MOD: {activeMriModality}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {!isMain ? (
+                        <div className="flex items-center gap-1 text-[#98D9CE] group-hover:text-white transition-colors">
+                          <span className="text-[9px] font-mono uppercase tracking-wider hidden sm:inline opacity-0 group-hover:opacity-100 transition-opacity">
+                            Swap
+                          </span>
+                          <ArrowUpDown className="w-3.5 h-3.5" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setMaximizedViewer('sagittal')}
+                            className="p-1 rounded text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#151E2B] transition-colors cursor-pointer"
+                            title="Maximize Whole Screen"
+                            aria-label="Maximize Sagittal View"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Viewer content */}
+                  <div className={cn("relative flex-1 w-full min-h-0", !isMain && "pointer-events-none")}>
+                    <OrthogonalSliceViewer
+                      plane="sagittal"
+                      title="Sagittal (X)"
+                      patientId={selectedPatientId}
+                      sliceIndex={sagittalSlice}
+                      totalSlices={dimensions.sagittal}
+                      modality={activeMriModality}
+                      segSource={segSource}
+                      confidenceThreshold={confidenceThreshold}
+                      subregions={subregions}
+                      onToggleSubregion={toggleSubregion}
+                      opacity={opacity}
+                      showOverlay={layers.tumor || layers.overlay}
+                      crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
+                      dimensions={dimensions}
+                      onSliceChange={setSagittalSlice}
+                      onCoordinateClick={handleCoordinateClick}
+                      accentColor="blue"
+                      isMaximized={false}
+                      onToggleMaximize={() => setMaximizedViewer('sagittal')}
+                      isEditing={isEditing}
+                      brushMode={brushMode}
+                      activeLabel={activeLabel}
+                      brushRadius={brushRadius}
+                      onStrokeComplete={handleStrokeComplete}
+                      segTimestamp={segTimestamp}
+                      rotation={sliceRotation}
+                      brightness={sliceBrightness}
+                      contrast={sliceContrast}
+                      externalZoom={sliceZoom}
+                      externalPan={slicePan}
+                      showControls={isMain}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* RIGHT WORKSPACE (~28% width): Accordion 1 & Accordion 2 */}
+        <div className="w-full lg:w-[28%] xl:w-[27%] flex flex-col min-h-0 h-full overflow-y-auto no-scrollbar gap-2.5 shrink-0">
+          <WorkspaceAccordions
+            patients={patients}
+            selectedPatientId={selectedPatientId}
+            onSelectPatient={setSelectedPatientId}
+            currentResult={currentResult}
+            annotationRecord={annotationRecord}
+            activeMriModality={activeMriModality}
+            onSelectModality={setActiveMriModality}
+            availableModalities={availableModalities}
+            activeView={viewLayout}
+            onSelectView={setViewLayout}
+            segSource={segSource}
+            onSelectSegSource={setSegSource}
+            confidenceThreshold={confidenceThreshold}
+            onConfidenceChange={setConfidenceThreshold}
+            subregions={subregions}
+            onToggleSubregion={toggleSubregion}
+            layers={layers}
+            onToggleLayer={toggleLayer}
+            opacity={opacity}
+            onChangeOpacity={setOpacity}
+            brainAppearance={brainAppearance}
+            onChangeBrainAppearance={setBrainAppearance}
+            isEditing={isEditing}
+            onToggleEditing={() => setIsEditing((prev) => !prev)}
+            onReset={handleReset}
+            brushMode={brushMode}
+            setBrushMode={setBrushMode}
+            activeLabel={activeLabel}
+            setActiveLabel={setActiveLabel}
+            brushRadius={brushRadius}
+            setBrushRadius={setBrushRadius}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onClearEdits={handleClearEdits}
+            onOpenCompare={handleOpenCompare}
+            onOpenDraftModal={() => setShowDraftModal(true)}
+            onOpenSubmitModal={() => setShowSubmitModal(true)}
+            onRunPrediction={handleRunPrediction}
+            predicting={predicting}
+            axialSlice={axialSlice}
+            coronalSlice={coronalSlice}
+            sagittalSlice={sagittalSlice}
+            dimensions={dimensions}
+            onAxialChange={setAxialSlice}
+            onCoronalChange={setCoronalSlice}
+            onSagittalChange={setSagittalSlice}
+            activeAnalysisTab={activeAnalysisTab}
+            onActiveAnalysisTabChange={setActiveAnalysisTab}
+          />
+        </div>
+      </div>
+
+      {/* FULLSCREEN MAXIMIZED MODAL OVERLAY (With Volumetrics & Analysis Sidebar) */}
+      {maximizedViewer && (
+        <div 
+          ref={fullscreenContainerRef}
+          className="fixed inset-0 z-[100] bg-[#060A12] flex flex-col p-2.5 sm:p-3 overflow-hidden select-none animate-fadeIn"
+        >
+          {/* Fullscreen Top HUD */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#101722]/95 border border-[#1C2636] px-4 py-2 rounded-xl shadow-medical-lg backdrop-blur-md mb-2 shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#399DBA] animate-pulse" />
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#F4F7FC]">
+                {maximizedViewer === '3d' ? '3D BRAIN MODEL' : `${maximizedViewer.toUpperCase()} MRI VIEW`} • CASE: {selectedPatientId}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono uppercase hidden sm:inline">
+                MOD: {activeMriModality}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#151E2B] border border-[#243348] text-[#8496AC] font-mono uppercase hidden md:inline">
+                MASK: {segSource.replace('_', ' ')}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Exit Fullscreen */}
+              <button
+                type="button"
+                onClick={() => setMaximizedViewer(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono font-semibold transition-colors cursor-pointer"
+                title="Restore Normal View (Esc)"
+              >
+                <Minimize2 className="w-3.5 h-3.5 text-[#399DBA]" />
+                <span>Exit Fullscreen (Esc)</span>
+              </button>
             </div>
           </div>
 
-          {/* Right: Undo, Redo, Clear, Compare, Draft Save, Submit */}
-          <div className="flex items-center gap-1.5 text-xs font-mono">
-            {/* Undo */}
-            <button
-              onClick={handleUndo}
-              disabled={!annotationRecord?.edit_history?.length}
-              className="p-1 rounded bg-[#080B12] hover:bg-[#151E2B] border border-[#1C2636] text-[#F4F7FC] disabled:opacity-30 transition-colors"
-              title="Undo Last Stroke (Ctrl+Z)"
-            >
-              <Undo2 className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Redo */}
-            <button
-              onClick={handleRedo}
-              className="p-1 rounded bg-[#080B12] hover:bg-[#151E2B] border border-[#1C2636] text-[#F4F7FC] transition-colors"
-              title="Redo Stroke (Ctrl+Y)"
-            >
-              <Redo2 className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Clear All Human Edits */}
-            <button
-              onClick={handleClearEdits}
-              disabled={!annotationRecord?.edit_history?.length}
-              className="px-2 py-0.5 rounded bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 text-[10px] disabled:opacity-30 transition-colors"
-              title="Reset all edits"
-            >
-              Clear
-            </button>
-
-            {/* Compare Masks */}
-            <button
-              onClick={handleOpenCompare}
-              className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#080B12] hover:bg-[#151E2B] border border-[#4C8DFF]/40 text-[#4C8DFF] text-[10px] transition-colors"
-              title="Compare Original AI vs Corrected Mask"
-            >
-              <GitCompare className="w-3 h-3 text-[#4C8DFF]" />
-              <span>Compare</span>
-            </button>
-
-            {/* Save Draft */}
-            <button
-              onClick={() => setShowDraftModal(true)}
-              className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-950/40 hover:bg-purple-900/50 border border-purple-500/40 text-purple-300 text-[10px] transition-colors"
-            >
-              <Save className="w-3 h-3" />
-              <span>Save Draft</span>
-            </button>
-
-            {/* Confirm & Submit for Review */}
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              className="flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[10px] shadow-xs transition-colors"
-            >
-              <Send className="w-3 h-3" />
-              <span>Submit Review</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. CLINICAL WORKSPACE: MAXIMIZED 4-UP MPR VIEWPORTS (CENTER) + COMPACT RIGHT INSPECTOR */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-2.5 min-h-0 overflow-hidden">
-        
-        {/* CENTER VIEWPORT CANVAS (Fills maximum space) */}
-        <div className="flex-1 min-w-0 min-h-0 h-full flex flex-col overflow-hidden">
-          {viewLayout === 'quad' ? (
-            /* QUAD MPR VIEW: 2x2 Synchronized Workstation Grid (3D + Axial + Coronal + Sagittal) */
-            <div className="grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-2 h-full min-h-0">
-              {/* Viewport 1: 3D Anatomical Brain & Segmented Tumor */}
-              <div className="h-full min-h-0 overflow-hidden">
+          {/* Fullscreen Body Area: Main Viewer (left/fill) + Volumetrics (right) */}
+          <div className="flex-1 w-full h-full min-h-0 flex gap-2.5 overflow-hidden">
+            {/* Main Fullscreen Viewer */}
+            <div className="flex-1 h-full min-w-0 relative rounded-xl overflow-hidden border border-[#1C2636] shadow-medical-lg bg-[#060A12] medical-viewer-grid flex flex-col">
+              {maximizedViewer === '3d' && (
                 <MedicalViewer
                   viewMode="3d"
                   patientId={selectedPatientId}
                   segSource={segSource}
+                  confidenceThreshold={confidenceThreshold}
                   layers={layers}
                   opacity={opacity}
                   subregions={subregions}
                   brainAppearance={brainAppearance}
                   onBrainAppearanceChange={setBrainAppearance}
-                  onResetView={handleReset}
-                  isMaximized={false}
-                  onToggleMaximize={() => setMaximizedViewer('3d')}
+                  isMaximized={true}
+                  onToggleMaximize={() => setMaximizedViewer(null)}
                   viewerCommand={threeCommand}
                 />
-              </div>
-
-              {/* Viewport 2: Axial (Z) Plane */}
-              <div className="h-full min-h-0 overflow-hidden">
+              )}
+              {maximizedViewer === 'axial' && (
                 <OrthogonalSliceViewer
                   plane="axial"
-                  title="Axial (Z)"
+                  title="Axial Plane (Z)"
                   patientId={selectedPatientId}
                   sliceIndex={axialSlice}
                   totalSlices={dimensions.axial}
                   modality={activeMriModality}
                   segSource={segSource}
+                  confidenceThreshold={confidenceThreshold}
                   subregions={subregions}
                   onToggleSubregion={toggleSubregion}
                   opacity={opacity}
@@ -1393,8 +1537,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   onSliceChange={setAxialSlice}
                   onCoordinateClick={handleCoordinateClick}
                   accentColor="teal"
-                  isMaximized={false}
-                  onToggleMaximize={() => setMaximizedViewer('axial')}
+                  isMaximized={true}
+                  onToggleMaximize={() => setMaximizedViewer(null)}
                   isEditing={isEditing}
                   brushMode={brushMode}
                   activeLabel={activeLabel}
@@ -1406,19 +1550,19 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   contrast={sliceContrast}
                   externalZoom={sliceZoom}
                   externalPan={slicePan}
+                  showControls={true}
                 />
-              </div>
-
-              {/* Viewport 3: Coronal (Y) Plane */}
-              <div className="h-full min-h-0 overflow-hidden">
+              )}
+              {maximizedViewer === 'coronal' && (
                 <OrthogonalSliceViewer
                   plane="coronal"
-                  title="Coronal (Y)"
+                  title="Coronal Plane (Y)"
                   patientId={selectedPatientId}
                   sliceIndex={coronalSlice}
                   totalSlices={dimensions.coronal}
                   modality={activeMriModality}
                   segSource={segSource}
+                  confidenceThreshold={confidenceThreshold}
                   subregions={subregions}
                   onToggleSubregion={toggleSubregion}
                   opacity={opacity}
@@ -1428,8 +1572,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   onSliceChange={setCoronalSlice}
                   onCoordinateClick={handleCoordinateClick}
                   accentColor="cyan"
-                  isMaximized={false}
-                  onToggleMaximize={() => setMaximizedViewer('coronal')}
+                  isMaximized={true}
+                  onToggleMaximize={() => setMaximizedViewer(null)}
                   isEditing={isEditing}
                   brushMode={brushMode}
                   activeLabel={activeLabel}
@@ -1441,19 +1585,19 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   contrast={sliceContrast}
                   externalZoom={sliceZoom}
                   externalPan={slicePan}
+                  showControls={true}
                 />
-              </div>
-
-              {/* Viewport 4: Sagittal (X) Plane */}
-              <div className="h-full min-h-0 overflow-hidden">
+              )}
+              {maximizedViewer === 'sagittal' && (
                 <OrthogonalSliceViewer
                   plane="sagittal"
-                  title="Sagittal (X)"
+                  title="Sagittal Plane (X)"
                   patientId={selectedPatientId}
                   sliceIndex={sagittalSlice}
                   totalSlices={dimensions.sagittal}
                   modality={activeMriModality}
                   segSource={segSource}
+                  confidenceThreshold={confidenceThreshold}
                   subregions={subregions}
                   onToggleSubregion={toggleSubregion}
                   opacity={opacity}
@@ -1463,8 +1607,8 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   onSliceChange={setSagittalSlice}
                   onCoordinateClick={handleCoordinateClick}
                   accentColor="blue"
-                  isMaximized={false}
-                  onToggleMaximize={() => setMaximizedViewer('sagittal')}
+                  isMaximized={true}
+                  onToggleMaximize={() => setMaximizedViewer(null)}
                   isEditing={isEditing}
                   brushMode={brushMode}
                   activeLabel={activeLabel}
@@ -1476,559 +1620,96 @@ export default function ViewerPage({ currentResult, onNavigate }) {
                   contrast={sliceContrast}
                   externalZoom={sliceZoom}
                   externalPan={slicePan}
+                  showControls={true}
                 />
-              </div>
+              )}
             </div>
-          ) : viewLayout === '3d' ? (
-            <div className="h-full min-h-0 overflow-hidden">
-              <MedicalViewer
-                viewMode="3d"
+
+            {/* Right Side: Volumetrics & Analysis in Fullscreen (Always Visible - No Hide Option) */}
+            <div className="w-[340px] sm:w-[380px] lg:w-[410px] xl:w-[430px] h-full flex flex-col shrink-0 overflow-hidden animate-fadeIn">
+              <VolumetricsAnalysisPanel
                 patientId={selectedPatientId}
                 segSource={segSource}
+                confidenceThreshold={confidenceThreshold}
+                activeMriModality={activeMriModality}
+                axialSlice={axialSlice}
+                coronalSlice={coronalSlice}
+                sagittalSlice={sagittalSlice}
+                dimensions={dimensions}
+                onAxialChange={setAxialSlice}
+                onCoronalChange={setCoronalSlice}
+                onSagittalChange={setSagittalSlice}
+                subregions={subregions}
+                onToggleSubregion={toggleSubregion}
                 layers={layers}
+                onToggleLayer={toggleLayer}
                 opacity={opacity}
-                subregions={subregions}
-                brainAppearance={brainAppearance}
-                onBrainAppearanceChange={setBrainAppearance}
-                onResetView={handleReset}
-                isMaximized={false}
-                onToggleMaximize={() => setMaximizedViewer('3d')}
-                viewerCommand={threeCommand}
+                onChangeOpacity={setOpacity}
+                activeTab={activeAnalysisTab}
+                onTabChange={setActiveAnalysisTab}
+                isOpen={true}
+                isFullscreen={true}
               />
             </div>
-          ) : viewLayout === 'axial' ? (
-            <div className="h-full min-h-0 overflow-hidden">
-              <OrthogonalSliceViewer
-                plane="axial"
-                title="Axial (Z)"
-                patientId={selectedPatientId}
-                sliceIndex={axialSlice}
-                totalSlices={dimensions.axial}
-                modality={activeMriModality}
-                segSource={segSource}
-                subregions={subregions}
-                onToggleSubregion={toggleSubregion}
-                opacity={opacity}
-                showOverlay={layers.tumor || layers.overlay}
-                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
-                dimensions={dimensions}
-                onSliceChange={setAxialSlice}
-                onCoordinateClick={handleCoordinateClick}
-                accentColor="teal"
-                isMaximized={false}
-                onToggleMaximize={() => setMaximizedViewer('axial')}
-                isEditing={isEditing}
-                brushMode={brushMode}
-                activeLabel={activeLabel}
-                brushRadius={brushRadius}
-                onStrokeComplete={handleStrokeComplete}
-                segTimestamp={segTimestamp}
-                rotation={sliceRotation}
-                brightness={sliceBrightness}
-                contrast={sliceContrast}
-                externalZoom={sliceZoom}
-                externalPan={slicePan}
-              />
-            </div>
-          ) : viewLayout === 'coronal' ? (
-            <div className="h-full min-h-0 overflow-hidden">
-              <OrthogonalSliceViewer
-                plane="coronal"
-                title="Coronal (Y)"
-                patientId={selectedPatientId}
-                sliceIndex={coronalSlice}
-                totalSlices={dimensions.coronal}
-                modality={activeMriModality}
-                segSource={segSource}
-                subregions={subregions}
-                onToggleSubregion={toggleSubregion}
-                opacity={opacity}
-                showOverlay={layers.tumor || layers.overlay}
-                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
-                dimensions={dimensions}
-                onSliceChange={setCoronalSlice}
-                onCoordinateClick={handleCoordinateClick}
-                accentColor="cyan"
-                isMaximized={false}
-                onToggleMaximize={() => setMaximizedViewer('coronal')}
-                isEditing={isEditing}
-                brushMode={brushMode}
-                activeLabel={activeLabel}
-                brushRadius={brushRadius}
-                onStrokeComplete={handleStrokeComplete}
-                segTimestamp={segTimestamp}
-                rotation={sliceRotation}
-                brightness={sliceBrightness}
-                contrast={sliceContrast}
-                externalZoom={sliceZoom}
-                externalPan={slicePan}
-              />
-            </div>
-          ) : (
-            <div className="h-full min-h-0 overflow-hidden">
-              <OrthogonalSliceViewer
-                plane="sagittal"
-                title="Sagittal (X)"
-                patientId={selectedPatientId}
-                sliceIndex={sagittalSlice}
-                totalSlices={dimensions.sagittal}
-                modality={activeMriModality}
-                segSource={segSource}
-                subregions={subregions}
-                onToggleSubregion={toggleSubregion}
-                opacity={opacity}
-                showOverlay={layers.tumor || layers.overlay}
-                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
-                dimensions={dimensions}
-                onSliceChange={setSagittalSlice}
-                onCoordinateClick={handleCoordinateClick}
-                accentColor="blue"
-                isMaximized={false}
-                onToggleMaximize={() => setMaximizedViewer('sagittal')}
-                isEditing={isEditing}
-                brushMode={brushMode}
-                activeLabel={activeLabel}
-                brushRadius={brushRadius}
-                onStrokeComplete={handleStrokeComplete}
-                segTimestamp={segTimestamp}
-                rotation={sliceRotation}
-                brightness={sliceBrightness}
-                contrast={sliceContrast}
-                externalZoom={sliceZoom}
-                externalPan={slicePan}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT CLINICAL DIAGNOSTIC INSPECTOR (Toggleable, Compact, 3-Tab Architecture) */}
-        {inspectorOpen && (
-          <aside className="w-full lg:w-[310px] xl:w-[330px] shrink-0 bg-[#101722] border border-[#1C2636] rounded-xl p-3 flex flex-col justify-between space-y-3 overflow-y-auto overflow-x-hidden shadow-medical-sm animate-fadeIn">
-            <div className="space-y-3">
-              {/* Header Tabs: Volumetrics | Coordinates | Display Layers */}
-              <div className="flex items-center gap-0.5 p-0.5 bg-[#080B12] rounded-lg border border-[#1C2636] text-xs">
-                <button
-                  onClick={() => setActiveRightTab('burden')}
-                  className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
-                    activeRightTab === 'burden'
-                      ? 'bg-[#4C8DFF] text-white font-semibold shadow-xs'
-                      : 'text-[#8496AC] hover:text-[#F4F7FC]'
-                  }`}
-                >
-                  Volumetrics
-                </button>
-                <button
-                  onClick={() => setActiveRightTab('coords')}
-                  className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
-                    activeRightTab === 'coords'
-                      ? 'bg-[#4C8DFF] text-white font-semibold shadow-xs'
-                      : 'text-[#8496AC] hover:text-[#F4F7FC]'
-                  }`}
-                >
-                  Coords
-                </button>
-                <button
-                  onClick={() => setActiveRightTab('layers')}
-                  className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
-                    activeRightTab === 'layers'
-                      ? 'bg-[#4C8DFF] text-white font-semibold shadow-xs'
-                      : 'text-[#8496AC] hover:text-[#F4F7FC]'
-                  }`}
-                >
-                  Layers
-                </button>
-              </div>
-
-              {/* TAB 1: Volumetric Analysis Panel */}
-              {activeRightTab === 'burden' && (
-                <TumorBurdenPanel
-                  patientId={selectedPatientId}
-                  segSource={segSource}
-                  onSliceSelect={(sliceIdx) => setAxialSlice(sliceIdx)}
-                />
-              )}
-
-              {/* TAB 2: Slice Coordinates Stepper & Tumor Focus */}
-              {activeRightTab === 'coords' && (
-                <SliceCoordinatesPanel
-                  axialSlice={axialSlice}
-                  coronalSlice={coronalSlice}
-                  sagittalSlice={sagittalSlice}
-                  dimensions={dimensions}
-                  onAxialChange={setAxialSlice}
-                  onCoronalChange={setCoronalSlice}
-                  onSagittalChange={setSagittalSlice}
-                />
-              )}
-
-              {/* TAB 3: Layers, Opacity & 3D Shading Controls */}
-              {activeRightTab === 'layers' && (
-                <div className="space-y-3 text-xs">
-                  {/* Segmentation Overlays */}
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#8496AC] font-semibold block">
-                      Segmentation Layers
-                    </span>
-                    {[
-                      { key: 'wt', label: 'Whole Tumor (WT)', color: '#EAB308', desc: 'Labels {1, 2, 3}' },
-                      { key: 'tc', label: 'Tumor Core (TC)', color: '#F43F5E', desc: 'Labels {1, 3}' },
-                      { key: 'et', label: 'Enhancing Tumor (ET)', color: '#06B6D4', desc: 'Label {3}' },
-                    ].map(({ key, label, color, desc }) => (
-                      <label key={key} className="flex items-center justify-between p-2 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs cursor-pointer hover:bg-[#151E2B] transition-colors">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-2.5 h-2.5 rounded shrink-0 shadow-xs" style={{ backgroundColor: color }} />
-                          <div className="min-w-0">
-                            <span className="text-[#F4F7FC] font-medium block truncate">{label}</span>
-                            <span className="text-[10px] text-[#8496AC] font-mono">{desc}</span>
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={subregions[key]}
-                          onChange={() => toggleSubregion(key)}
-                          className="accent-[#4C8DFF] rounded cursor-pointer shrink-0"
-                        />
-                      </label>
-                    ))}
-                  </div>
-
-                  {/* MRI Background Toggle */}
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#8496AC] font-semibold block">
-                      Anatomy Background
-                    </span>
-                    <label className="flex items-center justify-between p-2 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs cursor-pointer hover:bg-[#151E2B] transition-colors">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded bg-slate-400 shrink-0" />
-                        <div>
-                          <span className="text-[#F4F7FC] font-medium block">MRI Anatomy</span>
-                          <span className="text-[10px] text-[#8496AC] font-mono">Atlas & Scan Background</span>
-                        </div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={layers.mri}
-                        onChange={() => setLayers(prev => ({ ...prev, mri: !prev.mri }))}
-                        className="accent-[#4C8DFF] rounded cursor-pointer shrink-0"
-                      />
-                    </label>
-                  </div>
-
-                  {/* Opacity Slider */}
-                  <div className="space-y-1.5 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs">
-                    <div className="flex items-center justify-between text-[#8496AC] font-mono">
-                      <span>Segmentation Opacity</span>
-                      <span className="text-[#F4F7FC] font-bold">{Math.round(opacity * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="1.0"
-                      step="0.05"
-                      value={opacity}
-                      onChange={(e) => setOpacity(parseFloat(e.target.value))}
-                      className="w-full accent-[#4C8DFF] cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Brain Appearance Selector */}
-                  <div className="space-y-1.5 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-xs relative" ref={appearanceDropdownRef}>
-                    <span className="text-[11px] text-[#8496AC] font-mono block">3D Brain Appearance:</span>
-                    
-                    <button
-                      type="button"
-                      onClick={toggleAppearanceDropdown}
-                      className="w-full flex items-center justify-between gap-2 bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] hover:border-[#4C8DFF] text-[#F4F7FC] text-xs font-mono rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#4C8DFF] transition-colors shadow-xs"
-                      aria-haspopup="listbox"
-                      aria-expanded={appearanceDropdownState === 'open'}
-                    >
-                      {(() => {
-                        const curOpt = BRAIN_APPEARANCE_OPTIONS.find(o => o.id === brainAppearance) || BRAIN_APPEARANCE_OPTIONS[0];
-                        return (
-                          <div className="flex items-center gap-1.5 truncate min-w-0">
-                            <span className="font-semibold truncate">{curOpt.name}</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30 shrink-0">
-                              {curOpt.badge}
-                            </span>
-                          </div>
-                        );
-                      })()}
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 text-[#8496AC] transition-transform duration-200 shrink-0 ${
-                          appearanceDropdownState === 'open' ? 'rotate-180 text-[#4C8DFF]' : ''
-                        }`}
-                      />
-                    </button>
-
-                    {/* Popover Dropdown */}
-                    {appearanceDropdownState !== 'closed' && (
-                      <div 
-                        className={`absolute bottom-full left-0 mb-2 z-[100] w-full bg-[#151E2B] border border-[#1C2636] rounded-xl shadow-medical-lg p-2 ring-1 ring-[#4C8DFF]/30 text-xs font-mono space-y-1 ${
-                          appearanceDropdownState === 'closing' ? 'animate-dropdown-exit' : 'animate-dropdown-up'
-                        }`}
-                      >
-                        <div className="px-2.5 py-1.5 rounded-lg bg-[#101722] border border-[#1C2636] flex items-center justify-between text-[11px] font-bold text-[#F4F7FC] mb-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#4C8DFF] animate-pulse" />
-                            <span>3D Shading Mode</span>
-                          </div>
-                          <span className="text-[#4C8DFF] text-[10px]">{BRAIN_APPEARANCE_OPTIONS.length} modes</span>
-                        </div>
-
-                        {BRAIN_APPEARANCE_OPTIONS.map((opt) => {
-                          const isSelected = brainAppearance === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => {
-                                setBrainAppearance(opt.id);
-                                closeAppearanceDropdown();
-                              }}
-                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
-                                isSelected
-                                  ? 'bg-[#4C8DFF]/15 text-[#4C8DFF] font-bold border border-[#4C8DFF]/40'
-                                  : 'text-[#F4F7FC] hover:bg-[#1C2636] border border-transparent'
-                              }`}
-                            >
-                              <div className="min-w-0">
-                                <span className="block font-semibold truncate text-xs">{opt.name}</span>
-                                <span className="text-[10px] text-[#8496AC] block">{opt.badge}</span>
-                              </div>
-                              {isSelected && (
-                                <Check className="w-4 h-4 text-[#4C8DFF] shrink-0 ml-1.5" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Run Prediction / Pipeline Trigger */}
-            <div className="pt-2 border-t border-[#1C2636]">
-              <button
-                onClick={handleRunPrediction}
-                disabled={predicting}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[#4C8DFF] hover:bg-[#3B7BE8] text-white font-semibold text-xs transition-colors shadow-medical-sm disabled:opacity-50 cursor-pointer"
-              >
-                {predicting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Segmenting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Re-run UNETR Model</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </aside>
-        )}
-      </div>
-
-      {/* FULLSCREEN MAXIMIZED MODAL OVERLAY */}
-      {maximizedViewer && (
-        <div className="fixed inset-0 z-50 bg-[#080B12] flex flex-col p-2.5 sm:p-3 overflow-hidden select-none animate-fadeIn">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#101722]/95 border border-[#1C2636] px-4 py-2 rounded-xl shadow-medical-lg backdrop-blur-md mb-2 shrink-0">
-            <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#4C8DFF] animate-pulse" />
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#F4F7FC]">
-                {maximizedViewer.toUpperCase()} VIEW • CASE: {selectedPatientId}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setMaximizedViewer(null)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151E2B] hover:bg-[#1C2636] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono font-semibold transition-colors"
-              >
-                <Minimize2 className="w-3.5 h-3.5 text-[#4C8DFF]" />
-                <span>Exit Fullscreen (Esc)</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 w-full h-full min-h-0 relative rounded-xl overflow-hidden border border-[#1C2636] shadow-medical-lg bg-[#080B12]">
-            {maximizedViewer === '3d' && (
-              <MedicalViewer
-                viewMode="3d"
-                patientId={selectedPatientId}
-                segSource={segSource}
-                layers={layers}
-                opacity={opacity}
-                subregions={subregions}
-                brainAppearance={brainAppearance}
-                onBrainAppearanceChange={setBrainAppearance}
-                onResetView={handleReset}
-                isMaximized={true}
-                onToggleMaximize={() => setMaximizedViewer(null)}
-                viewerCommand={threeCommand}
-              />
-            )}
-            {maximizedViewer === 'axial' && (
-              <OrthogonalSliceViewer
-                plane="axial"
-                title="Axial Plane (Z)"
-                patientId={selectedPatientId}
-                sliceIndex={axialSlice}
-                totalSlices={dimensions.axial}
-                modality={activeMriModality}
-                segSource={segSource}
-                subregions={subregions}
-                onToggleSubregion={toggleSubregion}
-                opacity={opacity}
-                showOverlay={layers.tumor || layers.overlay}
-                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
-                dimensions={dimensions}
-                onSliceChange={setAxialSlice}
-                onCoordinateClick={handleCoordinateClick}
-                accentColor="teal"
-                isMaximized={true}
-                onToggleMaximize={() => setMaximizedViewer(null)}
-                isEditing={isEditing}
-                brushMode={brushMode}
-                activeLabel={activeLabel}
-                brushRadius={brushRadius}
-                onStrokeComplete={handleStrokeComplete}
-                segTimestamp={segTimestamp}
-                rotation={sliceRotation}
-                brightness={sliceBrightness}
-                contrast={sliceContrast}
-                externalZoom={sliceZoom}
-                externalPan={slicePan}
-              />
-            )}
-            {maximizedViewer === 'coronal' && (
-              <OrthogonalSliceViewer
-                plane="coronal"
-                title="Coronal Plane (Y)"
-                patientId={selectedPatientId}
-                sliceIndex={coronalSlice}
-                totalSlices={dimensions.coronal}
-                modality={activeMriModality}
-                segSource={segSource}
-                subregions={subregions}
-                onToggleSubregion={toggleSubregion}
-                opacity={opacity}
-                showOverlay={layers.tumor || layers.overlay}
-                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
-                dimensions={dimensions}
-                onSliceChange={setCoronalSlice}
-                onCoordinateClick={handleCoordinateClick}
-                accentColor="cyan"
-                isMaximized={true}
-                onToggleMaximize={() => setMaximizedViewer(null)}
-                isEditing={isEditing}
-                brushMode={brushMode}
-                activeLabel={activeLabel}
-                brushRadius={brushRadius}
-                onStrokeComplete={handleStrokeComplete}
-                segTimestamp={segTimestamp}
-                rotation={sliceRotation}
-                brightness={sliceBrightness}
-                contrast={sliceContrast}
-                externalZoom={sliceZoom}
-                externalPan={slicePan}
-              />
-            )}
-            {maximizedViewer === 'sagittal' && (
-              <OrthogonalSliceViewer
-                plane="sagittal"
-                title="Sagittal Plane (X)"
-                patientId={selectedPatientId}
-                sliceIndex={sagittalSlice}
-                totalSlices={dimensions.sagittal}
-                modality={activeMriModality}
-                segSource={segSource}
-                subregions={subregions}
-                onToggleSubregion={toggleSubregion}
-                opacity={opacity}
-                showOverlay={layers.tumor || layers.overlay}
-                crosshair={{ x: sagittalSlice, y: coronalSlice, z: axialSlice }}
-                dimensions={dimensions}
-                onSliceChange={setSagittalSlice}
-                onCoordinateClick={handleCoordinateClick}
-                accentColor="blue"
-                isMaximized={true}
-                onToggleMaximize={() => setMaximizedViewer(null)}
-                isEditing={isEditing}
-                brushMode={brushMode}
-                activeLabel={activeLabel}
-                brushRadius={brushRadius}
-                onStrokeComplete={handleStrokeComplete}
-                segTimestamp={segTimestamp}
-                rotation={sliceRotation}
-                brightness={sliceBrightness}
-                contrast={sliceContrast}
-                externalZoom={sliceZoom}
-                externalPan={slicePan}
-              />
-            )}
           </div>
         </div>
       )}
 
       {/* MODAL 1: MASK COMPARISON MODAL (AI Prediction vs Corrected) */}
       {showCompareModal && compareData && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[#101722] border border-[#1C2636] rounded-2xl p-6 max-w-xl w-full shadow-medical-lg space-y-4 animate-modal-enter">
-            <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white border border-[#98D9CE]/60 rounded-2xl p-6 max-w-xl w-full shadow-xl space-y-4 animate-modal-enter">
+            <div className="flex items-center justify-between border-b border-[#98D9CE]/60 pb-3">
               <div className="flex items-center gap-2">
-                <GitCompare className="w-5 h-5 text-[#4C8DFF]" />
-                <h3 className="font-bold text-[#F4F7FC] text-base">Mask Comparison Analysis</h3>
+                <GitCompare className="w-5 h-5 text-[#103B5C]" />
+                <h3 className="font-bold text-[#103B5C] text-base">Mask Comparison Analysis</h3>
               </div>
               <button 
                 onClick={() => setShowCompareModal(false)}
-                className="text-[#8496AC] hover:text-[#F4F7FC]"
+                className="text-[#6B7280] hover:text-[#103B5C]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-[#8496AC]">
+              <p className="text-[#475569]">
                 Quantifying agreement between original UNETR model prediction and human clinical correction:
               </p>
 
               <div className="grid grid-cols-2 gap-3 font-mono">
-                <div className="p-3 rounded-lg bg-[#080B12] border border-[#1C2636]">
-                  <span className="text-[#8496AC] block text-[10px]">Overall Dice Agreement</span>
-                  <span className="text-lg font-bold text-[#4C8DFF]">
+                <div className="p-3 rounded-lg bg-[#F8FCFB] border border-[#98D9CE]/60">
+                  <span className="text-[#6B7280] block text-[10px] font-bold">Overall Dice Agreement</span>
+                  <span className="text-lg font-bold text-[#103B5C]">
                     {compareData.dice_agreement !== undefined ? (compareData.dice_agreement * 100).toFixed(1) + '%' : 'N/A'}
                   </span>
                 </div>
-                <div className="p-3 rounded-lg bg-[#080B12] border border-[#1C2636]">
-                  <span className="text-[#8496AC] block text-[10px]">Modified Voxels</span>
-                  <span className="text-lg font-bold text-[#F4F7FC]">
+                <div className="p-3 rounded-lg bg-[#F8FCFB] border border-[#98D9CE]/60">
+                  <span className="text-[#6B7280] block text-[10px] font-bold">Modified Voxels</span>
+                  <span className="text-lg font-bold text-[#111827]">
                     {compareData.voxels_changed || 0}
                   </span>
                 </div>
               </div>
 
               {compareData.volume_comparison && (
-                <div className="p-3 rounded-lg bg-[#080B12] border border-[#1C2636] space-y-2">
-                  <span className="font-semibold text-[#F4F7FC] block">Volume Deltas:</span>
+                <div className="p-3 rounded-lg bg-[#F8FCFB] border border-[#98D9CE]/60 space-y-2">
+                  <span className="font-bold text-[#103B5C] block">Volume Deltas:</span>
                   <div className="grid grid-cols-3 gap-2 font-mono text-[11px]">
                     <div>
-                      <span className="text-[#EAB308] block font-bold">WT (Whole Tumor)</span>
-                      <span className="text-[#8496AC]">Pred: {compareData.volume_comparison.WT?.original_cm3?.toFixed(1) || 0} cm³</span>
-                      <span className="text-white block font-semibold">Corr: {compareData.volume_comparison.WT?.corrected_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#B45309] block font-bold">WT (Whole Tumor)</span>
+                      <span className="text-[#6B7280]">Pred: {compareData.volume_comparison.WT?.original_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#111827] block font-bold">Corr: {compareData.volume_comparison.WT?.corrected_cm3?.toFixed(1) || 0} cm³</span>
                     </div>
                     <div>
-                      <span className="text-[#F43F5E] block font-bold">TC (Core)</span>
-                      <span className="text-[#8496AC]">Pred: {compareData.volume_comparison.TC?.original_cm3?.toFixed(1) || 0} cm³</span>
-                      <span className="text-white block font-semibold">Corr: {compareData.volume_comparison.TC?.corrected_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#DC2626] block font-bold">TC (Core)</span>
+                      <span className="text-[#6B7280]">Pred: {compareData.volume_comparison.TC?.original_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#111827] block font-bold">Corr: {compareData.volume_comparison.TC?.corrected_cm3?.toFixed(1) || 0} cm³</span>
                     </div>
                     <div>
-                      <span className="text-[#06B6D4] block font-bold">ET (Enhancing)</span>
-                      <span className="text-[#8496AC]">Pred: {compareData.volume_comparison.ET?.original_cm3?.toFixed(1) || 0} cm³</span>
-                      <span className="text-white block font-semibold">Corr: {compareData.volume_comparison.ET?.corrected_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#0891B2] block font-bold">ET (Enhancing)</span>
+                      <span className="text-[#6B7280]">Pred: {compareData.volume_comparison.ET?.original_cm3?.toFixed(1) || 0} cm³</span>
+                      <span className="text-[#111827] block font-bold">Corr: {compareData.volume_comparison.ET?.corrected_cm3?.toFixed(1) || 0} cm³</span>
                     </div>
                   </div>
                 </div>
@@ -2038,7 +1719,7 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setShowCompareModal(false)}
-                className="px-4 py-2 rounded-lg bg-[#4C8DFF] hover:bg-[#3B7BE8] text-white font-semibold text-xs shadow-medical-sm"
+                className="px-4 py-2 rounded-lg bg-[#399DBA] hover:bg-[#103B5C] hover:opacity-90 text-white font-bold text-xs shadow-sm"
               >
                 Close Comparison
               </button>
@@ -2049,29 +1730,29 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 2: SAVE DRAFT MODAL */}
       {showDraftModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[#101722] border border-purple-500/30 rounded-2xl p-6 max-w-md w-full shadow-medical-lg space-y-4 animate-modal-enter">
-            <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white border border-[#98D9CE]/60 rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4 animate-modal-enter">
+            <div className="flex items-center justify-between border-b border-[#98D9CE]/60 pb-3">
               <div className="flex items-center gap-2">
-                <Save className="w-5 h-5 text-purple-400" />
-                <h3 className="font-bold text-[#F4F7FC] text-base">Save Annotation Draft</h3>
+                <Save className="w-5 h-5 text-[#103B5C]" />
+                <h3 className="font-bold text-[#103B5C] text-base">Save Annotation Draft</h3>
               </div>
-              <button onClick={() => setShowDraftModal(false)} className="text-[#8496AC] hover:text-[#F4F7FC]">
+              <button onClick={() => setShowDraftModal(false)} className="text-[#6B7280] hover:text-[#103B5C]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-[#8496AC]">
+              <p className="text-[#475569]">
                 Save your in-progress voxel corrections without submitting to the training queue. You can resume editing later.
               </p>
               <div>
-                <label className="text-[#F4F7FC] font-semibold block mb-1">Clinical Notes (Optional):</label>
+                <label className="text-[#103B5C] font-bold block mb-1">Clinical Notes (Optional):</label>
                 <textarea
                   value={draftNotes}
                   onChange={(e) => setDraftNotes(e.target.value)}
                   placeholder="e.g., Extended enhancing tumor margin on axial slices 72-80..."
-                  className="w-full h-24 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono focus:outline-none focus:border-purple-400"
+                  className="w-full h-24 p-2.5 rounded-lg bg-[#F8FCFB] border border-[#98D9CE]/60 text-[#111827] text-xs font-mono focus:outline-none focus:border-[#399DBA]"
                 />
               </div>
             </div>
@@ -2079,14 +1760,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowDraftModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-[#1C2636] text-[#8496AC] text-xs hover:text-[#F4F7FC]"
+                className="px-3 py-1.5 rounded-lg border border-[#98D9CE]/60 text-[#475569] text-xs hover:bg-[#F8FCFB]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExecuteSaveDraft}
                 disabled={draftSaving}
-                className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-medical-sm"
+                className="px-4 py-1.5 rounded-lg bg-[#399DBA] hover:bg-[#103B5C] hover:opacity-90 text-white font-bold text-xs shadow-sm"
               >
                 {draftSaving ? 'Saving...' : 'Confirm Save Draft'}
               </button>
@@ -2097,33 +1778,33 @@ export default function ViewerPage({ currentResult, onNavigate }) {
 
       {/* MODAL 3: SUBMIT FOR REVIEW MODAL */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[#101722] border border-emerald-500/30 rounded-2xl p-6 max-w-md w-full shadow-medical-lg space-y-4 animate-modal-enter">
-            <div className="flex items-center justify-between border-b border-[#1C2636] pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white border border-[#98D9CE]/60 rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4 animate-modal-enter">
+            <div className="flex items-center justify-between border-b border-[#98D9CE]/60 pb-3">
               <div className="flex items-center gap-2">
-                <Send className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-bold text-[#F4F7FC] text-base">Submit for Clinical Review</h3>
+                <Send className="w-5 h-5 text-[#103B5C]" />
+                <h3 className="font-bold text-[#103B5C] text-base">Submit for Clinical Review</h3>
               </div>
-              <button onClick={() => setShowSubmitModal(false)} className="text-[#8496AC] hover:text-[#F4F7FC]">
+              <button onClick={() => setShowSubmitModal(false)} className="text-[#6B7280] hover:text-[#103B5C]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-emerald-200 space-y-1">
+              <div className="p-3 rounded-lg bg-[#EBF8F6] border border-[#98D9CE]/60 text-[#103B5C] space-y-1">
                 <span className="font-bold block">Human-in-the-Loop Protocol:</span>
-                <p>
+                <p className="text-[11px] text-[#103B5C]">
                   Submitting this correction marks it as <strong>Submitted for Review</strong>. A supervisory neuro-radiologist will review and approve the contour before it is admitted to the adaptive training dataset.
                 </p>
               </div>
 
               <div>
-                <label className="text-[#F4F7FC] font-semibold block mb-1">Radiologist Review Notes:</label>
+                <label className="text-[#103B5C] font-bold block mb-1">Radiologist Review Notes:</label>
                 <textarea
                   value={submitNotes}
                   onChange={(e) => setSubmitNotes(e.target.value)}
                   placeholder="e.g., Confirmed enhancing tumor boundary on T1ce; reduced necrotic over-segmentation on coronal views."
-                  className="w-full h-24 p-2.5 rounded-lg bg-[#080B12] border border-[#1C2636] text-[#F4F7FC] text-xs font-mono focus:outline-none focus:border-emerald-400"
+                  className="w-full h-24 p-2.5 rounded-lg bg-[#F8FCFB] border border-[#98D9CE]/60 text-[#111827] text-xs font-mono focus:outline-none focus:border-[#399DBA]"
                 />
               </div>
             </div>
@@ -2131,14 +1812,14 @@ export default function ViewerPage({ currentResult, onNavigate }) {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowSubmitModal(false)}
-                className="px-3 py-1.5 rounded-lg border border-[#1C2636] text-[#8496AC] text-xs hover:text-[#F4F7FC]"
+                className="px-3 py-1.5 rounded-lg border border-[#98D9CE]/60 text-[#475569] text-xs hover:bg-[#F8FCFB]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExecuteSubmitReview}
                 disabled={submitting}
-                className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-medical-sm"
+                className="px-4 py-1.5 rounded-lg bg-[#399DBA] hover:bg-[#103B5C] hover:opacity-90 text-white font-bold text-xs shadow-sm"
               >
                 {submitting ? 'Submitting...' : 'Confirm Submission'}
               </button>

@@ -3,6 +3,7 @@ Volume service for 3D Brain Tumor Segmentation MPR.
 Provides high-performance canonical RAS NIfTI slicing, volume caching,
 patient discovery, multi-modality alignment, and real-time BraTS segmentation overlay.
 """
+import os
 from collections import OrderedDict
 import io
 import logging
@@ -14,9 +15,9 @@ import nibabel as nib
 import numpy as np
 from PIL import Image
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", str(Path(__file__).resolve().parents[4])))
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = PROJECT_ROOT / "data" / "raw" / "BraTS2021" / "BraTS2021_Training_Data"
+DATA_DIR = Path(os.getenv("DATA_DIR", str(PROJECT_ROOT / "data" / "raw" / "BraTS2021" / "BraTS2021_Training_Data")))
 VAL_SPLIT_FILE = PROJECT_ROOT / "data" / "splits" / "val.txt"
 SESSIONS_DIR = PROJECT_ROOT / "neuroseg3d_sessions"
 SESSIONS_RUNTIME_DIR = BACKEND_DIR / "runtime" / "sessions"
@@ -111,12 +112,66 @@ class VolumeService:
         return None
 
     @classmethod
-    def get_volume_array(cls, subject_id: str, kind: str) -> Optional[np.ndarray]:
+    def filter_major_tumor_components(
+        cls,
+        mask: np.ndarray,
+        min_volume_voxels: int = 1000,
+        min_relative_ratio: float = 0.15,
+        max_components: int = 5
+    ) -> np.ndarray:
+        """
+        3D Connected-Component Analysis: Retains only the dominant/major high-volume tumor mass
+        and clinically meaningful secondary lesions (>= 15% of largest mass AND >= 1.0 cm³),
+        pruning away all small false fragments, floating particles, and isolated artifacts behind the brain.
+        """
+        import scipy.ndimage
+        wt_binary = (mask > 0)
+        total_wt_voxels = int(np.count_nonzero(wt_binary))
+        if total_wt_voxels == 0:
+            return mask
+
+        lbl, n_feats = scipy.ndimage.label(wt_binary)
+        if n_feats <= 1:
+            return mask
+
+        sizes = [(comp_id, int(np.count_nonzero(lbl == comp_id))) for comp_id in range(1, n_feats + 1)]
+        sizes.sort(key=lambda x: x[1], reverse=True)
+        max_voxels = sizes[0][1]
+
+        # Always keep the largest component (dominant tumor mass)
+        kept_ids = [sizes[0][0]]
+
+        # Keep additional components only if significant (>= 1000 voxels / 1.0 cm³ AND >= 15% of largest)
+        for comp_id, vox in sizes[1:max_components]:
+            if vox >= min_volume_voxels and (vox / max_voxels) >= min_relative_ratio:
+                kept_ids.append(comp_id)
+
+        keep_mask = np.isin(lbl, kept_ids)
+        return np.where(keep_mask, mask, 0).astype(mask.dtype)
+
+    @classmethod
+    def get_volume_array(
+        cls,
+        subject_id: str,
+        kind: str,
+        confidence_threshold: Optional[float] = None,
+        filter_major_only: bool = True
+    ) -> Optional[np.ndarray]:
         """
         Loads and caches canonical RAS volume in memory.
         kind: 'flair', 't1', 't1ce', 't2', 'seg', 'pred'
+        If kind == 'pred' and confidence_threshold is set (> 0.0), loads probabilities.nii.gz,
+        applies calibrated thresholding (P >= confidence_threshold), and filters out small false fragments.
         """
-        cache_key = (subject_id, kind.lower())
+        kind_clean = kind.lower()
+        if kind_clean in ["pred", "prediction"] and confidence_threshold is not None and confidence_threshold > 0.0:
+            cache_suffix = f"pred_conf_{confidence_threshold:.2f}"
+            if not filter_major_only:
+                cache_suffix += "_unfiltered_cc"
+            cache_key = (subject_id, cache_suffix)
+        else:
+            cache_key = (subject_id, kind_clean)
+
         with cls._cache_lock:
             if cache_key in cls._cache:
                 cls._cache.move_to_end(cache_key)
@@ -125,6 +180,45 @@ class VolumeService:
         subj_dir = cls._find_subject_dir(subject_id)
         if not subj_dir:
             return None
+
+        # Check for thresholded prediction using continuous probabilities
+        if kind_clean in ["pred", "prediction"] and confidence_threshold is not None and confidence_threshold > 0.0:
+            prob_cands = [
+                SESSIONS_RUNTIME_DIR / subject_id / "probabilities.nii.gz",
+                SESSIONS_DIR / subject_id / "probabilities.nii.gz",
+                subj_dir / "probabilities.nii.gz",
+                subj_dir / f"{subject_id}_probabilities.nii.gz",
+            ]
+            prob_path = next((p for p in prob_cands if p.exists()), None)
+            if prob_path:
+                try:
+                    nii = nib.load(str(prob_path))
+                    canonical = nib.as_closest_canonical(nii)
+                    prob_arr = canonical.get_fdata(dtype=np.float32)
+                    # Support both (X, Y, Z, 4) and (4, X, Y, Z)
+                    if prob_arr.ndim == 4 and prob_arr.shape[-1] == 4:
+                        p_tumor = prob_arr[..., 1] + prob_arr[..., 2] + prob_arr[..., 3]
+                        argmax = np.argmax(prob_arr, axis=-1).astype(np.uint8)
+                    elif prob_arr.ndim == 4 and prob_arr.shape[0] == 4:
+                        p_tumor = prob_arr[1] + prob_arr[2] + prob_arr[3]
+                        argmax = np.argmax(prob_arr, axis=0).astype(np.uint8)
+                    else:
+                        p_tumor = np.zeros(prob_arr.shape[:3], dtype=np.float32)
+                        argmax = np.zeros(prob_arr.shape[:3], dtype=np.uint8)
+
+                    filtered_arr = np.where(p_tumor >= confidence_threshold, argmax, 0).astype(np.float32)
+
+                    # Prune small false fragments, floating specks, and artifacts behind brain
+                    if filter_major_only:
+                        filtered_arr = cls.filter_major_tumor_components(filtered_arr)
+
+                    with cls._cache_lock:
+                        if len(cls._cache) >= cls._cache_max_size:
+                            cls._cache.popitem(last=False)
+                        cls._cache[cache_key] = filtered_arr
+                    return filtered_arr
+                except Exception as e:
+                    logger.error(f"Error computing thresholded prediction from {prob_path}: {e}")
 
         # Determine file path
         target_path: Optional[Path] = None
@@ -275,7 +369,8 @@ class VolumeService:
         show_tc: bool = True,
         show_et: bool = True,
         opacity: float = 0.75,
-        show_overlay: bool = True
+        show_overlay: bool = True,
+        confidence_threshold: Optional[float] = None
     ) -> bytes:
         """
         Renders an authentic, contrast-normalized 2D slice along the requested plane
@@ -312,7 +407,7 @@ class VolumeService:
         if seg_source in ["ground_truth", "gt"]:
             seg_vol = cls.get_volume_array(subject_id, "seg")
         elif seg_source in ["prediction", "pred"]:
-            seg_vol = cls.get_volume_array(subject_id, "pred")
+            seg_vol = cls.get_volume_array(subject_id, "pred", confidence_threshold=confidence_threshold)
         elif seg_source in ["corrected", "annotation"]:
             seg_vol = cls.get_volume_array(subject_id, "corrected")
         elif seg_source in ["original", "orig", "original_prediction"]:
@@ -407,16 +502,21 @@ class VolumeService:
         return buf.getvalue()
 
     @classmethod
+    @classmethod
     def extract_tumor_mesh(
         cls,
         subject_id: str,
-        seg_source: str = "ground_truth"
+        seg_source: str = "ground_truth",
+        confidence_threshold: Optional[float] = None
     ) -> Dict[str, Any]:
         """
-        Extracts 3D surface meshes (WT, TC, ET) from the real volumetric segmentation mask
-        using Marching Cubes, formatted and scaled for direct Three.js rendering.
+        Extracts authentic 3D surface meshes (WT, TC, ET) from the real volumetric segmentation mask
+        using smooth Marching Cubes, formatted and scaled for direct Three.js rendering.
+        Eliminates jagged voxel stepping via continuous Gaussian field smoothing and filters out
+        floating noise dust components.
         """
         import skimage.measure
+        from scipy.ndimage import label, gaussian_filter
 
         clean_id = subject_id.strip()
         
@@ -424,7 +524,7 @@ class VolumeService:
         if seg_source in ["ground_truth", "gt"]:
             seg_vol = cls.get_volume_array(clean_id, "seg")
         elif seg_source in ["prediction", "pred"]:
-            seg_vol = cls.get_volume_array(clean_id, "pred")
+            seg_vol = cls.get_volume_array(clean_id, "pred", confidence_threshold=confidence_threshold)
         elif seg_source in ["corrected", "annotation"]:
             seg_vol = cls.get_volume_array(clean_id, "corrected")
         elif seg_source in ["original", "orig"]:
@@ -436,6 +536,7 @@ class VolumeService:
             return {
                 "patient_id": clean_id,
                 "seg_source": seg_source,
+                "confidence_threshold": confidence_threshold,
                 "has_mesh": False,
                 "error": "Segmentation mask not available for this patient.",
                 "surfaces": {}
@@ -448,6 +549,17 @@ class VolumeService:
             "et": (seg_vol == 3) | (seg_vol == 4)
         }
 
+        total_wt_voxels = int(np.count_nonzero(masks["wt"]))
+        if total_wt_voxels == 0:
+            return {
+                "patient_id": clean_id,
+                "seg_source": seg_source,
+                "confidence_threshold": confidence_threshold,
+                "has_mesh": False,
+                "message": "No regions meet the current high-confidence display threshold.",
+                "surfaces": {}
+            }
+
         surfaces = {}
         step = 2  # Downsample 2x for fast marching cubes and lightweight mesh
         center = np.array([120.0, 120.0, 77.5], dtype=np.float32)
@@ -459,14 +571,29 @@ class VolumeService:
                 surfaces[key] = None
                 continue
 
-            sub_mask = mask[::step, ::step, ::step]
-            if np.count_nonzero(sub_mask) < 4:
+            # Connected component filtering to remove tiny detached noise specks (< 30 voxels)
+            lbl, n_feats = label(mask)
+            if n_feats > 1:
+                clean_mask = np.zeros_like(mask, dtype=bool)
+                for f_idx in range(1, n_feats + 1):
+                    comp_size = np.count_nonzero(lbl == f_idx)
+                    if comp_size >= 30:
+                        clean_mask |= (lbl == f_idx)
+                if not clean_mask.any():
+                    largest_comp = max(range(1, n_feats + 1), key=lambda i: np.count_nonzero(lbl == i))
+                    clean_mask = (lbl == largest_comp)
+                mask = clean_mask
+
+            sub_mask = mask[::step, ::step, ::step].astype(np.float32)
+            if np.count_nonzero(sub_mask > 0) < 4:
                 surfaces[key] = None
                 continue
 
             try:
+                # Mild Gaussian smoothing (sigma=0.6) removes voxel stepping without shrinking anatomical detail
+                smooth_field = gaussian_filter(sub_mask, sigma=0.6)
                 verts, faces, normals, _ = skimage.measure.marching_cubes(
-                    sub_mask,
+                    smooth_field,
                     level=0.5,
                     spacing=(step, step, step)
                 )
@@ -503,6 +630,7 @@ class VolumeService:
         return {
             "patient_id": clean_id,
             "seg_source": seg_source,
+            "confidence_threshold": confidence_threshold,
             "has_mesh": any(v is not None for v in surfaces.values()),
             "surfaces": surfaces
         }

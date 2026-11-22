@@ -1,0 +1,6 @@
+model_name,patient_count,WT_dice_mean,WT_dice_std,TC_dice_mean,TC_dice_std,ET_dice_mean,ET_dice_std,overall_mean_dice,WT_precision_mean,WT_recall_mean,WT_rel_vol_error_pct_mean,WT_hd95_mean,TC_hd95_mean,ET_hd95_mean,overall_mean_hd95
+Baseline UNETR,10,0.7525,0.1165,0.652,0.1889,0.6615,0.1741,0.6887,64.36,94.46,58.76,75.35,88.18,86.09,83.21
+Online Tokenizer,10,0.5324,0.1619,0.7022,0.1642,0.7454,0.1369,0.66,38.28,97.44,211.25,76.39,76.63,79.4,77.48
+Dense Predictor,10,0.4815,0.1542,0.6714,0.1856,0.6706,0.1706,0.6078,33.15,98.5,268.6,76.89,83.33,84.69,81.64
+Full MOD,10,0.618,0.1588,0.5867,0.186,0.5309,0.1632,0.5785,47.83,94.72,134.88,74.34,87.79,87.92,83.35
+Adaptive MOD,10,0.5139,0.1645,0.669,0.1886,0.6808,0.1705,0.6213,36.43,97.98,237.44,74.94,82.45,83.95,80.45

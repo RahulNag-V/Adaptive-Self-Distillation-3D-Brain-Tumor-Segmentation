@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Website-Wide Scroll Controller
+ * Neuro Resonence AI - Website-Wide Scroll Controller
  * Handles discrete stepping, cardinal top/bottom jumps, and continuous
  * requestAnimationFrame scrolling for the primary application content container.
  *

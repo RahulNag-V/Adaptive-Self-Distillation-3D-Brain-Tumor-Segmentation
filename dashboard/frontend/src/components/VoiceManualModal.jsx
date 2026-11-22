@@ -125,7 +125,7 @@ export default function VoiceManualModal({ isOpen, onClose }) {
                 </span>
               </h2>
               <p className="text-xs text-[#64748B]">
-                Natural-language hands-free voice control across the entire NeuroVision AI platform.
+                Natural-language hands-free voice control across the entire Neuro Resonence AI platform.
               </p>
             </div>
           </div>

@@ -1,0 +1,128 @@
+{
+  "manifest_name": "NeuroVision AI - Phase 7 Stage C Controlled Optimization Execution Manifest",
+  "protocol_version": "3.0",
+  "creation_timestamp": "2026-11-06T19:25:00Z",
+  "author": "Senior Medical AI Research Scientist & ML Systems Engineer",
+  "checkpoints": {
+    "baseline_unetr": {
+      "arm": "Arm 1",
+      "model_type": "MONAI UNETR (4-Channel)",
+      "checkpoint_path": "checkpoints/baseline/epoch_10.pth",
+      "file_size_bytes": 1226971717,
+      "sha256": "57C4250B0F3FCB0C93CCEF5B26E2A5D8775675E3DE810176AE272DF1D08CD0E6",
+      "status": "VERIFIED_ON_DISK"
+    },
+    "adaptive_mod": {
+      "arms": ["Arm 2", "Arm 3"],
+      "model_type": "Adaptive Self-Distillation Student UNETR (4-Channel)",
+      "checkpoint_path": "checkpoints/adaptive/best.pth",
+      "file_size_bytes": 1794254739,
+      "sha256": "B2F63BF5209DA7AD62D52A1234EE1BE0414D67119B6B5EEBF598FF992B22497E",
+      "status": "VERIFIED_ON_DISK"
+    }
+  },
+  "dataset_splits": {
+    "source_validation_file": "data/splits/val.txt",
+    "source_validation_sha256": "E728F824019285FC4516F5F1AF491CD1CE7A09BDB3F8A65BDDA92C323DCF2661",
+    "calibration_cohort": {
+      "count": 5,
+      "patient_ids": [
+        "BraTS2021_01024",
+        "BraTS2021_01052",
+        "BraTS2021_01072",
+        "BraTS2021_01047",
+        "BraTS2021_01063"
+      ],
+      "usage": "Exclusively for threshold search and objective optimization"
+    },
+    "locked_test_cohort": {
+      "count": 5,
+      "patient_ids": [
+        "BraTS2021_01046",
+        "BraTS2021_01058",
+        "BraTS2021_01069",
+        "BraTS2021_01026",
+        "BraTS2021_01045"
+      ],
+      "usage": "Single-pass evaluation after threshold is frozen",
+      "isolation_status": "LOCKED_AND_UNOBSERVED"
+    }
+  },
+  "candidate_thresholds": [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90],
+  "objective_function": {
+    "formula": "J(tau) = w_wt_dice * WT_Dice(tau) + w_wt_prec * WT_Prec(tau) + w_tc_dice * TC_Dice(tau) + w_et_dice * ET_Dice(tau) - lambda * MARE_WT(tau)",
+    "weights": {
+      "w_wt_dice": 0.40,
+      "w_wt_prec": 0.25,
+      "w_tc_dice": 0.15,
+      "w_et_dice": 0.10,
+      "lambda_mare": 0.10
+    },
+    "mare_definition": {
+      "formula": "MARE = mean(abs(V_pred - V_gt) / V_gt)",
+      "per_patient_safety_check": "if V_gt <= 0: raise ValueError('Ground-truth WT volume must be positive')",
+      "utility_format": "dimensionless decimal ratio (e.g. 0.2928)",
+      "reporting_format": "percentage (e.g. 29.28%)"
+    }
+  },
+  "tie_breaking_rules": {
+    "tier_1": "Higher calibration mean Whole Tumor Recall (WT_Recall)",
+    "tier_2": "Lower calibration Mean Absolute Relative Error (MARE_WT)",
+    "tier_3": "Lower numerical candidate threshold value (tau)"
+  },
+  "research_acceptance_criteria": {
+    "cohort_level": {
+      "wt_dice_mean_min": 0.7200,
+      "wt_precision_mean_min": 65.0,
+      "wt_recall_mean_min": 85.0,
+      "wt_mare_mean_max_pct": 50.0,
+      "tc_dice_mean_min": 0.6000,
+      "et_dice_mean_min": 0.6000
+    },
+    "individual_patient_level": {
+      "flag_wt_recall_below": 85.0,
+      "flag_tc_dice_below": 0.6000,
+      "flag_et_dice_below": 0.6000,
+      "flag_abs_volume_error_above_pct": 50.0,
+      "disqualification_wt_recall_below": 70.0,
+      "anti_masking_rule": "Cohort averages must never conceal individual patient failures; any flagged patient requires explicit case-level radiologic post-mortem"
+    }
+  },
+  "comparison_arms": {
+    "arm_1": {
+      "name": "Baseline UNETR",
+      "checkpoint": "checkpoints/baseline/epoch_10.pth",
+      "decision_rule": "default_argmax",
+      "threshold": null
+    },
+    "arm_2": {
+      "name": "Adaptive MOD Default",
+      "checkpoint": "checkpoints/adaptive/best.pth",
+      "decision_rule": "default_argmax",
+      "threshold": null
+    },
+    "arm_3": {
+      "name": "Adaptive MOD Calibrated",
+      "checkpoint": "checkpoints/adaptive/best.pth",
+      "decision_rule": "calibrated_threshold",
+      "threshold": "selected_tau_star"
+    }
+  },
+  "execution_sequence_and_isolation": [
+    "Step 1: Checkpoint SHA-256 pre-flight verification against this manifest.",
+    "Step 2: Run inference strictly on the 5 calibration patients using checkpoints/adaptive/best.pth.",
+    "Step 3: Sweep the 9 candidate thresholds on calibration softmax probabilities.",
+    "Step 4: Compute J(tau) and apply acceptance gating and tie-breaking to select optimal tau*.",
+    "Step 5: Cryptographically seal selected tau* into selected_threshold.json.",
+    "Step 6: Only after tau* is frozen, run single-pass evaluation on the 5 locked-test patients across Arms 1, 2, and 3.",
+    "Step 7: Compute per-patient metrics, MARE, cohort statistics, and individual-patient gating flags.",
+    "Step 8: Output locked_test_results.csv, statistical_tests.json, and individual_patient_audit.json."
+  ],
+  "governance_restrictions": {
+    "automatic_retraining": "PROHIBITED. If acceptance criteria fail, halt execution and produce a separate Retraining Proposal requiring explicit human approval.",
+    "production_modification": "PROHIBITED. Zero files in dashboard/backend, dashboard/frontend, or src/ may be modified during Stage C.",
+    "locked_test_modifications": "PROHIBITED. The locked-test split cannot be altered before or after observing outcomes.",
+    "candidate_threshold_modifications": "PROHIBITED. Only the 9 pre-registered thresholds may be evaluated."
+  }
+}
+

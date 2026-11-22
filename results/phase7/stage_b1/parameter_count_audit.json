@@ -1,0 +1,108 @@
+{
+  "finding": "Parameter discrepancy resolved between 94.7M (earlier estimate) vs 102.24M (exact measured count).",
+  "root_cause": "The 92.8M-94.7M figures in earlier frontend/backend mock tables originated from standard 1-channel UNETR (BTCV CT benchmark, in_channels=1, out_channels=1 = 92.80M parameters) plus heuristic head estimates. In this repository, UNETR is instantiated for 4-channel MRI (in_channels=4, out_channels=4), where the exact parameter count is 102,240,836 (102.24M parameters: 97.80M ViT encoder + 4.44M decoder). The student model loaded during inference has exactly 102,240,836 parameters across all five checkpoints.",
+  "exact_counts": {
+    "UNETR_4channel_total": 102240836,
+    "UNETR_ViT_encoder": 97796352,
+    "UNETR_decoder": 4444484,
+    "Dense_Predictor_head": 13189888,
+    "Training_state_parameters_adaptive": 217671560,
+    "Active_inference_parameters": 102240836
+  },
+  "per_checkpoint_audit": {
+    "baseline": {
+      "checkpoint_path": "checkpoints/baseline/epoch_10.pth",
+      "top_level_keys": [
+        "epoch",
+        "model_state_dict",
+        "optimizer_state_dict",
+        "train_loss",
+        "val_loss"
+      ],
+      "sub_dict_parameter_counts": {
+        "model_state_dict": 102240836
+      }
+    },
+    "online_tokenizer": {
+      "checkpoint_path": "checkpoints/online_tokenizer/epoch_10.pth",
+      "top_level_keys": [
+        "epoch",
+        "student_state_dict",
+        "teacher_state_dict",
+        "optimizer_state_dict",
+        "total_loss",
+        "segmentation_loss",
+        "online_tokenizer_loss",
+        "config"
+      ],
+      "sub_dict_parameter_counts": {
+        "student_state_dict": 102240836,
+        "teacher_state_dict": 102240836
+      }
+    },
+    "dense_predictor": {
+      "checkpoint_path": "checkpoints/dense_predictor/epoch_10.pth",
+      "top_level_keys": [
+        "epoch",
+        "student_state_dict",
+        "dense_predictor_state_dict",
+        "optimizer_state_dict",
+        "total_loss",
+        "segmentation_loss",
+        "dense_predictor_loss",
+        "lambda_dp",
+        "config"
+      ],
+      "sub_dict_parameter_counts": {
+        "student_state_dict": 102240836,
+        "dense_predictor_state_dict": 13189888
+      }
+    },
+    "mod": {
+      "checkpoint_path": "checkpoints/mod/epoch_09.pth",
+      "top_level_keys": [
+        "epoch",
+        "student_state_dict",
+        "teacher_state_dict",
+        "dense_predictor_state_dict",
+        "optimizer_state_dict",
+        "best_loss"
+      ],
+      "sub_dict_parameter_counts": {
+        "student_state_dict": 102240836,
+        "teacher_state_dict": 102240836,
+        "dense_predictor_state_dict": 13189888
+      }
+    },
+    "adaptive": {
+      "checkpoint_path": "checkpoints/adaptive/best.pth",
+      "top_level_keys": [
+        "epoch",
+        "student_state_dict",
+        "teacher_state_dict",
+        "dense_predictor_state_dict",
+        "optimizer_state_dict",
+        "losses",
+        "segmentation_loss",
+        "online_tokenizer_loss",
+        "dense_predictor_loss",
+        "mod_loss",
+        "total_loss",
+        "lambda_ot",
+        "lambda_dp",
+        "lambda_ot_before",
+        "lambda_dp_before",
+        "lambda_ot_after",
+        "lambda_dp_after",
+        "val_summary",
+        "configuration",
+        "is_best"
+      ],
+      "sub_dict_parameter_counts": {
+        "student_state_dict": 102240836,
+        "teacher_state_dict": 102240836,
+        "dense_predictor_state_dict": 13189888
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@ import { Sliders } from 'lucide-react';
 /**
  * SliceCoordinatesPanel
  * Precision multi-planar slice coordinate navigation panel.
- * Styled for the unified clinical dark workstation palette (#080B12 / #101722 / #151E2B / #1C2636).
+ * Theme: Neuro Resonence AI Brand Palette (Deep Blue #103B5C, Primary Brand Blue #399DBA, Ocean Blue #1B6284, Soft Mint #98D9CE)
  */
 export default function SliceCoordinatesPanel({
   axialSlice = 75,
@@ -30,9 +30,9 @@ export default function SliceCoordinatesPanel({
       label: 'Axial (Z)',
       value: safeAxial,
       total: totalAxial,
-      dotColor: 'bg-[#35B982]',
-      textAccent: 'text-[#35B982]',
-      accentClass: 'accent-[#35B982]',
+      dotColor: 'bg-[#103B5C]',
+      textAccent: 'text-[#103B5C]',
+      accentClass: 'accent-[#103B5C]',
       onChange: onAxialChange,
     },
     {
@@ -40,9 +40,9 @@ export default function SliceCoordinatesPanel({
       label: 'Coronal (Y)',
       value: safeCoronal,
       total: totalCoronal,
-      dotColor: 'bg-[#35C6B0]',
-      textAccent: 'text-[#35C6B0]',
-      accentClass: 'accent-[#35C6B0]',
+      dotColor: 'bg-[#399DBA]',
+      textAccent: 'text-[#103B5C]',
+      accentClass: 'accent-[#399DBA]',
       onChange: onCoronalChange,
     },
     {
@@ -50,35 +50,35 @@ export default function SliceCoordinatesPanel({
       label: 'Sagittal (X)',
       value: safeSagittal,
       total: totalSagittal,
-      dotColor: 'bg-[#4C8DFF]',
-      textAccent: 'text-[#4C8DFF]',
-      accentClass: 'accent-[#4C8DFF]',
+      dotColor: 'bg-[#1B6284]',
+      textAccent: 'text-[#103B5C]',
+      accentClass: 'accent-[#1B6284]',
       onChange: onSagittalChange,
     },
   ];
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between pb-1.5 border-b border-[#1C2636]">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-[#8496AC] font-semibold">
+      <div className="flex items-center justify-between pb-1.5 border-b border-[#111111]/15">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-[#103B5C] font-bold">
           Spatial Coordinates
         </span>
-        <Sliders className="w-3.5 h-3.5 text-[#4C8DFF]" />
+        <Sliders className="w-3.5 h-3.5 text-[#399DBA]" />
       </div>
 
       <div className="space-y-1.5">
         {planes.map(({ id, label, value, total, dotColor, textAccent, accentClass, onChange }) => (
           <div
             key={id}
-            className="p-2 rounded-lg bg-[#151E2B] border border-[#1C2636] hover:border-[#243348] transition-colors space-y-1 shadow-clinical-sm"
+            className="p-2.5 rounded-lg bg-transparent border border-[#111111]/25 hover:border-[#103B5C] transition-colors space-y-1.5 shadow-xs"
           >
             <div className="flex items-center justify-between text-xs">
-              <span className="text-[#F4F7FC] font-medium flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+              <span className="text-[#111827] font-bold flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${dotColor}`} />
                 <span className="text-[11px] font-sans">{label}</span>
               </span>
               <span className={`font-mono tabular-nums text-[11px] font-bold ${textAccent}`}>
-                {value + 1} <span className="text-[#8496AC]/70 font-normal">/ {total}</span>
+                {value + 1} <span className="text-[#6B7280] font-normal">/ {total}</span>
               </span>
             </div>
             <input
@@ -88,7 +88,7 @@ export default function SliceCoordinatesPanel({
               value={value}
               disabled={disabled}
               onChange={(e) => onChange && onChange(parseInt(e.target.value, 10))}
-              className={`w-full ${accentClass} cursor-pointer h-1.5 bg-[#101722] rounded-lg disabled:opacity-40 disabled:cursor-not-allowed`}
+              className={`w-full ${accentClass} cursor-pointer h-1.5 bg-black/10 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed`}
               aria-label={`${label} Coordinate`}
             />
           </div>

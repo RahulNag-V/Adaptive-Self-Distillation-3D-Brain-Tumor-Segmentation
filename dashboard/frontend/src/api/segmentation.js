@@ -121,6 +121,7 @@ export function getSliceUrl({
   opacity = 0.75,
   showOverlay = true,
   timestamp = null,
+  confidenceThreshold = null,
 }) {
   const params = new URLSearchParams({
     patient_id: patientId,
@@ -134,6 +135,9 @@ export function getSliceUrl({
     opacity: String(opacity),
     show_overlay: String(showOverlay),
   });
+  if (confidenceThreshold !== null && confidenceThreshold !== undefined) {
+    params.append('confidence_threshold', String(confidenceThreshold));
+  }
   if (timestamp) {
     params.append('t', String(timestamp));
   }
@@ -152,18 +156,26 @@ export async function runPatientPrediction(patientId) {
 
 /**
  * Fetches quantitative tumor burden, affected slice extents, relative intracranial percentage,
- * and experimental research categorization for a patient based on real MRI and segmentation masks.
- * GET /api/patients/{patient_id}/tumor-burden?seg_source={seg_source}
+ * 3D connected components, and experimental research categorization for a patient based on real MRI and segmentation masks.
+ * GET /api/patients/{patient_id}/tumor-burden?seg_source={seg_source}&confidence_threshold={confidenceThreshold}
  */
-export async function getPatientTumorBurden(patientId, segSource = 'ground_truth') {
-  return request(`/api/patients/${patientId}/tumor-burden?seg_source=${encodeURIComponent(segSource)}`);
+export async function getPatientTumorBurden(patientId, segSource = 'ground_truth', confidenceThreshold = null) {
+  let url = `/api/patients/${patientId}/tumor-burden?seg_source=${encodeURIComponent(segSource)}`;
+  if (confidenceThreshold !== null && confidenceThreshold !== undefined) {
+    url += `&confidence_threshold=${encodeURIComponent(confidenceThreshold)}`;
+  }
+  return request(url);
 }
 
 /**
  * Fetches authentic 3D surface meshes (WT, TC, ET) extracted from the real volumetric
  * segmentation mask using Marching Cubes, formatted and scaled for Three.js.
- * GET /api/patients/{patient_id}/mesh?seg_source={seg_source}
+ * GET /api/patients/{patient_id}/mesh?seg_source={seg_source}&confidence_threshold={confidenceThreshold}
  */
-export async function getPatientTumorMesh(patientId, segSource = 'ground_truth') {
-  return request(`/api/patients/${patientId}/mesh?seg_source=${encodeURIComponent(segSource)}`);
+export async function getPatientTumorMesh(patientId, segSource = 'ground_truth', confidenceThreshold = null) {
+  let url = `/api/patients/${patientId}/mesh?seg_source=${encodeURIComponent(segSource)}`;
+  if (confidenceThreshold !== null && confidenceThreshold !== undefined) {
+    url += `&confidence_threshold=${encodeURIComponent(confidenceThreshold)}`;
+  }
+  return request(url);
 }

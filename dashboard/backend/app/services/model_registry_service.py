@@ -5,6 +5,7 @@ Enforces non-regression acceptance criteria before allowing promotion to active 
 and preserves prior checkpoints for safe, instant rollback.
 """
 from pathlib import Path
+import os
 import json
 import logging
 import shutil
@@ -12,7 +13,7 @@ import time
 from typing import Dict, Any, List, Optional
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
-PROJECT_ROOT = BACKEND_DIR.parent
+PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", str(Path(__file__).resolve().parents[4])))
 
 from app.schemas.adaptive import ModelRegistryStatus
 

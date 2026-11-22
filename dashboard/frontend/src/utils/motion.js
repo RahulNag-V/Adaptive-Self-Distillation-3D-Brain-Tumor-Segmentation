@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Motion & Animation Design Engine
+ * Neuro Resonence AI - Motion & Animation Design Engine
  * Standardized GSAP configuration, ScrollTrigger registration, and reduced-motion guard.
  */
 

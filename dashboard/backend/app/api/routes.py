@@ -342,15 +342,16 @@ async def get_patient_info(patient_id: str):
 @router.get("/patients/{patient_id}/tumor-burden")
 async def get_patient_tumor_burden(
     patient_id: str,
-    seg_source: str = Query("ground_truth", description="ground_truth, prediction, or corrected")
+    seg_source: str = Query("ground_truth", description="ground_truth, prediction, or corrected"),
+    confidence_threshold: Optional[float] = Query(None, description="Calibrated confidence threshold e.g. 0.90")
 ):
     """
     Calculates quantitative tumor burden, affected slice extents, relative intracranial burden,
-    and experimental research categorization for a patient based on real MRI and segmentation masks.
+    3D connected components, and experimental research categorization for a patient based on real MRI and segmentation masks.
     """
     clean_id = sanitize_filename(patient_id)
     from app.services.tumor_burden_service import TumorBurdenService
-    result = TumorBurdenService.analyze_tumor_burden(clean_id, seg_source=seg_source)
+    result = TumorBurdenService.analyze_tumor_burden(clean_id, seg_source=seg_source, confidence_threshold=confidence_threshold)
     if not result.get("success", False):
         err = result.get("error", "")
         if "expired or is unavailable" in err or "could not be found" in err:
@@ -369,14 +370,15 @@ async def get_patient_tumor_burden(
 @router.get("/patients/{patient_id}/mesh")
 async def get_patient_tumor_mesh(
     patient_id: str,
-    seg_source: str = Query("ground_truth", description="ground_truth, prediction, or corrected")
+    seg_source: str = Query("ground_truth", description="ground_truth, prediction, or corrected"),
+    confidence_threshold: Optional[float] = Query(None, description="Calibrated confidence threshold e.g. 0.90")
 ):
     """
     Extracts authentic 3D surface meshes (WT, TC, ET) from the real volumetric segmentation mask
     using Marching Cubes, formatted and scaled for direct Three.js rendering.
     """
     clean_id = sanitize_filename(patient_id)
-    return VolumeService.extract_tumor_mesh(clean_id, seg_source=seg_source)
+    return VolumeService.extract_tumor_mesh(clean_id, seg_source=seg_source, confidence_threshold=confidence_threshold)
 
 
 @router.get("/volume/slice")
@@ -390,7 +392,8 @@ async def get_volume_slice(
     show_tc: bool = Query(True),
     show_et: bool = Query(True),
     opacity: float = Query(0.75),
-    show_overlay: bool = Query(True)
+    show_overlay: bool = Query(True),
+    confidence_threshold: Optional[float] = Query(None, description="Calibrated confidence threshold e.g. 0.90")
 ):
     """
     Renders an authentic 2D MRI slice along the requested anatomical plane
@@ -408,7 +411,8 @@ async def get_volume_slice(
             show_tc=show_tc,
             show_et=show_et,
             opacity=opacity,
-            show_overlay=show_overlay
+            show_overlay=show_overlay,
+            confidence_threshold=confidence_threshold
         )
         return Response(content=png_bytes, media_type="image/png")
     except ValueError as e:

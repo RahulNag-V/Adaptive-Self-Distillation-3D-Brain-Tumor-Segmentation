@@ -83,12 +83,13 @@ class TumorBurdenService:
     def analyze_tumor_burden(
         cls,
         subject_id: str,
-        seg_source: str = "ground_truth"
+        seg_source: str = "ground_truth",
+        confidence_threshold: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Analyzes actual patient MRI volume and corresponding segmentation mask.
         Computes physical volume, slice-wise peak area, anatomical extent,
-        relative intracranial volume burden, and research classification.
+        relative intracranial volume burden, 3D connected components, and research classification.
         """
         # 1. Distinguish between Session UUID and Dataset Patient ID
         is_session = is_valid_uuid(subject_id)
@@ -175,7 +176,33 @@ class TumorBurdenService:
             assessment_source_tag = "prediction"
 
         is_ground_truth = (seg_kind == "seg")
-        seg_vol = VolumeService.get_volume_array(subject_id, seg_kind)
+        pruned_fragments_count = 0
+        pruned_volume_cm3 = 0.0
+        major_regions_count = 1
+
+        if seg_kind == "pred":
+            seg_vol = VolumeService.get_volume_array(subject_id, "pred", confidence_threshold=confidence_threshold, filter_major_only=True)
+            raw_pred_vol = VolumeService.get_volume_array(subject_id, "pred", confidence_threshold=None)
+            unfiltered_wt_voxels = int(np.count_nonzero(raw_pred_vol > 0)) if raw_pred_vol is not None else None
+            unfiltered_wt_volume_cm3 = round(unfiltered_wt_voxels * voxel_vol_cm3, 3) if unfiltered_wt_voxels is not None else None
+
+            # Calculate false fragments removed by 3D connected-component analysis
+            if confidence_threshold is not None and confidence_threshold > 0:
+                unpruned_conf_vol = VolumeService.get_volume_array(subject_id, "pred", confidence_threshold=confidence_threshold, filter_major_only=False)
+                if unpruned_conf_vol is not None and seg_vol is not None:
+                    unpruned_voxels = int(np.count_nonzero(unpruned_conf_vol > 0))
+                    pruned_vox = max(0, unpruned_voxels - int(np.count_nonzero(seg_vol > 0)))
+                    pruned_volume_cm3 = round(pruned_vox * voxel_vol_cm3, 3)
+
+                    from scipy.ndimage import label as nd_label
+                    _, raw_cc_count = nd_label(unpruned_conf_vol > 0)
+                    _, kept_cc_count = nd_label(seg_vol > 0)
+                    pruned_fragments_count = max(0, raw_cc_count - kept_cc_count)
+                    major_regions_count = kept_cc_count
+        else:
+            seg_vol = VolumeService.get_volume_array(subject_id, seg_kind)
+            unfiltered_wt_voxels = None
+            unfiltered_wt_volume_cm3 = None
 
         has_mask = seg_vol is not None
         if not has_mask:
@@ -220,6 +247,33 @@ class TumorBurdenService:
         et_volume_cm3 = round(et_voxels * voxel_vol_cm3, 3)
         ed_volume_cm3 = round(ed_voxels * voxel_vol_cm3, 3)
         ncr_volume_cm3 = round(ncr_voxels * voxel_vol_cm3, 3)
+
+        # 3b. 3D Connected Component Analysis on Whole Tumor (WT)
+        from scipy.ndimage import label
+        labeled_cc, num_features = label(is_wt)
+        connected_components: List[Dict[str, Any]] = []
+        if num_features > 0:
+            for k in range(1, num_features + 1):
+                comp_vox = int(np.count_nonzero(labeled_cc == k))
+                if comp_vox > 0:
+                    connected_components.append({
+                        "id": k,
+                        "voxels": comp_vox,
+                        "volume_cm3": round(comp_vox * voxel_vol_cm3, 3),
+                        "percentage_of_wt": round((comp_vox / max(1, wt_voxels)) * 100.0, 1)
+                    })
+            connected_components.sort(key=lambda c: c["voxels"], reverse=True)
+            for idx, comp in enumerate(connected_components):
+                if idx == 0:
+                    comp["label"] = "Primary Tumor Region"
+                    comp["is_primary"] = True
+                else:
+                    comp["label"] = f"Major Satellite Region #{idx + 1}"
+                    comp["is_primary"] = False
+
+        threshold_message = None
+        if not has_tumor and confidence_threshold is not None and confidence_threshold > 0:
+            threshold_message = "No regions meet the current high-confidence display threshold."
 
         # 4. Slice-wise Cross-Sectional Analysis & Peak Slice
         # Axial (Z) slice-wise area
@@ -375,6 +429,16 @@ class TumorBurdenService:
             "checkpoint_identifier": "checkpoints/adaptive/best.pth (MONAI Adaptive UNETR)" if not is_ground_truth else "Manual Radiological Delineation",
             "has_segmentation": True,
             "has_tumor": has_tumor,
+            "confidence_threshold": confidence_threshold,
+            "threshold_message": threshold_message,
+            "unfiltered_wt_volume_cm3": unfiltered_wt_volume_cm3,
+            "unfiltered_wt_voxels": unfiltered_wt_voxels,
+            "pruned_fragments_count": pruned_fragments_count,
+            "pruned_volume_cm3": pruned_volume_cm3,
+            "major_regions_count": major_regions_count,
+            "has_pruned_fragments": pruned_fragments_count > 0,
+            "connected_components": connected_components[:10],
+            "total_connected_components": len(connected_components),
             "spatial_metadata": {
                 "dimensions": {
                     "sagittal_x": shape_x,

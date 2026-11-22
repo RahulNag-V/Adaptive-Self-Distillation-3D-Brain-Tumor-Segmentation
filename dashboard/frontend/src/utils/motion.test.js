@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Motion & Interaction Test Suite
+ * Neuro Resonence AI - Motion & Interaction Test Suite
  *
  * Verifies all 20 core criteria outlined in the Master Motion Specification:
  * 1.  Sidebar collapse (256px -> 72px)

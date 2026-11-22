@@ -114,6 +114,7 @@ export default function OrthogonalSliceViewer({
   contrast = 100,
   externalZoom = null,
   externalPan = null,
+  confidenceThreshold = 0.90,
 }) {
   const containerRef = useRef(null);
   const viewportRef = useRef(null);
@@ -312,6 +313,7 @@ export default function OrthogonalSliceViewer({
         opacity,
         showOverlay,
         timestamp: segTimestamp,
+        confidenceThreshold: segSource === 'prediction' ? confidenceThreshold : null,
       })
     : '';
 
@@ -461,7 +463,7 @@ export default function OrthogonalSliceViewer({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onContextMenu={(e) => e.preventDefault()}
-      className="relative w-full h-full min-h-0 bg-[#05070B] rounded-xl overflow-hidden border border-[#1C2636] hover:border-[#243348] select-none flex flex-col group shadow-clinical-md"
+      className="relative w-full h-full min-h-0 bg-[#060A12] medical-viewer-grid rounded-xl overflow-hidden border border-[#111111] select-none flex flex-col group shadow-[0_4px_12px_rgba(0,0,0,0.10)]"
     >
       {/* 1. TOP HEADER HUD (Responsive, Compact, Clear Metadata & Controls) */}
       <div className="h-8 px-2.5 bg-[#101722] border-b border-[#1C2636] flex items-center justify-between z-20 shrink-0 select-none backdrop-blur-sm">
@@ -513,27 +515,15 @@ export default function OrthogonalSliceViewer({
               <Crosshair className="w-3.5 h-3.5" />
             </button>
 
-            {/* Maximize / Restore Button */}
-            <button
-              onClick={onToggleMaximize || handleFitToView}
-              className="p-1 rounded text-[#8496AC] hover:text-[#F4F7FC] hover:bg-[#101722] transition-colors cursor-pointer"
-              title={isMaximized ? 'Restore View (Esc)' : 'Maximize Whole Screen'}
-              aria-label={isMaximized ? 'Restore View' : 'Maximize Whole Screen'}
-            >
-              {isMaximized ? (
-                <Minimize2 className="w-3.5 h-3.5 text-[#4C8DFF]" />
-              ) : (
-                <Maximize2 className="w-3.5 h-3.5" />
-              )}
-            </button>
+
           </div>
         )}
       </div>
 
-      {/* 2. MAIN VIEWPORT AREA (Dynamic Scaling, Fitted Slices & Centering) */}
+      {/* 2. MAIN VIEWPORT AREA (Dynamic Scaling, Fitted Slices & Centering with Medical Grid) */}
       <div 
         ref={viewportRef}
-        className={`relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-black/70 ${
+        className={`relative flex-1 w-full h-full flex items-center justify-center overflow-hidden medical-viewer-grid ${
           isPanning ? 'cursor-grabbing' : 'cursor-crosshair'
         }`}
       >

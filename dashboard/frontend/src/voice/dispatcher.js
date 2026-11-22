@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - Voice Action Dispatcher
+ * Neuro Resonence AI - Voice Action Dispatcher
  *
  * Implements:
  * - Allowlisted action execution across routes, layout, scrolling, 3D viewer, and page handlers

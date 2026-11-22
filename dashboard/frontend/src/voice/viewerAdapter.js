@@ -1,5 +1,5 @@
 /**
- * NeuroVision AI - 3D Viewer & MPR Action Adapter
+ * Neuro Resonence AI - 3D Viewer & MPR Action Adapter
  *
  * Bridges allowlisted voice actions to ViewerPage state and 3D Three.js canvas.
  * Validates slice coordinates against real volumetric dimensions (never assumes axis equals array index).

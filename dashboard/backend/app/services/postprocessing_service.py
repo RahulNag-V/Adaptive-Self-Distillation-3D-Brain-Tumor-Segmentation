@@ -64,6 +64,43 @@ class PostprocessingService:
         pred_nii = nib.Nifti1Image(pred_arr, affine, header)
         nib.save(pred_nii, str(output_path))
 
+        # Invert and save continuous softmax probability tensor if present
+        if "prob" in processed_data:
+            try:
+                prob_inverter = Invertd(
+                    keys="prob",
+                    transform=transform_pipeline,
+                    orig_keys="image",
+                    meta_keys="prob_meta_dict",
+                    orig_meta_keys="image_meta_dict",
+                    nearest_interp=False,
+                    to_tensor=True
+                )
+                prob_inverted = prob_inverter(processed_data)
+                prob_tensor = prob_inverted["prob"]
+                prob_arr = prob_tensor.cpu().numpy().astype(np.float32)
+                # Reshape to (H, W, D, 4) if channels first
+                if prob_arr.ndim == 4 and prob_arr.shape[0] == 4:
+                    prob_arr = np.transpose(prob_arr, (1, 2, 3, 0))
+
+                prob_header = ref_nii.header.copy()
+                prob_header.set_data_dtype(np.float32)
+                prob_nii = nib.Nifti1Image(prob_arr, affine, prob_header)
+                prob_path = output_path.parent / "probabilities.nii.gz"
+                nib.save(prob_nii, str(prob_path))
+
+                # Save pre-calculated high-confidence prediction (P >= 0.90)
+                p_tumor = prob_arr[..., 1] + prob_arr[..., 2] + prob_arr[..., 3]
+                high_conf_arr = np.where(p_tumor >= 0.90, pred_arr, 0).astype(np.uint8)
+                high_conf_header = ref_nii.header.copy()
+                high_conf_header.set_data_dtype(np.uint8)
+                high_conf_nii = nib.Nifti1Image(high_conf_arr, affine, high_conf_header)
+                nib.save(high_conf_nii, str(output_path.parent / "prediction_high_conf.nii.gz"))
+            except Exception as e:
+                # Non-fatal: log warning
+                import logging
+                logging.getLogger("neuroseg3d.postprocessing").warning(f"Could not save probabilities.nii.gz: {e}")
+
         unique_labels = [int(x) for x in np.unique(pred_arr)]
         final_shape = list(pred_arr.shape)
 

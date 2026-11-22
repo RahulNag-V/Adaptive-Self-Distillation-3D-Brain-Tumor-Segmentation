@@ -5,6 +5,7 @@ Initializes from the currently approved production checkpoint and saves candidat
 in a segregated directory for validation and safety checks before any promotion.
 """
 from pathlib import Path
+import os
 import json
 import logging
 import threading
@@ -15,7 +16,7 @@ from typing import Dict, Any, List, Optional
 import torch
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
-PROJECT_ROOT = BACKEND_DIR.parent
+PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", str(Path(__file__).resolve().parents[4])))
 
 from app.services.dataset_service import DatasetService
 

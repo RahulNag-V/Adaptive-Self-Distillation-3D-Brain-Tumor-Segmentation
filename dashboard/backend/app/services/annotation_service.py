@@ -4,6 +4,8 @@ Manages versioned human-in-the-loop annotations, 3D voxel mask updates from 2D s
 undo/redo stacks, audit trails, and multi-stage review workflows.
 """
 from pathlib import Path
+import os
+import sys
 import json
 import logging
 import math
@@ -16,8 +18,10 @@ import nibabel as nib
 import numpy as np
 
 # Ensure project root is in sys.path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", str(Path(__file__).resolve().parents[4])))
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.schemas.adaptive import AnnotationState
 from app.services.volume_service import VolumeService
