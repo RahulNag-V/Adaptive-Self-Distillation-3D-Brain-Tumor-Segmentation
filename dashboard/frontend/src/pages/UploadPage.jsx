@@ -19,7 +19,9 @@ import {
   ExternalLink, 
   Cpu, 
   Database,
-  Crosshair
+  Crosshair,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { uploadMRI, validateMRI, runSegmentation, loadValidationSubject } from '../api/segmentation';
 import { getCatalog } from '../api/adaptive';
@@ -126,6 +128,7 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
   });
 
   const [validationResult, setValidationResult] = useState(null);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   const mriInputRefs = {
     flair: useRef(null),
@@ -944,32 +947,153 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
 
       {/* PIPELINE PROGRESS & STATUS BANNER (7-STATE MACHINE) */}
       {pipelineState.stage !== 'idle' && (
-        <div className="card-transparent p-5 rounded-xl flex items-start gap-3.5 text-xs animate-fadeIn">
-          {isRunning ? (
-            <Loader2 className="w-5 h-5 text-[#103B5C] shrink-0 mt-0.5 animate-spin" />
-          ) : pipelineState.stage === 'complete' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
-          )}
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="font-bold uppercase tracking-wider text-[11px] font-mono text-[#103B5C]">
-                {pipelineState.stage === 'uploading' && 'Stage 1/4: Ingesting Scans'}
-                {pipelineState.stage === 'validating' && 'Stage 2/4: Validating Compatibility'}
-                {pipelineState.stage === 'inference' && 'Stage 3/4: Executing Adaptive Model Inference'}
-                {pipelineState.stage === 'processing' && 'Stage 4/4: Registering Volume & Uncertainties'}
-                {pipelineState.stage === 'complete' && 'Inference Pipeline Succeeded'}
-                {pipelineState.stage === 'error' && 'Pipeline Error'}
-              </span>
+        pipelineState.stage === 'error' ? (
+          <div 
+            className="p-4 sm:p-5 rounded-xl border text-xs animate-fadeIn space-y-3"
+            style={{
+              background: 'linear-gradient(135deg, rgba(254, 242, 242, 0.90) 0%, rgba(254, 226, 226, 0.75) 100%)',
+              borderColor: 'rgba(220, 38, 38, 0.55)',
+              boxShadow: '0 4px 14px rgba(220, 38, 38, 0.08)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
+          >
+            {/* Header row */}
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-100 border border-red-300 flex items-center justify-center shrink-0 mt-0.5 text-red-700 shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-700" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xs uppercase tracking-wider font-mono text-red-900 bg-red-200/70 px-2 py-0.5 rounded border border-red-300">
+                    Upload Error
+                  </span>
+                  <span className="text-[11px] font-mono text-red-800 font-bold">
+                    Scan Validation Failed
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-red-950">
+                  {pipelineState.error?.includes('gzip') || pipelineState.error?.includes('NIFTI') || pipelineState.message?.includes('validation')
+                    ? "We couldn’t read one or more of your MRI scan files."
+                    : pipelineState.message || "We encountered an issue processing your scan files."}
+                </h3>
+              </div>
             </div>
-            <p className="opacity-90">{pipelineState.message}</p>
-            {pipelineState.error && (
-              <p className="font-mono text-rose-800 font-bold mt-1">{pipelineState.error}</p>
-            )}
+
+            {/* Explanation & Helpful Guidance */}
+            <div className="pl-11 space-y-3 text-xs text-red-900 font-medium">
+              <p className="leading-relaxed">
+                <strong className="font-bold text-red-950">Possible reason:</strong>{' '}
+                {pipelineState.error?.includes('gzip') || pipelineState.error?.includes('NIFTI')
+                  ? "The uploaded file is not a valid .nii.gz MRI file, or it may be incorrectly compressed, renamed, or damaged."
+                  : pipelineState.message || "The uploaded scan files failed pre-flight geometry checks or format requirements."}
+              </p>
+
+              {/* Step-by-step guidance card */}
+              <div className="p-3.5 rounded-lg bg-white/70 border border-red-200/90 space-y-2 shadow-2xs">
+                <span className="font-bold text-red-950 block text-[11px] font-mono uppercase tracking-wide">
+                  What you should do:
+                </span>
+                <p className="text-[11px] text-red-900 font-medium leading-relaxed">
+                  Please make sure you upload valid MRI files in <code className="px-1.5 py-0.5 rounded bg-red-100/80 border border-red-300/80 font-mono font-bold text-red-950">.nii.gz</code> format for all required sequences:
+                </p>
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {[
+                    { id: 'FLAIR', name: 'FLAIR' },
+                    { id: 'T1', name: 'T1' },
+                    { id: 'T1ce', name: 'T1ce' },
+                    { id: 'T2', name: 'T2' }
+                  ].map((seq) => (
+                    <span 
+                      key={seq.id} 
+                      className="px-2 py-0.5 rounded-md bg-red-100/90 border border-red-300 font-mono text-[11px] font-bold text-red-950 shadow-2xs"
+                    >
+                      {seq.name}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="pt-1.5 space-y-1 text-[11px] text-red-900 leading-relaxed">
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-red-700 font-bold">•</span>
+                    <span>Check that each file is a real <strong className="text-red-950 font-semibold">.nii.gz</strong> MRI file.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-red-700 font-bold">•</span>
+                    <span>Re-upload the correct FLAIR, T1, T1ce, and T2 files.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-red-700 font-bold">•</span>
+                    <span>Do not rename random files to <span className="font-mono text-red-950 font-semibold">.nii.gz</span> without proper compression.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-red-700 font-bold">•</span>
+                    <span>Make sure the files are not damaged, corrupted, or incomplete.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Collapsible Technical Details for advanced users and developers */}
+              {pipelineState.error && (
+                <div className="pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowTechnicalDetails((prev) => !prev)}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-red-800 hover:text-red-950 transition-colors cursor-pointer underline underline-offset-2"
+                  >
+                    {showTechnicalDetails ? (
+                      <>
+                        <ChevronUp className="w-3.5 h-3.5 text-red-700" />
+                        <span>Hide technical details</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-3.5 h-3.5 text-red-700" />
+                        <span>Show technical details</span>
+                      </>
+                    )}
+                  </button>
+
+                  {showTechnicalDetails && (
+                    <div className="mt-2 p-3 rounded-lg bg-red-950/5 border border-red-300/80 font-mono text-[11px] text-red-950 space-y-1.5 animate-fadeIn">
+                      <div className="flex items-center justify-between text-[10px] uppercase font-bold text-red-800 font-mono">
+                        <span>Backend Diagnostic Log</span>
+                        <span className="text-[9px] text-red-700 font-normal">Internal Stack Trace</span>
+                      </div>
+                      <pre className="whitespace-pre-wrap break-all max-h-44 overflow-y-auto font-mono text-[10px] leading-relaxed text-red-950 bg-white/80 p-2.5 rounded border border-red-200 shadow-2xs">
+                        {pipelineState.error}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="card-transparent p-5 rounded-xl flex items-start gap-3.5 text-xs animate-fadeIn">
+            {isRunning ? (
+              <Loader2 className="w-5 h-5 text-[#103B5C] shrink-0 mt-0.5 animate-spin" />
+            ) : pipelineState.stage === 'complete' ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
+            )}
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold uppercase tracking-wider text-[11px] font-mono text-[#103B5C]">
+                  {pipelineState.stage === 'uploading' && 'Stage 1/4: Ingesting Scans'}
+                  {pipelineState.stage === 'validating' && 'Stage 2/4: Validating Compatibility'}
+                  {pipelineState.stage === 'inference' && 'Stage 3/4: Executing Adaptive Model Inference'}
+                  {pipelineState.stage === 'processing' && 'Stage 4/4: Registering Volume & Uncertainties'}
+                  {pipelineState.stage === 'complete' && 'Inference Pipeline Succeeded'}
+                </span>
+              </div>
+              <p className="opacity-90">{pipelineState.message}</p>
+            </div>
+          </div>
+        )
       )}
 
       {/* ACTION CONTROLS */}
