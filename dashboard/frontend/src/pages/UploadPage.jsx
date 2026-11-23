@@ -19,9 +19,7 @@ import {
   ExternalLink, 
   Cpu, 
   Database,
-  Crosshair,
-  ChevronDown,
-  ChevronUp
+  Crosshair
 } from 'lucide-react';
 import { uploadMRI, validateMRI, runSegmentation, loadValidationSubject } from '../api/segmentation';
 import { getCatalog } from '../api/adaptive';
@@ -128,7 +126,6 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
   });
 
   const [validationResult, setValidationResult] = useState(null);
-  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   const mriInputRefs = {
     flair: useRef(null),
@@ -1033,41 +1030,6 @@ export default function UploadPage({ onNavigate, onSegmentationComplete, onOpenV
                   </div>
                 </div>
               </div>
-
-              {/* Collapsible Technical Details for advanced users and developers */}
-              {pipelineState.error && (
-                <div className="pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setShowTechnicalDetails((prev) => !prev)}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-red-800 hover:text-red-950 transition-colors cursor-pointer underline underline-offset-2"
-                  >
-                    {showTechnicalDetails ? (
-                      <>
-                        <ChevronUp className="w-3.5 h-3.5 text-red-700" />
-                        <span>Hide technical details</span>
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-3.5 h-3.5 text-red-700" />
-                        <span>Show technical details</span>
-                      </>
-                    )}
-                  </button>
-
-                  {showTechnicalDetails && (
-                    <div className="mt-2 p-3 rounded-lg bg-red-950/5 border border-red-300/80 font-mono text-[11px] text-red-950 space-y-1.5 animate-fadeIn">
-                      <div className="flex items-center justify-between text-[10px] uppercase font-bold text-red-800 font-mono">
-                        <span>Backend Diagnostic Log</span>
-                        <span className="text-[9px] text-red-700 font-normal">Internal Stack Trace</span>
-                      </div>
-                      <pre className="whitespace-pre-wrap break-all max-h-44 overflow-y-auto font-mono text-[10px] leading-relaxed text-red-950 bg-white/80 p-2.5 rounded border border-red-200 shadow-2xs">
-                        {pipelineState.error}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         ) : (
