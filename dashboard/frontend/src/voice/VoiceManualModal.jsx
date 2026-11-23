@@ -134,34 +134,61 @@ export default function VoiceManualModal({ isOpen, onClose }) {
     <div className={`fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center p-3 sm:p-6 transition-opacity duration-200 overflow-hidden ${isClosing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 bg-[#111827]/70 backdrop-blur-sm transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`} 
+        className={`fixed inset-0 bg-[#092B47]/60 backdrop-blur-md transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`} 
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Dialog */}
       <div 
-        className={`relative w-full max-w-4xl max-h-[88vh] my-auto bg-white rounded-2xl shadow-2xl border border-[#98D9CE]/60 flex flex-col overflow-hidden text-[#111827] z-10 ${
+        className={`relative w-full max-w-4xl max-h-[88vh] my-auto rounded-2xl flex flex-col overflow-hidden text-[#111827] z-10 ${
           isClosing ? 'animate-modal-exit' : 'animate-modal-enter'
         }`}
+        style={{
+          backgroundColor: 'rgba(152, 217, 206, 0.16)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid #111111',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.18)',
+        }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="voice-manual-title"
       >
         {/* 1. HEADER */}
-        <div className="p-4 sm:p-5 border-b border-[#98D9CE]/60 bg-[#F8FCFB] flex items-center justify-between shrink-0">
+        <div 
+          className="p-4 sm:p-5 flex items-center justify-between shrink-0"
+          style={{
+            backgroundColor: 'rgba(152, 217, 206, 0.28)',
+            borderBottom: '1px solid #111111',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#103B5C]/10 border border-[#399DBA]/20 flex items-center justify-center text-[#103B5C]">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-[#103B5C] shadow-xs"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                border: '1px solid #111111',
+              }}
+            >
               <BookOpen className="w-5 h-5 text-[#103B5C]" />
             </div>
             <div>
               <h2 id="voice-manual-title" className="text-base sm:text-lg font-bold text-[#103B5C] flex items-center gap-2">
                 <span>Voice Control Manual</span>
-                <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#EBF8F6] text-[#103B5C] border border-[#98D9CE]/60">
+                <span 
+                  className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full text-[#103B5C]"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                    border: '1px solid #111111',
+                  }}
+                >
                   Official Registry
                 </span>
               </h2>
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-[#25313D] font-medium leading-relaxed">
                 Hands-free voice navigation and clinical workstation control across the entire Neuro Resonence AI platform.
               </p>
             </div>
@@ -169,28 +196,39 @@ export default function VoiceManualModal({ isOpen, onClose }) {
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[#6B7280] hover:text-[#103B5C] hover:bg-[#EBF8F6] transition-colors"
+            className="p-2 rounded-xl text-[#103B5C] hover:bg-[rgba(226,247,242,0.85)] border border-transparent hover:border-[#111111] transition-all cursor-pointer"
             aria-label="Close Voice Manual"
+            title="Close Manual"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* 2. SEARCH & FILTER BAR */}
-        <div className="p-3 sm:p-4 border-b border-[#98D9CE]/60 bg-white flex flex-col sm:flex-row gap-3 shrink-0">
+        <div 
+          className="p-3 sm:p-4 flex flex-col sm:flex-row gap-3 shrink-0"
+          style={{
+            backgroundColor: 'rgba(152, 217, 206, 0.22)',
+            borderBottom: '1px solid #111111',
+          }}
+        >
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#399DBA]" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#103B5C]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search voice commands (e.g., 'scroll down', 'axial', 'flair', 'stop', 'rotate')..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#98D9CE]/60 bg-[#F8FCFB] text-xs text-[#111827] placeholder-[#6B7280] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#399DBA]/50 focus:border-[#399DBA] transition-all"
+              className="w-full pl-10 pr-4 py-2 rounded-xl text-xs font-medium text-[#111827] placeholder-[#25313D]/70 focus:bg-white/80 focus:outline-none focus:ring-1 focus:ring-[#103B5C] transition-all shadow-xs"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                border: '1px solid #111111',
+              }}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#6B7280] hover:text-[#103B5C]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#103B5C] hover:text-[#092B47] cursor-pointer"
               >
                 Clear
               </button>
@@ -201,7 +239,11 @@ export default function VoiceManualModal({ isOpen, onClose }) {
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#98D9CE]/60 bg-[#F8FCFB] text-xs font-semibold text-[#103B5C] focus:outline-none focus:ring-2 focus:ring-[#399DBA]/50 focus:border-[#399DBA]"
+              className="w-full px-3 py-2 rounded-xl text-xs font-semibold text-[#103B5C] focus:bg-white/80 focus:outline-none focus:ring-1 focus:ring-[#103B5C] shadow-xs cursor-pointer transition-all"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                border: '1px solid #111111',
+              }}
             >
               <option value="all">All Sections ({COMMAND_REGISTRY.length} commands)</option>
               {MANUAL_SECTIONS.map((sec) => (
@@ -211,44 +253,79 @@ export default function VoiceManualModal({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* 4. MODAL BODY (SCROLLABLE CONTENT) */}
+        {/* 3. MODAL BODY (SCROLLABLE CONTENT) */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {/* VOICE DIAGNOSTICS PANEL */}
-          <div className="p-4 rounded-xl bg-[#F8FCFB] border border-[#98D9CE]/60 text-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-[#98D9CE]/60 pb-2">
-              <span className="font-bold text-[#103B5C] flex items-center gap-1.5">
-                <Activity className="w-4 h-4 text-[#399DBA]" />
+          <div 
+            className="p-4 rounded-xl text-xs space-y-3"
+            style={{
+              backgroundColor: 'rgba(152, 217, 206, 0.22)',
+              border: '1px solid #111111',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
+            }}
+          >
+            <div className="flex items-center justify-between border-b border-[#111111]/20 pb-2">
+              <span className="font-semibold text-[#103B5C] flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-[#103B5C]" />
                 <span>Voice Engine Diagnostics & Telemetry</span>
               </span>
-              <span className="text-[10px] font-mono text-[#6B7280]">Live Telemetry</span>
+              <span className="text-[10px] font-mono font-medium text-[#25313D]">Live Telemetry</span>
             </div>
 
             {/* Status Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs">
-              <div className="p-2 rounded-lg bg-white border border-[#98D9CE]/60 space-y-0.5">
-                <span className="text-[10px] text-[#6B7280] uppercase font-mono">Speech API</span>
-                <div className="font-bold text-[#103B5C]">
+              <div 
+                className="p-2.5 rounded-lg space-y-0.5 transition-all duration-250 hover:bg-[rgba(226,247,242,0.85)] cursor-default"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.40)',
+                  border: '1px solid #111111',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                }}
+              >
+                <span className="text-[10px] text-[#25313D] uppercase font-mono font-medium">Speech API</span>
+                <div className="font-semibold text-[#103B5C]">
                   {isSupported ? 'Supported' : 'Unavailable'}
                 </div>
               </div>
 
-              <div className="p-2 rounded-lg bg-white border border-[#98D9CE]/60 space-y-0.5">
-                <span className="text-[10px] text-[#6B7280] uppercase font-mono">Context</span>
-                <div className="font-bold text-[#103B5C]">
+              <div 
+                className="p-2.5 rounded-lg space-y-0.5 transition-all duration-250 hover:bg-[rgba(226,247,242,0.85)] cursor-default"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.40)',
+                  border: '1px solid #111111',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                }}
+              >
+                <span className="text-[10px] text-[#25313D] uppercase font-mono font-medium">Context</span>
+                <div className="font-semibold text-[#103B5C]">
                   {isSecureContext ? 'Secure (HTTPS/Local)' : 'Insecure'}
                 </div>
               </div>
 
-              <div className="p-2 rounded-lg bg-white border border-[#98D9CE]/60 space-y-0.5">
-                <span className="text-[10px] text-[#6B7280] uppercase font-mono">Mic Permission</span>
-                <div className="font-bold capitalize text-[#103B5C]">
+              <div 
+                className="p-2.5 rounded-lg space-y-0.5 transition-all duration-250 hover:bg-[rgba(226,247,242,0.85)] cursor-default"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.40)',
+                  border: '1px solid #111111',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                }}
+              >
+                <span className="text-[10px] text-[#25313D] uppercase font-mono font-medium">Mic Permission</span>
+                <div className="font-semibold capitalize text-[#103B5C]">
                   {micPermState}
                 </div>
               </div>
 
-              <div className="p-2 rounded-lg bg-white border border-[#98D9CE]/60 space-y-0.5">
-                <span className="text-[10px] text-[#6B7280] uppercase font-mono">Engine State</span>
-                <div className="font-bold capitalize text-[#103B5C]">
+              <div 
+                className="p-2.5 rounded-lg space-y-0.5 transition-all duration-250 hover:bg-[rgba(226,247,242,0.85)] cursor-default"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.40)',
+                  border: '1px solid #111111',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                }}
+              >
+                <span className="text-[10px] text-[#25313D] uppercase font-mono font-medium">Engine State</span>
+                <div className="font-semibold capitalize text-[#103B5C]">
                   {status}
                 </div>
               </div>
@@ -256,25 +333,40 @@ export default function VoiceManualModal({ isOpen, onClose }) {
 
             {/* Recent 10 Telemetry Log */}
             <div className="space-y-1.5 pt-1">
-              <span className="text-[10px] font-mono text-[#6B7280] uppercase">Recent Transcripts & Outcomes</span>
+              <span className="text-[10px] font-mono text-[#25313D] font-medium uppercase">Recent Transcripts & Outcomes</span>
               {telemetryLogs.length === 0 ? (
-                <div className="p-2.5 rounded-lg bg-white border border-[#98D9CE]/60 text-[#6B7280] text-[11px] text-center italic">
+                <div 
+                  className="p-2.5 rounded-lg text-[#25313D] font-medium text-[11px] text-center italic"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.40)',
+                    border: '1px solid #111111',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                  }}
+                >
                   No commands executed yet. Speak a voice command to view telemetry.
                 </div>
               ) : (
                 <div className="max-h-32 overflow-y-auto space-y-1 pr-1 font-mono text-[10px]">
                   {telemetryLogs.map((log) => (
-                    <div key={log.id} className="p-1.5 rounded bg-white border border-[#98D9CE]/60 flex items-center justify-between gap-2">
+                    <div 
+                      key={log.id} 
+                      className="p-2 rounded flex items-center justify-between gap-2 transition-all duration-250 hover:bg-[rgba(226,247,242,0.85)]"
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.40)',
+                        border: '1px solid #111111',
+                        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+                      }}
+                    >
                       <div className="flex items-center gap-2 truncate">
-                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-                          log.success ? 'bg-teal-100 text-teal-800' : 'bg-rose-100 text-rose-800'
+                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border border-[#111111]/30 ${
+                          log.success ? 'bg-teal-200/80 text-teal-950' : 'bg-rose-200/80 text-rose-950'
                         }`}>
                           {log.success ? 'PASS' : 'FAIL'}
                         </span>
-                        <span className="text-[#103B5C] font-bold truncate">"{log.text}"</span>
-                        <span className="text-[#6B7280]">→ {log.label}</span>
+                        <span className="text-[#103B5C] font-semibold truncate">"{log.text}"</span>
+                        <span className="text-[#25313D] font-medium">→ {log.label}</span>
                       </div>
-                      <span className="text-[#6B7280] shrink-0 text-[9px]">{log.timestamp}</span>
+                      <span className="text-[#25313D] font-medium shrink-0 text-[9px]">{log.timestamp}</span>
                     </div>
                   ))}
                 </div>
@@ -285,21 +377,30 @@ export default function VoiceManualModal({ isOpen, onClose }) {
           {/* INSTRUCTIONAL GUIDES */}
           {filteredGuides.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#6B7280] font-mono border-b border-[#98D9CE]/60 pb-1">
+              <div className="flex items-center justify-between text-xs text-[#25313D] font-mono font-semibold border-b border-[#111111]/20 pb-1">
                 <span>System Guides & Setup Instructions</span>
                 <span>Reference Only</span>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 {filteredGuides.map((guide) => (
-                  <div key={guide.id} className="p-3.5 rounded-xl border border-[#98D9CE]/60 bg-[#F8FCFB] space-y-2 text-xs">
-                    <span className="font-bold text-[#103B5C] flex items-center gap-1.5">
-                      <Info className="w-3.5 h-3.5 text-[#399DBA] shrink-0" />
+                  <div 
+                    key={guide.id} 
+                    className="p-3.5 rounded-xl space-y-2 text-xs transition-all duration-250 hover:bg-[rgba(226,247,242,0.85)] cursor-default"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.35)',
+                      border: '1px solid #111111',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
+                      transition: 'background-color 250ms ease, box-shadow 250ms ease, border-color 250ms ease',
+                    }}
+                  >
+                    <span className="font-semibold text-[#103B5C] flex items-center gap-1.5">
+                      <Info className="w-3.5 h-3.5 text-[#103B5C] shrink-0" />
                       <span>{guide.title}</span>
                     </span>
-                    <ul className="space-y-1 text-[11px] text-[#475569]">
+                    <ul className="space-y-1 text-[11px] text-[#25313D] font-medium leading-relaxed">
                       {guide.instructions.map((inst, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                          <Check className="w-3 h-3 text-teal-600 shrink-0 mt-0.5" />
+                          <Check className="w-3 h-3 text-emerald-700 font-bold shrink-0 mt-0.5" />
                           <span>{inst}</span>
                         </li>
                       ))}
@@ -312,13 +413,19 @@ export default function VoiceManualModal({ isOpen, onClose }) {
 
           {/* EXECUTABLE COMMANDS LIST */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-[#6B7280] font-mono border-b border-[#98D9CE]/60 pb-2">
+            <div className="flex items-center justify-between text-xs text-[#25313D] font-mono font-semibold border-b border-[#111111]/20 pb-2">
               <span>Showing {filteredCommands.length} Allowlisted Commands</span>
               <span>100% Tested & Verified</span>
             </div>
 
             {filteredCommands.length === 0 ? (
-              <div className="p-8 text-center text-[#6B7280] text-xs">
+              <div 
+                className="p-8 text-center text-[#25313D] font-medium text-xs rounded-xl"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.35)',
+                  border: '1px solid #111111',
+                }}
+              >
                 No matching voice commands found for "{searchQuery}".
               </div>
             ) : (
@@ -326,53 +433,76 @@ export default function VoiceManualModal({ isOpen, onClose }) {
                 {filteredCommands.map((cmd) => (
                   <div
                     key={cmd.id}
-                    className="p-3.5 sm:p-4 rounded-xl border border-[#98D9CE]/60 hover:border-[#399DBA] bg-white hover:bg-[#F8FCFB] transition-all text-xs space-y-2 shadow-xs"
+                    className="p-3.5 sm:p-4 rounded-xl space-y-2 text-xs transition-all duration-250 hover:bg-[rgba(226,247,242,0.85)] hover:shadow-[0_6px_18px_rgba(0,0,0,0.12)] cursor-default"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.35)',
+                      border: '1px solid #111111',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
+                      transition: 'background-color 250ms ease, box-shadow 250ms ease, border-color 250ms ease',
+                    }}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-[#103B5C] text-xs sm:text-sm">
+                        <span className="font-semibold text-[#103B5C] text-xs sm:text-sm">
                           {cmd.description}
                         </span>
                         {cmd.requiresConfirmation && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-300 font-bold">
-                            <AlertTriangle className="w-3 h-3" />
+                          <span 
+                            className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md font-bold"
+                            style={{
+                              backgroundColor: 'rgba(254, 243, 199, 0.85)',
+                              color: '#78350F',
+                              border: '1px solid #D97706',
+                            }}
+                          >
+                            <AlertTriangle className="w-3 h-3 text-amber-700" />
                             Confirmation Required
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-[#EBF8F6] text-[#103B5C] border border-[#98D9CE]/60">
+                      <span 
+                        className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md text-[#103B5C]"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                          border: '1px solid #111111',
+                        }}
+                      >
                         {cmd.category}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-[11px] font-mono text-[#6B7280]">Phrases:</span>
+                      <span className="text-[11px] font-mono text-[#25313D] font-medium">Phrases:</span>
                       {cmd.phrases.slice(0, 4).map((p, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-0.5 rounded-lg bg-[#EBF8F6] text-[#103B5C] font-mono text-[11px] border border-[#98D9CE]/60 font-semibold"
+                          className="px-2 py-0.5 rounded-lg text-[#103B5C] font-mono text-[11px] font-semibold"
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                            border: '1px solid #111111',
+                          }}
                         >
                           "{p}"
                         </span>
                       ))}
                       {cmd.phrases.length > 4 && (
-                        <span className="text-[10px] text-[#6B7280] font-mono">
+                        <span className="text-[10px] text-[#25313D] font-mono font-medium">
                           +{cmd.phrases.length - 4} more
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-[#6B7280] pt-1 border-t border-[#FFF7ED]">
+                    <div className="flex items-center justify-between text-[11px] text-[#25313D] font-medium pt-1.5 border-t border-[#111111]/15">
                       <span className="truncate">
                         <strong>Example:</strong> <span className="italic text-[#103B5C] font-semibold">{cmd.examples[0]}</span>
                       </span>
-                      <span className="text-[10px] font-mono text-[#6B7280]">
+                      <span className="text-[10px] font-mono text-[#25313D] font-medium">
                         Target: {cmd.targetPage}
                       </span>
                     </div>
 
                     {cmd.constraints && (
-                      <div className="text-[10px] text-[#6B7280] font-mono pt-0.5">
+                      <div className="text-[10px] text-[#25313D] font-mono font-medium pt-0.5">
                         Constraints: {cmd.constraints}
                       </div>
                     )}
