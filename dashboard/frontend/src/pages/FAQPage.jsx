@@ -8,7 +8,7 @@ export default function FAQPage({ onNavigate }) {
   }, []);
 
   return (
-    <div className="faq-section max-w-6xl mx-auto w-full min-h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-3.5rem)] lg:max-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 flex flex-col justify-center font-sans text-[#111827] dark:text-white lg:overflow-hidden">
+    <div className="faq-section max-w-7xl mx-auto w-full h-[calc(100vh-3.5rem)] max-h-[calc(100vh-3.5rem)] px-4 sm:px-6 lg:px-8 py-1.5 sm:py-2 flex flex-col justify-center font-sans text-[#111827] dark:text-white lg:overflow-hidden">
       {/* MAIN HIRAEL FAQ-05 COMPONENT */}
       <Faq05 onNavigate={onNavigate} />
     </div>

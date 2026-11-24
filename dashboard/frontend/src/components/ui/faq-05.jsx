@@ -78,7 +78,7 @@ export const FAQS = [
 export default function Faq05({ onNavigate }) {
   return (
     <section data-slot="faq" className="w-full">
-      <div className="faq-layout grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full lg:h-[min(650px,calc(100vh-7rem))]">
+      <div className="faq-layout grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center w-full h-auto lg:h-[calc(100vh-4.25rem)]">
         {/* Left Column: Eyebrow, Heading, Description & Quick Link - COMPLETELY STATIONARY */}
         <div
           data-slot="faq-intro"
@@ -135,7 +135,7 @@ export default function Faq05({ onNavigate }) {
         {/* Right Column: Outer FAQ Card Remains Stationary While Inner Questions Scroll */}
         <div
           data-slot="faq-list"
-          className="faq-right card-transparent lg:col-span-7 rounded-2xl p-5 sm:p-8 flex flex-col h-[520px] sm:h-[580px] lg:h-full max-h-[85vh] lg:max-h-full overflow-hidden relative shadow-xs"
+          className="faq-right card-transparent lg:col-span-7 rounded-2xl p-5 sm:p-6 lg:p-7 flex flex-col h-[88vh] lg:h-full max-h-[92vh] lg:max-h-full overflow-hidden relative shadow-xs"
         >
           {/* Inner Independently Scrollable Questions Container */}
           <div className="faq-questions flex-1 w-full min-h-0 pr-2 sm:pr-3.5 select-text">
