@@ -212,8 +212,8 @@ export default function WorkspaceMenu({
               </div>
             </div>
 
-            {/* Navigation Groups with Highlighted Categories (Zero Scrolling, Fits 1 Screen) */}
-            <div className="flex-1 overflow-hidden px-3 py-2 space-y-2 z-10 flex flex-col justify-between">
+            {/* Navigation Groups with Highlighted Categories */}
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 z-10">
               {WORKSPACE_NAV_GROUPS.map((group) => (
                 <div key={group.category} className="space-y-0.5">
                   {/* Highlighted & Larger Category Banner */}
